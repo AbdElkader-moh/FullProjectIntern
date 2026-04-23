@@ -163,9 +163,14 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
-.upload-area:hover {
+.upload-area:not(.has-image):hover {
   border-color: var(--accent-primary);
   background: rgba(108, 92, 231, 0.05);
+}
+
+.upload-area.has-image {
+  cursor: default;
+  border-style: solid;
 }
 
 .upload-placeholder {
@@ -279,6 +284,16 @@
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+}
+
+.spinner-upload {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(108, 92, 231, 0.1);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 0.5rem;
 }
 
 @keyframes spin {

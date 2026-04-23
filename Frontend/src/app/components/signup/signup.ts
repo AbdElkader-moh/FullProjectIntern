@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -10,10 +10,11 @@ import { CommonModule } from '@angular/common';
   templateUrl: './signup.html',
   styleUrl: './signup.css',
 })
-export class Signup {
+export class Signup implements OnDestroy {
   signupForm: FormGroup;
   errorMessage = '';
   isLoading = false;
+  isImageLoading = false;
   imagePreview: string | null = null;
   fileName: string | null = null;
 
@@ -37,20 +38,38 @@ export class Signup {
       const file = input.files[0];
       this.fileName = file.name;
 
-      // Convert to base64 data URL to store as the profilePicture string
+      // Clean up previous blob URL if it exists
+      if (this.imagePreview && this.imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(this.imagePreview);
+      }
+
+      // 1. Use Blob URL for instant preview
+      this.imagePreview = URL.createObjectURL(file);
+      this.isImageLoading = false;
+
+      // 2. Convert to base64 in background for the backend
       const reader = new FileReader();
       reader.onload = () => {
-        this.imagePreview = reader.result as string;
-        this.signupForm.patchValue({ profilePicture: this.imagePreview });
+        this.signupForm.patchValue({ profilePicture: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
   }
 
   removeImage(): void {
+    if (this.imagePreview && this.imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(this.imagePreview);
+    }
     this.imagePreview = null;
     this.fileName = null;
     this.signupForm.patchValue({ profilePicture: '' });
+  }
+
+  ngOnDestroy(): void {
+    // Final cleanup
+    if (this.imagePreview && this.imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(this.imagePreview);
+    }
   }
 
   isFieldInvalid(fieldName: string): boolean {

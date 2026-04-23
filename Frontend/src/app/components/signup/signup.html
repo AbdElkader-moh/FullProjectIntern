@@ -85,8 +85,15 @@
       <!-- Profile Picture Upload -->
       <div class="form-group">
         <label>Profile Picture <span class="optional">(optional)</span></label>
-        <div class="upload-area" (click)="fileInput.click()">
-          @if (imagePreview) {
+        <div class="upload-area" 
+             [class.has-image]="imagePreview"
+             (click)="(!imagePreview && !isImageLoading) ? fileInput.click() : null">
+          @if (isImageLoading) {
+            <div class="upload-placeholder">
+              <span class="spinner-upload"></span>
+              <span class="upload-text">Processing image...</span>
+            </div>
+          } @else if (imagePreview) {
             <div class="upload-preview">
               <img [src]="imagePreview" alt="Preview" class="preview-img" />
               <div class="preview-info">
