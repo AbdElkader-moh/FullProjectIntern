@@ -1,0 +1,25 @@
+services:
+  internship-mysql:
+    build: ./db
+    container_name: internship-mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend/user
+    container_name: backend-user
+    ports:
+      - "8080:8080"
+    depends_on:
+      internship-mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
