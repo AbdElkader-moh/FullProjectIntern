@@ -5,6 +5,9 @@ import com.backend.user.dto.SignupRequest;
 import com.backend.user.dto.UpdateProfilePictureRequest;
 import com.backend.user.dto.UserResponse;
 import com.backend.user.entity.User;
+import com.backend.user.exception.ConflictException;
+import com.backend.user.exception.NotFoundException;
+import com.backend.user.exception.UnauthorizedException;
 import com.backend.user.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,7 +27,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new ConflictException("An account with this email already exists.");
         }
 
         User user = new User();
@@ -35,22 +38,19 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
-
         return mapToResponse(savedUser);
     }
 
     @Override
     public String login(LoginRequest request, HttpSession session) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password."));
 
-        boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
-        if (!matches) {
-            throw new RuntimeException("Invalid email or password");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new UnauthorizedException("Invalid email or password.");
         }
 
         session.setAttribute("userId", user.getId());
-
         return "Login successful";
     }
 
@@ -59,11 +59,11 @@ public class UserServiceImpl implements UserService {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            throw new RuntimeException("User is not logged in");
+            throw new UnauthorizedException("You are not logged in.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found."));
 
         return mapToResponse(user);
     }
@@ -73,15 +73,14 @@ public class UserServiceImpl implements UserService {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            throw new RuntimeException("User is not logged in");
+            throw new UnauthorizedException("You are not logged in.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found."));
 
         user.setProfilePicture(request.getProfilePicture());
         User savedUser = userRepository.save(user);
-
         return mapToResponse(savedUser);
     }
 
@@ -97,7 +96,7 @@ public class UserServiceImpl implements UserService {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getProfilePicture(),
-                user.getPassword() // bcrypt hash, never plaintext
+                user.getPassword()
         );
     }
 }

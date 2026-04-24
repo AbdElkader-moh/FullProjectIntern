@@ -1,8 +1,14 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, ChangeDetectorRef } from '@angular/core';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-signin',
@@ -18,7 +24,8 @@ export class Signin {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.signinForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -35,15 +42,40 @@ export class Signin {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.authService.login(this.signinForm.value).subscribe({
-      next: () => {
-        this.router.navigate(['/home']);
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.errorMessage =
-          err.error?.message || 'Invalid email or password.';
-      },
-    });
+    this.authService
+      .login(this.signinForm.value)
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges(); // 🔥 force UI update
+        })
+      )
+      .subscribe({
+        next: () => {
+          // Only mark logged in AFTER success
+          (this.authService as any).loggedIn.next(true);
+
+          this.router.navigate(['/home']);
+        },
+        error: (err) => {
+          console.log('LOGIN ERROR:', err);
+
+          this.errorMessage =
+            err?.error?.message ||
+            err?.message ||
+            'Invalid email or password.';
+
+          this.cdr.detectChanges(); // 🔥 immediate render
+        },
+      });
   }
+    goToSignup(event: Event): void {
+    event.preventDefault();
+
+    this.isLoading = false;
+    this.errorMessage = '';
+
+    this.router.navigate(['/signup']);
+  }
+
 }
