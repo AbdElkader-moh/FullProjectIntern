@@ -34,6 +34,13 @@ public class UserController {
         return ResponseEntity.ok(userService.getCurrentUser(session));
     }
 
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateProfilePicture(
+            @RequestBody UpdateProfilePictureRequest request,
+            HttpSession session) {
+        return ResponseEntity.ok(userService.updateProfilePicture(request, session));
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse> logout(HttpSession session) {
         userService.logout(session);

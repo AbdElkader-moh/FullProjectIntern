@@ -7,7 +7,6 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Try to fetch the current user profile to validate the session
   return authService.getProfile().pipe(
     map(() => true),
     catchError(() => {

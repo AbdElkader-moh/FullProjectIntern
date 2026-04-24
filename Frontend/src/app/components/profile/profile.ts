@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, UserResponse } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
@@ -10,9 +10,13 @@ import { CommonModule } from '@angular/common';
   styleUrl: './profile.css',
 })
 export class Profile implements OnInit {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   user: UserResponse | null = null;
   isLoading = true;
   errorMessage = '';
+  isUploadingPhoto = false;
+  showPassword = false;
 
   constructor(
     private authService: AuthService,
@@ -20,6 +24,12 @@ export class Profile implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.authService.currentUser) {
+      this.user = this.authService.currentUser;
+      this.isLoading = false;
+      return;
+    }
+
     this.authService.getProfile().subscribe({
       next: (user) => {
         this.user = user;
@@ -30,6 +40,41 @@ export class Profile implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  triggerFileUpload(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      this.isUploadingPhoto = true;
+
+      this.authService.updateProfilePicture(base64).subscribe({
+        next: (updatedUser) => {
+          this.user = updatedUser;
+          this.isUploadingPhoto = false;
+        },
+        error: () => {
+          this.errorMessage = 'Failed to update profile picture.';
+          this.isUploadingPhoto = false;
+        },
+      });
+    };
+    reader.readAsDataURL(file);
+
+    // reset so the same file can be re-selected
+    input.value = '';
+  }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
   }
 
   logout(): void {

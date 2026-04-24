@@ -8,6 +8,7 @@ export interface UserResponse {
   firstName: string;
   lastName: string;
   profilePicture: string;
+  password: string; // bcrypt hash returned from server
 }
 
 export interface ApiResponse {
@@ -27,6 +28,10 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface UpdateProfilePictureRequest {
+  profilePicture: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -36,6 +41,8 @@ export class AuthService {
 
   private loggedIn = new BehaviorSubject<boolean>(false);
   isLoggedIn$ = this.loggedIn.asObservable();
+
+  currentUser: UserResponse | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -60,12 +67,36 @@ export class AuthService {
   getProfile(): Observable<UserResponse> {
     return this.http
       .get<UserResponse>(`${this.apiUrl}/me`, this.httpOptions)
-      .pipe(tap(() => this.loggedIn.next(true)));
+      .pipe(
+        tap((user) => {
+          this.currentUser = user;
+          this.loggedIn.next(true);
+        })
+      );
+  }
+
+  updateProfilePicture(profilePicture: string): Observable<UserResponse> {
+    return this.http
+      .put<UserResponse>(
+        `${this.apiUrl}/me`,
+        { profilePicture } as UpdateProfilePictureRequest,
+        this.httpOptions
+      )
+      .pipe(
+        tap((user) => {
+          this.currentUser = user;
+        })
+      );
   }
 
   logout(): Observable<ApiResponse> {
     return this.http
       .post<ApiResponse>(`${this.apiUrl}/logout`, {}, this.httpOptions)
-      .pipe(tap(() => this.loggedIn.next(false)));
+      .pipe(
+        tap(() => {
+          this.currentUser = null;
+          this.loggedIn.next(false);
+        })
+      );
   }
 }

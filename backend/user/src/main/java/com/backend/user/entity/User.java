@@ -20,7 +20,9 @@ public class User {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "profile_picture")
+
+    @Lob
+    @Column(name = "profile_picture", columnDefinition = "LONGTEXT")
     private String profilePicture;
 
     @Column(nullable = false)

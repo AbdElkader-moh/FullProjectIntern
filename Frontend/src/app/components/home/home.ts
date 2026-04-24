@@ -18,8 +18,16 @@ export class Home implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Guard already called getProfile() — use the cached user synchronously
+    if (this.authService.currentUser) {
+      this.user = this.authService.currentUser;
+      return;
+    }
+
+    // Fallback: fetch if cache is empty (e.g. hard refresh)
     this.authService.getProfile().subscribe({
       next: (user) => (this.user = user),
+      error: () => this.router.navigate(['/signin']),
     });
   }
 

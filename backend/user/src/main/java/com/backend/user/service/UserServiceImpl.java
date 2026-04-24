@@ -2,6 +2,7 @@ package com.backend.user.service;
 
 import com.backend.user.dto.LoginRequest;
 import com.backend.user.dto.SignupRequest;
+import com.backend.user.dto.UpdateProfilePictureRequest;
 import com.backend.user.dto.UserResponse;
 import com.backend.user.entity.User;
 import com.backend.user.repository.UserRepository;
@@ -68,6 +69,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse updateProfilePicture(UpdateProfilePictureRequest request, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            throw new RuntimeException("User is not logged in");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setProfilePicture(request.getProfilePicture());
+        User savedUser = userRepository.save(user);
+
+        return mapToResponse(savedUser);
+    }
+
+    @Override
     public void logout(HttpSession session) {
         session.invalidate();
     }
@@ -78,7 +96,8 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getProfilePicture()
+                user.getProfilePicture(),
+                user.getPassword() // bcrypt hash, never plaintext
         );
     }
 }
