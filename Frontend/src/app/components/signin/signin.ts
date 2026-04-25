@@ -43,31 +43,35 @@ export class Signin {
     this.errorMessage = '';
 
     this.authService
-      .login(this.signinForm.value)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges(); // 🔥 force UI update
-        })
-      )
-      .subscribe({
+  .login(this.signinForm.value)
+  .pipe(
+    finalize(() => {
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    })
+  )
+  .subscribe({
+    next: () => {
+      this.authService.getProfile().subscribe({
         next: () => {
-          // Only mark logged in AFTER success
           (this.authService as any).loggedIn.next(true);
-
           this.router.navigate(['/home']);
         },
-        error: (err) => {
-          console.log('LOGIN ERROR:', err);
-
-          this.errorMessage =
-            err?.error?.message ||
-            err?.message ||
-            'Invalid email or password.';
-
-          this.cdr.detectChanges(); // 🔥 immediate render
+        error: () => {
+          this.errorMessage = 'Login succeeded, but failed to load profile.';
+          this.cdr.detectChanges();
         },
       });
+    },
+    error: (err) => {
+      this.errorMessage =
+        err?.error?.message ||
+        err?.message ||
+        'Invalid email or password.';
+
+      this.cdr.detectChanges();
+    },
+  });
   }
     goToSignup(event: Event): void {
     event.preventDefault();

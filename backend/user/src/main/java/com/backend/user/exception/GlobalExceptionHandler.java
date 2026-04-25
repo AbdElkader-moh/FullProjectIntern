@@ -2,6 +2,7 @@ package com.backend.user.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -30,11 +31,22 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND) // 404
                 .body(Map.of("message", ex.getMessage()));
     }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
+        String message ="All Fields Must be filled";
 
+        return ResponseEntity.badRequest().body(
+                Map.of("message", message)
+        );
+    }
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleGeneric(RuntimeException ex) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "An unexpected error occurred."));
     }
+
+
+
+
 }

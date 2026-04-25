@@ -2,7 +2,12 @@
   display: block;
   min-height: 100vh;
 }
-
+.header-profile-img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 /* ── Header Bar ── */
 .header-bar {
   display: flex;
