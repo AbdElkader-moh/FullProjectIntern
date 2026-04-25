@@ -112,10 +112,7 @@
   letter-spacing: 0.02em;
 }
 
-.optional {
-  color: var(--text-muted);
-  font-weight: 400;
-}
+
 
 .form-group input:not(.file-input-hidden) {
   background: rgba(255, 255, 255, 0.04);
