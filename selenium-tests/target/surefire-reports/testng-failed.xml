@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Failed suite [DXC Internship Test Suite]" guice-stage="DEVELOPMENT" verbose="0">
+  <test thread-count="5" name="Home Tests(failed)" verbose="0">
+    <classes>
+      <class name="com.internship.tests.HomeTest">
+        <methods>
+          <include name="setup"/>
+          <include name="teardown"/>
+          <include name="TC039_accessHomeWithoutLogin"/>
+          <include name="TC037_homeShowsDefaultIconWhenNoPhoto"/>
+          <include name="TC038_logoutFromHome"/>
+        </methods>
+      </class> <!-- com.internship.tests.HomeTest -->
+    </classes>
+  </test> <!-- Home Tests(failed) -->
+</suite> <!-- Failed suite [DXC Internship Test Suite] -->
