@@ -46,4 +46,11 @@ public class UserController {
         userService.logout(session);
         return ResponseEntity.ok(new ApiResponse("Logged out successfully"));
     }
+    @PutMapping("/me/password")
+    public ResponseEntity<ApiResponse> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            HttpSession session) {
+        userService.changePassword(request, session);
+        return ResponseEntity.ok(new ApiResponse("Password changed successfully."));
+    }
 }

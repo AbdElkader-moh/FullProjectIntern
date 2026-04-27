@@ -122,32 +122,55 @@ this.authService.updateProfilePicture(base64).subscribe({
     });
   }
 
-  changePassword(): void {
-    if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
-      this.passwordError = 'All password fields are required.';
-      this.passwordMessage = '';
-      return;
-    }
-
-    if (this.newPassword !== this.confirmPassword) {
-      this.passwordError = 'New passwords do not match.';
-      this.passwordMessage = '';
-      return;
-    }
-
-    this.isUpdatingPassword = true;
-    this.passwordError = '';
+changePassword(): void {
+  if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
+    this.passwordError = 'All password fields are required.';
     this.passwordMessage = '';
-    
-    setTimeout(() => {
-      this.passwordMessage = 'Password updated successfully!';
-      this.oldPassword = '';
-      this.newPassword = '';
-      this.confirmPassword = '';
-      this.isUpdatingPassword = false;
-      this.cdr.detectChanges();
-    }, 1500);
+    this.cdr.detectChanges();
+    return;
   }
+
+  if (this.newPassword !== this.confirmPassword) {
+    this.passwordError = 'New passwords do not match.';
+    this.passwordMessage = '';
+    this.cdr.detectChanges();
+    return;
+  }
+
+  this.isUpdatingPassword = true;
+  this.passwordError = '';
+  this.passwordMessage = '';
+  this.cdr.detectChanges();
+
+  this.authService
+    .changePassword({
+      oldPassword: this.oldPassword,
+      newPassword: this.newPassword,
+    })
+    .subscribe({
+      next: (res) => {
+        this.passwordMessage =
+          res?.message || 'Password updated successfully!';
+
+        this.oldPassword = '';
+        this.newPassword = '';
+        this.confirmPassword = '';
+        this.isUpdatingPassword = false;
+
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.passwordError =
+          err?.error?.message ||
+          'Failed to update password.';
+
+        this.passwordMessage = '';
+        this.isUpdatingPassword = false;
+
+        this.cdr.detectChanges();
+      },
+    });
+}
 
   toggleChangePassword(): void {
     this.isChangePasswordVisible = !this.isChangePasswordVisible;

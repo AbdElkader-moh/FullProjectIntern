@@ -1,9 +1,6 @@
 package com.backend.user.service;
 
-import com.backend.user.dto.LoginRequest;
-import com.backend.user.dto.SignupRequest;
-import com.backend.user.dto.UpdateProfilePictureRequest;
-import com.backend.user.dto.UserResponse;
+import com.backend.user.dto.*;
 import com.backend.user.entity.User;
 import com.backend.user.exception.ConflictException;
 import com.backend.user.exception.NotFoundException;
@@ -98,5 +95,23 @@ public class UserServiceImpl implements UserService {
                 user.getProfilePicture(),
                 user.getPassword()
         );
+    }
+    @Override
+    public void changePassword(ChangePasswordRequest request, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            throw new UnauthorizedException("You are not logged in.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found."));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new UnauthorizedException("Old password is incorrect.");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 }

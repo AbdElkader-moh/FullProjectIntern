@@ -27,6 +27,10 @@ export interface LoginRequest {
   email: string;
   password: string;
 }
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
 
 export interface UpdateProfilePictureRequest {
   profilePicture: string;
@@ -138,4 +142,13 @@ login(request: LoginRequest): Observable<ApiResponse> {
         catchError((err) => this.handleError(err))
       );
   }
+changePassword(request: ChangePasswordRequest): Observable<ApiResponse> {
+  return this.http
+    .put<ApiResponse>(
+      `${this.apiUrl}/me/password`,
+      request,
+      this.httpOptions
+    )
+    .pipe(catchError((err) => this.handleError(err)));
+}
 }
