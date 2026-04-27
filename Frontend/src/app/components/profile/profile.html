@@ -99,14 +99,12 @@
               <span class="password-text">{{ showPassword ? user.password : '••••••••••••' }}</span>
               <button class="btn-toggle-password" (click)="togglePassword()" [title]="showPassword ? 'Hide' : 'Show'">
                 @if (showPassword) {
-                  <!-- Eye-off icon -->
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
                     <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
                     <line x1="1" y1="1" x2="23" y2="23"/>
                   </svg>
                 } @else {
-                  <!-- Eye icon -->
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
@@ -116,6 +114,106 @@
             </span>
           </div>
         </div>
+
+        <!-- Option to show/hide Change Password form -->
+        <div class="action-bar">
+          <button class="btn-outline" (click)="toggleChangePassword()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span>{{ isChangePasswordVisible ? 'Cancel Change' : 'Change Password' }}</span>
+          </button>
+        </div>
+
+        <!-- Security / Change Password Section -->
+        @if (isChangePasswordVisible) {
+          <div class="security-section">
+            <h3 class="section-title">Change Password</h3>
+            
+            <div class="password-form">
+              <div class="input-group">
+                <label for="oldPassword">Old Password</label>
+                <div class="input-with-icon">
+                  <input 
+                    id="oldPassword"
+                    [type]="showOldPassword ? 'text' : 'password'" 
+                    [(ngModel)]="oldPassword" 
+                    placeholder="Enter old password"
+                    class="premium-input"
+                  />
+                  <button class="btn-icon-inside" (click)="toggleOldPassword()" [title]="showOldPassword ? 'Hide' : 'Show'">
+                    @if (showOldPassword) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label for="newPassword">New Password</label>
+                <div class="input-with-icon">
+                  <input 
+                    id="newPassword"
+                    [type]="showNewPassword ? 'text' : 'password'" 
+                    [(ngModel)]="newPassword" 
+                    placeholder="Enter new password"
+                    class="premium-input"
+                  />
+                  <button class="btn-icon-inside" (click)="toggleNewPassword()" [title]="showNewPassword ? 'Hide' : 'Show'">
+                    @if (showNewPassword) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="input-with-icon">
+                  <input 
+                    id="confirmPassword"
+                    [type]="showConfirmPassword ? 'text' : 'password'" 
+                    [(ngModel)]="confirmPassword" 
+                    placeholder="Confirm new password"
+                    class="premium-input"
+                  />
+                  <button class="btn-icon-inside" (click)="toggleConfirmPassword()" [title]="showConfirmPassword ? 'Hide' : 'Show'">
+                    @if (showConfirmPassword) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              @if (passwordError) {
+                <p class="password-error">{{ passwordError }}</p>
+              }
+              @if (passwordMessage) {
+                <p class="password-success">{{ passwordMessage }}</p>
+              }
+
+              <button 
+                class="btn-save-password" 
+                (click)="changePassword()"
+                [disabled]="isUpdatingPassword"
+              >
+                @if (isUpdatingPassword) {
+                  <div class="spinner-small"></div>
+                  <span>Updating...</span>
+                } @else {
+                  <span>Update Password</span>
+                }
+              </button>
+            </div>
+          </div>
+        }
 
       </div>
     }

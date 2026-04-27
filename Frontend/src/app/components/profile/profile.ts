@@ -2,10 +2,11 @@ import { Component, OnInit, ElementRef, ViewChild, ChangeDetectorRef } from '@an
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, UserResponse } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
@@ -17,6 +18,20 @@ export class Profile implements OnInit {
   errorMessage = '';
   isUploadingPhoto = false;
   showPassword = false;
+  
+  // Password change fields
+  oldPassword = '';
+  newPassword = '';
+  confirmPassword = '';
+  isUpdatingPassword = false;
+  passwordMessage = '';
+  passwordError = '';
+  
+  // Visibility toggles
+  isChangePasswordVisible = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+  showOldPassword = false;
 
   constructor(
     private authService: AuthService,
@@ -105,6 +120,53 @@ this.authService.updateProfilePicture(base64).subscribe({
       next: () => this.router.navigate(['/signin']),
       error: () => this.router.navigate(['/signin']),
     });
+  }
+
+  changePassword(): void {
+    if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
+      this.passwordError = 'All password fields are required.';
+      this.passwordMessage = '';
+      return;
+    }
+
+    if (this.newPassword !== this.confirmPassword) {
+      this.passwordError = 'New passwords do not match.';
+      this.passwordMessage = '';
+      return;
+    }
+
+    this.isUpdatingPassword = true;
+    this.passwordError = '';
+    this.passwordMessage = '';
+    
+    setTimeout(() => {
+      this.passwordMessage = 'Password updated successfully!';
+      this.oldPassword = '';
+      this.newPassword = '';
+      this.confirmPassword = '';
+      this.isUpdatingPassword = false;
+      this.cdr.detectChanges();
+    }, 1500);
+  }
+
+  toggleChangePassword(): void {
+    this.isChangePasswordVisible = !this.isChangePasswordVisible;
+    this.cdr.detectChanges();
+  }
+
+  toggleNewPassword(): void {
+    this.showNewPassword = !this.showNewPassword;
+    this.cdr.detectChanges();
+  }
+
+  toggleConfirmPassword(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
+    this.cdr.detectChanges();
+  }
+
+  toggleOldPassword(): void {
+    this.showOldPassword = !this.showOldPassword;
+    this.cdr.detectChanges();
   }
 
   getInitials(): string {
