@@ -8,16 +8,17 @@ docker network create project-net 2>/dev/null || true
 echo "Removing old containers..."
 docker rm -f internship-frontend internship-backend internship-mysql 2>/dev/null || true
 
+echo "Building MySQL image..."
+docker build -t custom-mysql ./db
+
 echo "Starting MySQL..."
 docker run -d --name internship-mysql \
   --network project-net \
   -p 3306:3306 \
   -v mysql_data:/var/lib/mysql \
-  -e MYSQL_DATABASE=project_db \
   -e MYSQL_ROOT_PASSWORD=root123 \
-  -e MYSQL_USER=appuser \
   -e MYSQL_PASSWORD=app123 \
-  mysql:8.0
+  custom-mysql
 
 echo "Waiting for MySQL..."
 sleep 20
