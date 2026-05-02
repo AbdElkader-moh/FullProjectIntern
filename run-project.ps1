@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 Write-Host "Creating Docker network..."
-
+docker network create project-net
 Write-Host "Removing old containers..."
 docker rm -f internship-frontend internship-backend internship-mysql 2>$null
 
