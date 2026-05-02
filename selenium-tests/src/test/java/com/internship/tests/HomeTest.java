@@ -26,9 +26,9 @@ public class HomeTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
-    // TC-036: Home page header shows profile picture when set
+    // TC-031: Home page header shows profile picture when set
     @Test
-    public void TC036_homeShowsProfilePicture() {
+    public void TC031_homeShowsProfilePicture() {
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("nadiinahmed25@gmail.com");
         driver.findElement(By.id("password")).sendKeys("123456");
@@ -38,7 +38,7 @@ public class HomeTest {
                 By.xpath(
                         "//img[contains(@class,'avatar') or contains(@class,'profile')] | //*[contains(@class,'profile-btn') or contains(@class,'avatar')]")));
         Assert.assertTrue(avatar.isDisplayed());
-        System.out.println("TC-036 PASSED");
+        System.out.println("TC-031 PASSED");
     }
 
     @AfterClass

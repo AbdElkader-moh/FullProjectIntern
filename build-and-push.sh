@@ -4,6 +4,10 @@ set -e
 
 DOCKER_USERNAME="abdelkader112002"
 
+echo "Building MySQL image..."
+docker build -t custom-mysql ./db
+docker tag custom-mysql omarash15/custom-mysql:v1.0
+
 echo "Building backend..."
 cd backend/user
 mvn clean package -DskipTests
@@ -18,6 +22,7 @@ docker tag frontend-service:v1.0 $DOCKER_USERNAME/frontend-service:v1.0
 cd ..
 
 echo "Pushing images..."
+docker push $DOCKER_USERNAME/custom-mysql:v1.0
 docker push $DOCKER_USERNAME/backend-service:v1.0
 docker push $DOCKER_USERNAME/frontend-service:v1.0
 

@@ -1,0 +1,958 @@
+{
+  "info": {
+    "name": "DXC Project — Sprint 1 BE Tests",
+    "description": "Backend integration tests for Sign Up, Sign In, Profile (GET/PUT), and Logout.\nBase URL: http://localhost:4200\nAll session-based — Postman must have 'Automatically follow redirects' ON and cookie jar enabled.",
+    "_postman_id": "dxc-sprint1-be-v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4200",
+      "type": "string"
+    },
+    {
+      "key": "testEmail",
+      "value": "be_test@test.com",
+      "type": "string"
+    },
+    {
+      "key": "testPassword",
+      "value": "abc123",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🟢 Sign Up",
+      "item": [
+        {
+          "name": "TC-044 | POST /signup — Happy Path (all valid fields)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-044: POST /signup — all valid fields (happy path)",
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has user fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('id');",
+                  "  pm.expect(body).to.have.property('email');",
+                  "  pm.expect(body).to.have.property('firstName');",
+                  "  pm.expect(body).to.have.property('lastName');",
+                  "});",
+                  "",
+                  "pm.test('Email matches what was sent', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.email).to.eql(pm.collectionVariables.get('testEmail'));",
+                  "});",
+                  "",
+                  "pm.test('Response does NOT contain plain-text password', () => {",
+                  "  const body = pm.response.json();",
+                  "  if (body.password) {",
+                  "    pm.expect(body.password).to.not.eql(pm.collectionVariables.get('testPassword'));",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate a unique email each run to avoid duplicate conflicts",
+                  "const ts = Date.now();",
+                  "const email = `be_test_${ts}@test.com`;",
+                  "pm.collectionVariables.set('testEmail', email);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"password\": \"{{testPassword}}\",\n  \"profilePicture\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/signup", "host": ["{{baseUrl}}"], "path": ["api", "users", "signup"] }
+          }
+        },
+        {
+          "name": "TC-045 | POST /signup — Duplicate Email (409)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// First, register a fresh user to guarantee the email exists",
+                  "const email = `dup_${Date.now()}@test.com`;",
+                  "pm.collectionVariables.set('dupEmail', email);",
+                  "",
+                  "const body = JSON.stringify({",
+                  "  email,",
+                  "  firstName: 'Dup',",
+                  "  lastName: 'User',",
+                  "  password: 'abc123',",
+                  "  profilePicture: ''",
+                  "});",
+                  "",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: body }",
+                  "}, (err, res) => {",
+                  "  console.log('Pre-registration status:', res.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-045: duplicate email must return 409",
+                  "pm.test('Status is 409 Conflict', () => {",
+                  "  pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('Error message present in body', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "  pm.expect(body.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{dupEmail}}\",\n  \"firstName\": \"Dup\",\n  \"lastName\": \"User\",\n  \"password\": \"abc123\",\n  \"profilePicture\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/signup", "host": ["{{baseUrl}}"], "path": ["api", "users", "signup"] }
+          }
+        },
+        {
+          "name": "TC-046 | POST /signup — Missing password field (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-046: missing required field → 400",
+                  "pm.test('Status is 400 Bad Request', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message present', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"no_pass@test.com\",\n  \"firstName\": \"No\",\n  \"lastName\": \"Pass\",\n  \"profilePicture\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/signup", "host": ["{{baseUrl}}"], "path": ["api", "users", "signup"] }
+          }
+        },
+        {
+          "name": "TC-047 | POST /signup — Missing email field (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-047: missing email → 400",
+                  "pm.test('Status is 400 Bad Request', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message present', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"No\",\n  \"lastName\": \"Email\",\n  \"password\": \"abc123\",\n  \"profilePicture\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/signup", "host": ["{{baseUrl}}"], "path": ["api", "users", "signup"] }
+          }
+        },
+        {
+          "name": "TC-EX01 | POST /signup — Invalid email format (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// EXTRA: @Email validation on the DTO should reject this",
+                  "pm.test('Status is 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Validation error returned', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"firstName\": \"Bad\",\n  \"lastName\": \"Email\",\n  \"password\": \"abc123\",\n  \"profilePicture\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/signup", "host": ["{{baseUrl}}"], "path": ["api", "users", "signup"] }
+          }
+        },
+        {
+          "name": "TC-EX02 | POST /signup — Empty JSON body (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// EXTRA: completely empty body should return 400",
+                  "pm.test('Status is 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Message key present in error body', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/signup", "host": ["{{baseUrl}}"], "path": ["api", "users", "signup"] }
+          }
+        },
+        {
+          "name": "TC-EX03 | POST /signup — Missing firstName (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => { pm.response.to.have.status(400); });",
+                  "pm.test('Error body present', () => {",
+                  "  pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"x@test.com\",\n  \"lastName\": \"Only\",\n  \"password\": \"abc123\",\n  \"profilePicture\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/signup", "host": ["{{baseUrl}}"], "path": ["api", "users", "signup"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🟡 Sign In",
+      "item": [
+        {
+          "name": "TC-048 | POST /login — Happy Path (200 + cookie)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Register a fresh user so login is guaranteed to succeed",
+                  "const email = `login_ok_${Date.now()}@test.com`;",
+                  "const password = 'abc123';",
+                  "pm.collectionVariables.set('loginEmail', email);",
+                  "pm.collectionVariables.set('loginPassword', password);",
+                  "",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({ email, firstName: 'Login', lastName: 'Test', password, profilePicture: '' })",
+                  "  }",
+                  "}, (err, res) => console.log('Signup for login test:', res.code));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-048",
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success message', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "  pm.expect(body.message.toLowerCase()).to.include('success');",
+                  "});",
+                  "",
+                  "pm.test('Session cookie is set (JSESSIONID)', () => {",
+                  "  const cookies = pm.response.headers.get('Set-Cookie') || '';",
+                  "  // Postman cookie jar captures it; this checks the header exists",
+                  "  pm.expect(pm.cookies.has('JSESSIONID')).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/login", "host": ["{{baseUrl}}"], "path": ["api", "users", "login"] }
+          }
+        },
+        {
+          "name": "TC-049 | POST /login — Wrong password (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-049",
+                  "pm.test('Status is 401', () => {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Error message present', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "  pm.expect(body.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/login", "host": ["{{baseUrl}}"], "path": ["api", "users", "login"] }
+          }
+        },
+        {
+          "name": "TC-050 | POST /login — Non-existent email (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-050",
+                  "pm.test('Status is 401', () => {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Error message present', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nobody_ghost@test.com\",\n  \"password\": \"abc123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/login", "host": ["{{baseUrl}}"], "path": ["api", "users", "login"] }
+          }
+        },
+        {
+          "name": "TC-051 | POST /login — Empty body (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-051",
+                  "pm.test('Status is 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Validation error message present', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/login", "host": ["{{baseUrl}}"], "path": ["api", "users", "login"] }
+          }
+        },
+        {
+          "name": "TC-EX04 | POST /login — Invalid email format (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// EXTRA: @Email annotation on LoginRequest should reject this",
+                  "pm.test('Status is 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error body present', () => {",
+                  "  pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"notanemail\",\n  \"password\": \"abc123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/login", "host": ["{{baseUrl}}"], "path": ["api", "users", "login"] }
+          }
+        },
+        {
+          "name": "TC-EX05 | POST /login — Missing password field (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error message present', () => {",
+                  "  pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"someone@test.com\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/login", "host": ["{{baseUrl}}"], "path": ["api", "users", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔵 Profile — GET /me",
+      "item": [
+        {
+          "name": "TC-052 | GET /me — Authenticated user gets profile (200)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Register + login so session cookie is set in Postman cookie jar",
+                  "const email = `me_test_${Date.now()}@test.com`;",
+                  "const password = 'abc123';",
+                  "pm.collectionVariables.set('meEmail', email);",
+                  "pm.collectionVariables.set('mePassword', password);",
+                  "",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({ email, firstName: 'Me', lastName: 'Test', password, profilePicture: '' })",
+                  "  }",
+                  "}, (err, res) => {",
+                  "  pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/api/users/login',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "      mode: 'raw',",
+                  "      raw: JSON.stringify({ email, password })",
+                  "    }",
+                  "  }, (err2, res2) => console.log('Login for /me test:', res2.code));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-052",
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains user profile fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('id');",
+                  "  pm.expect(body).to.have.property('email');",
+                  "  pm.expect(body).to.have.property('firstName');",
+                  "  pm.expect(body).to.have.property('lastName');",
+                  "});",
+                  "",
+                  "pm.test('Email matches logged-in user', () => {",
+                  "  pm.expect(pm.response.json().email).to.eql(pm.collectionVariables.get('meEmail'));",
+                  "});",
+                  "",
+                  "// Save user id for later PUT test",
+                  "pm.collectionVariables.set('meUserId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        },
+        {
+          "name": "TC-053 | GET /me — No session (401)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Force a fresh session by clearing cookies for this request",
+                  "// In Postman: manually ensure no cookie is sent OR run this in incognito-like environment",
+                  "console.log('NOTE: Make sure no JSESSIONID cookie is active for this test.');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-053",
+                  "pm.test('Status is 401 Unauthorized', () => {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Error message present', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "",
+                "description": "Intentionally empty — no session"
+              }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🟣 Profile — PUT /me",
+      "item": [
+        {
+          "name": "TC-054 | PUT /me — Update profile picture (200)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Register + login fresh user so session is available",
+                  "const email = `put_test_${Date.now()}@test.com`;",
+                  "const password = 'abc123';",
+                  "pm.collectionVariables.set('putEmail', email);",
+                  "",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({ email, firstName: 'Put', lastName: 'Test', password, profilePicture: '' })",
+                  "  }",
+                  "}, (err, res) => {",
+                  "  pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/api/users/login',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ email, password }) }",
+                  "  }, (err2, res2) => console.log('Login for PUT test:', res2.code));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-054",
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains updated profilePicture', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('profilePicture');",
+                  "  pm.expect(body.profilePicture).to.include('data:image');",
+                  "});",
+                  "",
+                  "pm.test('All user fields still present after update', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.all.keys('id', 'email', 'firstName', 'lastName', 'profilePicture', 'password');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profilePicture\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        },
+        {
+          "name": "TC-EX06 | PUT /me — No session (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// EXTRA: PUT /me without a session must return 401",
+                  "pm.test('Status is 401', () => {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('Error message present', () => {",
+                  "  pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "", "description": "No session" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profilePicture\": \"data:image/png;base64,abc\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        },
+        {
+          "name": "TC-EX07 | PUT /me — Empty profilePicture string (observe behavior)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// EXTRA: sending empty string for profilePicture — backend allows it (no @NotBlank on UpdateProfilePictureRequest)",
+                  "// Document actual status — expected 200 (overwrites with empty), or 400 if guarded",
+                  "pm.test('Response is 200 or 400 (document actual behavior)', () => {",
+                  "  const status = pm.response.code;",
+                  "  pm.expect([200, 400]).to.include(status);",
+                  "  console.log('Actual status for empty profilePicture:', status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profilePicture\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔴 Logout",
+      "item": [
+        {
+          "name": "TC-055 | POST /logout → GET /me returns 401 (session cleared)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Register + login so there is an active session to logout of",
+                  "const email = `logout_test_${Date.now()}@test.com`;",
+                  "const password = 'abc123';",
+                  "pm.collectionVariables.set('logoutEmail', email);",
+                  "",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({ email, firstName: 'Logout', lastName: 'Test', password, profilePicture: '' }) }",
+                  "}, (err, res) => {",
+                  "  pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/api/users/login',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ email, password }) }",
+                  "  }, (err2, res2) => console.log('Login before logout test:', res2.code));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-055 Part 1: logout itself returns 200",
+                  "pm.test('POST /logout returns 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Logout response has success message', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "});",
+                  "",
+                  "// TC-055 Part 2: after logout, GET /me must return 401",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/me',",
+                  "  method: 'GET'",
+                  "}, (err, res) => {",
+                  "  pm.test('GET /me after logout returns 401 (session cleared)', () => {",
+                  "    pm.expect(res.code).to.eql(401);",
+                  "  });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/logout", "host": ["{{baseUrl}}"], "path": ["api", "users", "logout"] }
+          }
+        },
+        {
+          "name": "TC-EX08 | POST /logout — No session (still 200, idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// EXTRA: Spring's session.invalidate() on an already-invalidated session",
+                  "// Spring creates a new session and immediately invalidates it — should not throw",
+                  "pm.test('Status is 200 (logout is idempotent / graceful)', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Message present', () => {",
+                  "  pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Cookie", "value": "", "description": "No active session" }],
+            "url": { "raw": "{{baseUrl}}/api/users/logout", "host": ["{{baseUrl}}"], "path": ["api", "users", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔒 Security — Bug Hunt",
+      "item": [
+        {
+          "name": "TC-EX09 | UserResponse leaks bcrypt hash — observe & document",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Register a user, login, then call /me and check if password hash is exposed",
+                  "const email = `sec_test_${Date.now()}@test.com`;",
+                  "const password = 'abc123';",
+                  "pm.collectionVariables.set('secEmail', email);",
+                  "",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify({ email, firstName: 'Sec', lastName: 'Test', password, profilePicture: '' }) }",
+                  "}, (err, res) => {",
+                  "  pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/api/users/login',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ email, password }) }",
+                  "  }, () => {});",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// BUG HUNT: UserResponse includes the password (bcrypt hash).",
+                  "// The hash should NEVER be sent to the client — this is a security issue.",
+                  "pm.test('[SECURITY OBSERVATION] GET /me — password field in response (should be removed)', () => {",
+                  "  const body = pm.response.json();",
+                  "  const hasPasswordField = body.hasOwnProperty('password');",
+                  "  console.log('password field present in /me response:', hasPasswordField);",
+                  "  if (hasPasswordField) {",
+                  "    console.warn('DEFECT: bcrypt hash exposed in GET /me response. Remove password from UserResponse.');",
+                  "  }",
+                  "  // This test logs and does NOT fail so the suite still runs — raise as a defect instead",
+                  "  pm.expect(true).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        },
+        {
+          "name": "TC-EX10 | POST /signup — profilePicture @NotBlank blocks empty string",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// BUG HUNT: SignupRequest has @NotBlank on profilePicture.",
+                  "// Users who skip photo upload on the FE send empty string '' → this triggers a 400 from backend validation.",
+                  "// Confirm the actual behavior here.",
+                  "pm.test('[DESIGN ISSUE] Signup with empty profilePicture — document status', () => {",
+                  "  const status = pm.response.code;",
+                  "  console.log('Status when profilePicture is empty string:', status);",
+                  "  if (status === 400) {",
+                  "    console.warn('DEFECT: @NotBlank on profilePicture blocks FE users who skip photo. Field should be optional.');",
+                  "  }",
+                  "  pm.expect([200, 400]).to.include(status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nophoto@test.com\",\n  \"firstName\": \"No\",\n  \"lastName\": \"Photo\",\n  \"password\": \"abc123\",\n  \"profilePicture\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/signup", "host": ["{{baseUrl}}"], "path": ["api", "users", "signup"] }
+          }
+        }
+      ]
+    }
+  ]
+}

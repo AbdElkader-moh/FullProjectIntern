@@ -1,161 +1,177 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testng-results ignored="0" total="27" passed="27" failed="0" skipped="0">
+<testng-results ignored="0" total="31" passed="31" failed="0" skipped="0">
   <reporter-output>
   </reporter-output>
-  <suite started-at="2026-04-26T03:14:29 EEST" name="DXC Internship Test Suite" finished-at="2026-04-26T03:14:58 EEST" duration-ms="28689">
+  <suite started-at="2026-05-02T11:11:55 EEST" name="DXC Internship Test Suite" finished-at="2026-05-02T11:12:38 EEST" duration-ms="43761">
     <groups>
     </groups>
-    <test started-at="2026-04-26T03:14:29 EEST" name="SignUp Tests" finished-at="2026-04-26T03:14:39 EEST" duration-ms="9562">
+    <test started-at="2026-05-02T11:11:55 EEST" name="SignUp Tests" finished-at="2026-05-02T11:12:14 EEST" duration-ms="19459">
       <class name="com.internship.tests.SignUpTest">
-        <test-method is-config="true" signature="setup()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:29 EEST" name="setup" finished-at="2026-04-26T03:14:31 EEST" duration-ms="1480" status="PASS">
+        <test-method is-config="true" signature="setup()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:11:55 EEST" name="setup" finished-at="2026-05-02T11:11:56 EEST" duration-ms="1754" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- setup -->
-        <test-method signature="TC006_allFieldsEmpty()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:31 EEST" name="TC006_allFieldsEmpty" finished-at="2026-04-26T03:14:32 EEST" duration-ms="978" status="PASS">
+        <test-method signature="TC001_signUpNoPhoto()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:11:56 EEST" name="TC001_signUpNoPhoto" finished-at="2026-05-02T11:11:58 EEST" duration-ms="1234" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- TC001_signUpNoPhoto -->
+        <test-method signature="TC002_signUpWithPhoto()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:11:58 EEST" name="TC002_signUpWithPhoto" finished-at="2026-05-02T11:12:00 EEST" duration-ms="2200" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- TC002_signUpWithPhoto -->
+        <test-method signature="TC003_firstNameTwoChars()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:00 EEST" name="TC003_firstNameTwoChars" finished-at="2026-05-02T11:12:02 EEST" duration-ms="1825" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- TC003_firstNameTwoChars -->
+        <test-method signature="TC004_lastNameTwoChars()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:02 EEST" name="TC004_lastNameTwoChars" finished-at="2026-05-02T11:12:03 EEST" duration-ms="1784" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- TC004_lastNameTwoChars -->
+        <test-method signature="TC005_passwordSixChars()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:03 EEST" name="TC005_passwordSixChars" finished-at="2026-05-02T11:12:05 EEST" duration-ms="1735" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- TC005_passwordSixChars -->
+        <test-method signature="TC006_allFieldsEmpty()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:05 EEST" name="TC006_allFieldsEmpty" finished-at="2026-05-02T11:12:06 EEST" duration-ms="708" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- TC006_allFieldsEmpty -->
-        <test-method signature="TC007_firstNameOneChar()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:32 EEST" name="TC007_firstNameOneChar" finished-at="2026-04-26T03:14:32 EEST" duration-ms="753" status="PASS">
+        <test-method signature="TC007_firstNameOneChar()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:06 EEST" name="TC007_firstNameOneChar" finished-at="2026-05-02T11:12:07 EEST" duration-ms="855" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- TC007_firstNameOneChar -->
-        <test-method signature="TC008_lastNameOneChar()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:32 EEST" name="TC008_lastNameOneChar" finished-at="2026-04-26T03:14:33 EEST" duration-ms="757" status="PASS">
+        <test-method signature="TC008_lastNameOneChar()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:07 EEST" name="TC008_lastNameOneChar" finished-at="2026-05-02T11:12:08 EEST" duration-ms="772" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- TC008_lastNameOneChar -->
-        <test-method signature="TC009_passwordFiveChars()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:33 EEST" name="TC009_passwordFiveChars" finished-at="2026-04-26T03:14:34 EEST" duration-ms="753" status="PASS">
+        <test-method signature="TC009_passwordFiveChars()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:08 EEST" name="TC009_passwordFiveChars" finished-at="2026-05-02T11:12:08 EEST" duration-ms="816" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- TC009_passwordFiveChars -->
-        <test-method signature="TC010_invalidEmail()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:34 EEST" name="TC010_invalidEmail" finished-at="2026-04-26T03:14:35 EEST" duration-ms="742" status="PASS">
+        <test-method signature="TC010_invalidEmail()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:08 EEST" name="TC010_invalidEmail" finished-at="2026-05-02T11:12:09 EEST" duration-ms="785" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- TC010_invalidEmail -->
-        <test-method signature="TC011_invalidEmailMissingDomain()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:35 EEST" name="TC011_invalidEmailMissingDomain" finished-at="2026-04-26T03:14:36 EEST" duration-ms="839" status="PASS">
+        <test-method signature="TC011_invalidEmailMissingDomain()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:09 EEST" name="TC011_invalidEmailMissingDomain" finished-at="2026-05-02T11:12:10 EEST" duration-ms="799" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- TC011_invalidEmailMissingDomain -->
-        <test-method signature="TC013_uploadImageThenRemove()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:36 EEST" name="TC013_uploadImageThenRemove" finished-at="2026-04-26T03:14:36 EEST" duration-ms="740" status="PASS">
+        <test-method signature="TC012_uploadImageThenRemove()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:10 EEST" name="TC012_uploadImageThenRemove" finished-at="2026-05-02T11:12:11 EEST" duration-ms="948" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC013_uploadImageThenRemove -->
-        <test-method signature="TC015_duplicateEmail()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:36 EEST" name="TC015_duplicateEmail" finished-at="2026-04-26T03:14:38 EEST" duration-ms="1486" status="PASS">
+        </test-method> <!-- TC012_uploadImageThenRemove -->
+        <test-method signature="TC013_duplicateEmail()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:11 EEST" name="TC013_duplicateEmail" finished-at="2026-05-02T11:12:13 EEST" duration-ms="1853" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC015_duplicateEmail -->
-        <test-method signature="TC016_navigateToSignIn()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:38 EEST" name="TC016_navigateToSignIn" finished-at="2026-04-26T03:14:39 EEST" duration-ms="718" status="PASS">
+        </test-method> <!-- TC013_duplicateEmail -->
+        <test-method signature="TC014_navigateToSignIn()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:13 EEST" name="TC014_navigateToSignIn" finished-at="2026-05-02T11:12:14 EEST" duration-ms="875" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC016_navigateToSignIn -->
-        <test-method is-config="true" signature="teardown()[pri:0, instance:com.internship.tests.SignUpTest@243c4f91]" started-at="2026-04-26T03:14:39 EEST" name="teardown" finished-at="2026-04-26T03:14:39 EEST" duration-ms="283" status="PASS">
+        </test-method> <!-- TC014_navigateToSignIn -->
+        <test-method is-config="true" signature="teardown()[pri:0, instance:com.internship.tests.SignUpTest@2f7298b]" started-at="2026-05-02T11:12:14 EEST" name="teardown" finished-at="2026-05-02T11:12:14 EEST" duration-ms="457" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- teardown -->
       </class> <!-- com.internship.tests.SignUpTest -->
     </test> <!-- SignUp Tests -->
-    <test started-at="2026-04-26T03:14:39 EEST" name="SignIn Tests" finished-at="2026-04-26T03:14:50 EEST" duration-ms="10863">
+    <test started-at="2026-05-02T11:12:14 EEST" name="SignIn Tests" finished-at="2026-05-02T11:12:27 EEST" duration-ms="12689">
       <class name="com.internship.tests.SignInTest">
-        <test-method is-config="true" signature="setup()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:39 EEST" name="setup" finished-at="2026-04-26T03:14:40 EEST" duration-ms="1109" status="PASS">
+        <test-method is-config="true" signature="setup()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:14 EEST" name="setup" finished-at="2026-05-02T11:12:15 EEST" duration-ms="1138" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- setup -->
-        <test-method signature="TC017_signInCorrectCredentials()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:40 EEST" name="TC017_signInCorrectCredentials" finished-at="2026-04-26T03:14:42 EEST" duration-ms="1683" status="PASS">
+        <test-method signature="TC015_signInCorrectCredentials()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:15 EEST" name="TC015_signInCorrectCredentials" finished-at="2026-05-02T11:12:17 EEST" duration-ms="2060" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC017_signInCorrectCredentials -->
-        <test-method signature="TC018_signInWrongPassword()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:42 EEST" name="TC018_signInWrongPassword" finished-at="2026-04-26T03:14:43 EEST" duration-ms="1536" status="PASS">
+        </test-method> <!-- TC015_signInCorrectCredentials -->
+        <test-method signature="TC016_signInWrongPassword()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:17 EEST" name="TC016_signInWrongPassword" finished-at="2026-05-02T11:12:19 EEST" duration-ms="1629" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC018_signInWrongPassword -->
-        <test-method signature="TC019_signInNonExistentEmail()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:43 EEST" name="TC019_signInNonExistentEmail" finished-at="2026-04-26T03:14:44 EEST" duration-ms="919" status="PASS">
+        </test-method> <!-- TC016_signInWrongPassword -->
+        <test-method signature="TC017_signInNonExistentEmail()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:19 EEST" name="TC017_signInNonExistentEmail" finished-at="2026-05-02T11:12:20 EEST" duration-ms="1570" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC019_signInNonExistentEmail -->
-        <test-method signature="TC020_signInAllFieldsEmpty()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:44 EEST" name="TC020_signInAllFieldsEmpty" finished-at="2026-04-26T03:14:45 EEST" duration-ms="787" status="PASS">
+        </test-method> <!-- TC017_signInNonExistentEmail -->
+        <test-method signature="TC018_signInAllFieldsEmpty()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:20 EEST" name="TC018_signInAllFieldsEmpty" finished-at="2026-05-02T11:12:21 EEST" duration-ms="875" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC020_signInAllFieldsEmpty -->
-        <test-method signature="TC021_signInInvalidEmail()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:45 EEST" name="TC021_signInInvalidEmail" finished-at="2026-04-26T03:14:46 EEST" duration-ms="865" status="PASS">
+        </test-method> <!-- TC018_signInAllFieldsEmpty -->
+        <test-method signature="TC019_signInInvalidEmail()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:21 EEST" name="TC019_signInInvalidEmail" finished-at="2026-05-02T11:12:22 EEST" duration-ms="989" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC021_signInInvalidEmail -->
-        <test-method signature="TC022_signInEmptyPassword()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:46 EEST" name="TC022_signInEmptyPassword" finished-at="2026-04-26T03:14:47 EEST" duration-ms="902" status="PASS">
+        </test-method> <!-- TC019_signInInvalidEmail -->
+        <test-method signature="TC020_signInEmptyPassword()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:22 EEST" name="TC020_signInEmptyPassword" finished-at="2026-05-02T11:12:23 EEST" duration-ms="1000" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC022_signInEmptyPassword -->
-        <test-method signature="TC023_loadingSpinnerDuringSignIn()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:47 EEST" name="TC023_loadingSpinnerDuringSignIn" finished-at="2026-04-26T03:14:48 EEST" duration-ms="915" status="PASS">
+        </test-method> <!-- TC020_signInEmptyPassword -->
+        <test-method signature="TC021_loadingSpinnerDuringSignIn()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:23 EEST" name="TC021_loadingSpinnerDuringSignIn" finished-at="2026-05-02T11:12:24 EEST" duration-ms="1013" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC023_loadingSpinnerDuringSignIn -->
-        <test-method signature="TC024_navigateToSignUp()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:48 EEST" name="TC024_navigateToSignUp" finished-at="2026-04-26T03:14:48 EEST" duration-ms="854" status="PASS">
+        </test-method> <!-- TC021_loadingSpinnerDuringSignIn -->
+        <test-method signature="TC022_navigateToSignUp()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:24 EEST" name="TC022_navigateToSignUp" finished-at="2026-05-02T11:12:25 EEST" duration-ms="972" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC024_navigateToSignUp -->
-        <test-method signature="TC025_createOneLinkDisabledDuringLoading()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:48 EEST" name="TC025_createOneLinkDisabledDuringLoading" finished-at="2026-04-26T03:14:49 EEST" duration-ms="940" status="PASS">
+        </test-method> <!-- TC022_navigateToSignUp -->
+        <test-method signature="TC023_createOneLinkDisabledDuringLoading()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:25 EEST" name="TC023_createOneLinkDisabledDuringLoading" finished-at="2026-05-02T11:12:26 EEST" duration-ms="1008" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC025_createOneLinkDisabledDuringLoading -->
-        <test-method is-config="true" signature="teardown()[pri:0, instance:com.internship.tests.SignInTest@1fa268de]" started-at="2026-04-26T03:14:49 EEST" name="teardown" finished-at="2026-04-26T03:14:50 EEST" duration-ms="350" status="PASS">
+        </test-method> <!-- TC023_createOneLinkDisabledDuringLoading -->
+        <test-method is-config="true" signature="teardown()[pri:0, instance:com.internship.tests.SignInTest@3e58a80e]" started-at="2026-05-02T11:12:26 EEST" name="teardown" finished-at="2026-05-02T11:12:27 EEST" duration-ms="423" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- teardown -->
       </class> <!-- com.internship.tests.SignInTest -->
     </test> <!-- SignIn Tests -->
-    <test started-at="2026-04-26T03:14:50 EEST" name="Profile Tests" finished-at="2026-04-26T03:14:55 EEST" duration-ms="5253">
+    <test started-at="2026-05-02T11:12:27 EEST" name="Profile Tests" finished-at="2026-05-02T11:12:34 EEST" duration-ms="7351">
       <class name="com.internship.tests.ProfileTest">
-        <test-method is-config="true" signature="setup()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:50 EEST" name="setup" finished-at="2026-04-26T03:14:53 EEST" duration-ms="2857" status="PASS">
+        <test-method is-config="true" signature="setup()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:27 EEST" name="setup" finished-at="2026-05-02T11:12:30 EEST" duration-ms="3495" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- setup -->
-        <test-method signature="TC026_profileDisplaysAllFields()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:53 EEST" name="TC026_profileDisplaysAllFields" finished-at="2026-04-26T03:14:53 EEST" duration-ms="652" status="PASS">
+        <test-method signature="TC024_profileDisplaysAllFields()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:30 EEST" name="TC024_profileDisplaysAllFields" finished-at="2026-05-02T11:12:31 EEST" duration-ms="657" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC026_profileDisplaysAllFields -->
-        <test-method signature="TC027_passwordMaskedByDefault()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:53 EEST" name="TC027_passwordMaskedByDefault" finished-at="2026-04-26T03:14:53 EEST" duration-ms="89" status="PASS">
+        </test-method> <!-- TC024_profileDisplaysAllFields -->
+        <test-method signature="TC025_passwordMaskedByDefault()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:31 EEST" name="TC025_passwordMaskedByDefault" finished-at="2026-05-02T11:12:31 EEST" duration-ms="138" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC027_passwordMaskedByDefault -->
-        <test-method signature="TC028_togglePasswordVisibility()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:53 EEST" name="TC028_togglePasswordVisibility" finished-at="2026-04-26T03:14:54 EEST" duration-ms="296" status="PASS">
+        </test-method> <!-- TC025_passwordMaskedByDefault -->
+        <test-method signature="TC026_togglePasswordVisibility()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:31 EEST" name="TC026_togglePasswordVisibility" finished-at="2026-05-02T11:12:32 EEST" duration-ms="781" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC028_togglePasswordVisibility -->
-        <test-method signature="TC029_updateProfilePicture()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:54 EEST" name="TC029_updateProfilePicture" finished-at="2026-04-26T03:14:54 EEST" duration-ms="110" status="PASS">
+        </test-method> <!-- TC026_togglePasswordVisibility -->
+        <test-method signature="TC027_updateProfilePicture()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:32 EEST" name="TC027_updateProfilePicture" finished-at="2026-05-02T11:12:32 EEST" duration-ms="622" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC029_updateProfilePicture -->
-        <test-method signature="TC030_profileShowsInitialsWhenNoPhoto()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:54 EEST" name="TC030_profileShowsInitialsWhenNoPhoto" finished-at="2026-04-26T03:14:54 EEST" duration-ms="87" status="PASS">
+        </test-method> <!-- TC027_updateProfilePicture -->
+        <test-method signature="TC028_profileShowsPhotoWhenSet()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:32 EEST" name="TC028_profileShowsPhotoWhenSet" finished-at="2026-05-02T11:12:33 EEST" duration-ms="601" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC030_profileShowsInitialsWhenNoPhoto -->
-        <test-method signature="TC031_profileShowsPhotoWhenSet()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:54 EEST" name="TC031_profileShowsPhotoWhenSet" finished-at="2026-04-26T03:14:54 EEST" duration-ms="90" status="PASS">
+        </test-method> <!-- TC028_profileShowsPhotoWhenSet -->
+        <test-method signature="TC029_logoutFromProfile()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:33 EEST" name="TC029_logoutFromProfile" finished-at="2026-05-02T11:12:33 EEST" duration-ms="213" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC031_profileShowsPhotoWhenSet -->
-        <test-method signature="TC032_logoutFromProfile()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:54 EEST" name="TC032_logoutFromProfile" finished-at="2026-04-26T03:14:55 EEST" duration-ms="697" status="PASS">
+        </test-method> <!-- TC029_logoutFromProfile -->
+        <test-method signature="TC030_accessProfileWithoutLogin()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:33 EEST" name="TC030_accessProfileWithoutLogin" finished-at="2026-05-02T11:12:33 EEST" duration-ms="73" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC032_logoutFromProfile -->
-        <test-method signature="TC034_accessProfileWithoutLogin()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:55 EEST" name="TC034_accessProfileWithoutLogin" finished-at="2026-04-26T03:14:55 EEST" duration-ms="61" status="PASS">
-          <reporter-output>
-          </reporter-output>
-        </test-method> <!-- TC034_accessProfileWithoutLogin -->
-        <test-method is-config="true" signature="teardown()[pri:0, instance:com.internship.tests.ProfileTest@4cc451f2]" started-at="2026-04-26T03:14:55 EEST" name="teardown" finished-at="2026-04-26T03:14:55 EEST" duration-ms="307" status="PASS">
+        </test-method> <!-- TC030_accessProfileWithoutLogin -->
+        <test-method is-config="true" signature="teardown()[pri:0, instance:com.internship.tests.ProfileTest@9f116cc]" started-at="2026-05-02T11:12:33 EEST" name="teardown" finished-at="2026-05-02T11:12:34 EEST" duration-ms="766" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- teardown -->
       </class> <!-- com.internship.tests.ProfileTest -->
     </test> <!-- Profile Tests -->
-    <test started-at="2026-04-26T03:14:55 EEST" name="Home Tests" finished-at="2026-04-26T03:14:58 EEST" duration-ms="2967">
+    <test started-at="2026-05-02T11:12:34 EEST" name="Home Tests" finished-at="2026-05-02T11:12:38 EEST" duration-ms="4217">
       <class name="com.internship.tests.HomeTest">
-        <test-method is-config="true" signature="setup()[pri:0, instance:com.internship.tests.HomeTest@12468a38]" started-at="2026-04-26T03:14:55 EEST" name="setup" finished-at="2026-04-26T03:14:56 EEST" duration-ms="1089" status="PASS">
+        <test-method is-config="true" signature="setup()[pri:0, instance:com.internship.tests.HomeTest@7ec7ffd3]" started-at="2026-05-02T11:12:34 EEST" name="setup" finished-at="2026-05-02T11:12:35 EEST" duration-ms="1306" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- setup -->
-        <test-method signature="TC036_homeShowsProfilePicture()[pri:0, instance:com.internship.tests.HomeTest@12468a38]" started-at="2026-04-26T03:14:56 EEST" name="TC036_homeShowsProfilePicture" finished-at="2026-04-26T03:14:58 EEST" duration-ms="1599" status="PASS">
+        <test-method signature="TC031_homeShowsProfilePicture()[pri:0, instance:com.internship.tests.HomeTest@7ec7ffd3]" started-at="2026-05-02T11:12:35 EEST" name="TC031_homeShowsProfilePicture" finished-at="2026-05-02T11:12:38 EEST" duration-ms="2572" status="PASS">
           <reporter-output>
           </reporter-output>
-        </test-method> <!-- TC036_homeShowsProfilePicture -->
-        <test-method is-config="true" signature="teardown()[pri:0, instance:com.internship.tests.HomeTest@12468a38]" started-at="2026-04-26T03:14:58 EEST" name="teardown" finished-at="2026-04-26T03:14:58 EEST" duration-ms="278" status="PASS">
+        </test-method> <!-- TC031_homeShowsProfilePicture -->
+        <test-method is-config="true" signature="teardown()[pri:0, instance:com.internship.tests.HomeTest@7ec7ffd3]" started-at="2026-05-02T11:12:38 EEST" name="teardown" finished-at="2026-05-02T11:12:38 EEST" duration-ms="336" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- teardown -->
