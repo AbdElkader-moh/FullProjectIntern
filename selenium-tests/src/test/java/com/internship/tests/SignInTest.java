@@ -26,9 +26,9 @@ public class SignInTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
-    // TC-017: Sign in with correct credentials
+    // TC-015: Sign in with correct credentials
     @Test
-    public void TC017_signInCorrectCredentials() {
+    public void TC015_signInCorrectCredentials() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("nadiinahmed25@gmail.com");
@@ -36,12 +36,12 @@ public class SignInTest {
         driver.findElement(By.cssSelector("button.btn-primary")).click();
         wait.until(ExpectedConditions.urlContains("/home"));
         Assert.assertTrue(driver.getCurrentUrl().contains("/home"));
-        System.out.println("TC-017 PASSED");
+        System.out.println("TC-015 PASSED");
     }
 
-    // TC-018: Sign in with wrong password
+    // TC-016: Sign in with wrong password
     @Test
-    public void TC018_signInWrongPassword() {
+    public void TC016_signInWrongPassword() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("nadiinahmed25@gmail.com");
@@ -51,12 +51,12 @@ public class SignInTest {
                 By.xpath(
                         "//*[contains(text(),'Invalid') or contains(text(),'incorrect') or contains(text(),'wrong')]")));
         Assert.assertTrue(error.isDisplayed());
-        System.out.println("TC-018 PASSED");
+        System.out.println("TC-016 PASSED");
     }
 
-    // TC-019: Sign in with non-existent email
+    // TC-017: Sign in with non-existent email
     @Test
-    public void TC019_signInNonExistentEmail() {
+    public void TC017_signInNonExistentEmail() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("ghost@test.com");
@@ -66,12 +66,12 @@ public class SignInTest {
                 By.xpath(
                         "//*[contains(text(),'Invalid') or contains(text(),'not found') or contains(text(),'incorrect')]")));
         Assert.assertTrue(error.isDisplayed());
-        System.out.println("TC-019 PASSED");
+        System.out.println("TC-017 PASSED");
     }
 
-    // TC-020: Submit sign in form with all fields empty
+    // TC-018: Submit sign in form with all fields empty
     @Test
-    public void TC020_signInAllFieldsEmpty() {
+    public void TC018_signInAllFieldsEmpty() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.elementToBeClickable(
@@ -79,12 +79,12 @@ public class SignInTest {
         WebElement error = wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector(".field-error")));
         Assert.assertTrue(error.isDisplayed());
-        System.out.println("TC-020 PASSED");
+        System.out.println("TC-018 PASSED");
     }
 
-    // TC-021: Sign in with invalid email format
+    // TC-019: Sign in with invalid email format
     @Test
-    public void TC021_signInInvalidEmail() {
+    public void TC019_signInInvalidEmail() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -93,12 +93,12 @@ public class SignInTest {
         WebElement error = wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.xpath("//*[contains(text(),'valid email')]")));
         Assert.assertTrue(error.isDisplayed());
-        System.out.println("TC-021 PASSED");
+        System.out.println("TC-019 PASSED");
     }
 
-    // TC-022: Sign in with valid email but empty password
+    // TC-020: Sign in with valid email but empty password
     @Test
-    public void TC022_signInEmptyPassword() {
+    public void TC020_signInEmptyPassword() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -107,12 +107,12 @@ public class SignInTest {
         WebElement error = wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.xpath("//*[contains(text(),'required') or contains(text(),'Password')]")));
         Assert.assertTrue(error.isDisplayed());
-        System.out.println("TC-022 PASSED");
+        System.out.println("TC-020 PASSED");
     }
 
-    // TC-023: Loading spinner appears during sign in
+    // TC-021: Loading spinner appears during sign in
     @Test
-    public void TC023_loadingSpinnerDuringSignIn() {
+    public void TC021_loadingSpinnerDuringSignIn() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -124,12 +124,12 @@ public class SignInTest {
                 button.getText().contains("Signing") ||
                 button.getAttribute("class").contains("loading");
         Assert.assertTrue(isDisabledOrLoading || driver.getCurrentUrl().contains("/home"));
-        System.out.println("TC-023 PASSED");
+        System.out.println("TC-021 PASSED");
     }
 
-    // TC-024: Navigate to signup from signin page
+    // TC-022: Navigate to signup from signin page
     @Test
-    public void TC024_navigateToSignUp() {
+    public void TC022_navigateToSignUp() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         WebElement createOneLink = wait.until(ExpectedConditions.elementToBeClickable(
@@ -138,12 +138,12 @@ public class SignInTest {
         createOneLink.click();
         wait.until(ExpectedConditions.urlContains("/signup"));
         Assert.assertTrue(driver.getCurrentUrl().contains("/signup"));
-        System.out.println("TC-024 PASSED");
+        System.out.println("TC-022 PASSED");
     }
 
-    // TC-025: Create one link disabled while sign in is loading
+    // TC-023: Create one link disabled while sign in is loading
     @Test
-    public void TC025_createOneLinkDisabledDuringLoading() {
+    public void TC023_createOneLinkDisabledDuringLoading() {
         driver.get("about:blank");
         driver.get("http://localhost:4200/signin");
         wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -158,7 +158,7 @@ public class SignInTest {
             Assert.assertTrue(driver.getCurrentUrl().contains("/home") ||
                     driver.getCurrentUrl().contains("/signin"));
         }
-        System.out.println("TC-025 PASSED");
+        System.out.println("TC-023 PASSED");
     }
 
     @AfterClass

@@ -1,17 +1,18 @@
 package com.internship.tests;
 
+import java.time.Duration;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import java.time.Duration;
 
 public class SignUpTest {
 
@@ -26,7 +27,94 @@ public class SignUpTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
-    // ==================== SIGN UP TESTS ====================
+    // TC-001: Sign up without photo - should be blocked
+    @Test
+    public void TC001_signUpNoPhoto() {
+        driver.get("about:blank");
+        driver.get("http://localhost:4200/signup");
+        String email = "tc001_" + System.currentTimeMillis() + "@gmail.com";
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("firstName"))).sendKeys("Ahmed");
+        driver.findElement(By.id("lastName")).sendKeys("Ali");
+        driver.findElement(By.id("email")).sendKeys(email);
+        driver.findElement(By.id("password")).sendKeys("abc123");
+        driver.findElement(By.cssSelector("button.btn-primary")).click();
+        // Should stay on signup or show error - NOT redirect to signin
+        Assert.assertFalse(driver.getCurrentUrl().contains("/signin"),
+                "TC-001 FAILED: Should not redirect without photo");
+        System.out.println("TC-001 PASSED: Signup blocked without photo");
+    }
+
+    // TC-002: Sign up with all valid fields and photo
+    @Test
+    public void TC002_signUpWithPhoto() {
+        driver.get("about:blank");
+        driver.get("http://localhost:4200/signup");
+        String email = "tc002_" + System.currentTimeMillis() + "@gmail.com";
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("firstName"))).sendKeys("Nadin");
+        driver.findElement(By.id("lastName")).sendKeys("Abdelaal");
+        driver.findElement(By.id("email")).sendKeys(email);
+        driver.findElement(By.id("password")).sendKeys("123456");
+        WebElement uploadInput = driver.findElement(By.cssSelector("input[type='file']"));
+        uploadInput.sendKeys("C:\\Users\\Nadaa\\OneDrive\\Pictures\\Screenshots\\Screenshot 2024-10-26 142611.png");
+        driver.findElement(By.cssSelector("button.btn-primary")).click();
+        wait.until(ExpectedConditions.urlContains("/signin"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/signin"));
+        System.out.println("TC-002 PASSED: Signup with photo successful");
+    }
+
+    // TC-003: First name exactly 2 characters
+    @Test
+    public void TC003_firstNameTwoChars() {
+        driver.get("about:blank");
+        driver.get("http://localhost:4200/signup");
+        String email = "tc003_" + System.currentTimeMillis() + "@gmail.com";
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("firstName"))).sendKeys("Ab");
+        driver.findElement(By.id("lastName")).sendKeys("Abdelaal");
+        driver.findElement(By.id("email")).sendKeys(email);
+        driver.findElement(By.id("password")).sendKeys("123456");
+        WebElement uploadInput = driver.findElement(By.cssSelector("input[type='file']"));
+        uploadInput.sendKeys("C:\\Users\\Nadaa\\OneDrive\\Pictures\\Screenshots\\Screenshot 2024-10-26 142611.png");
+        driver.findElement(By.cssSelector("button.btn-primary")).click();
+        wait.until(ExpectedConditions.urlContains("/signin"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/signin"));
+        System.out.println("TC-003 PASSED");
+    }
+
+    // TC-004: Last name exactly 2 characters
+    @Test
+    public void TC004_lastNameTwoChars() {
+        driver.get("about:blank");
+        driver.get("http://localhost:4200/signup");
+        String email = "tc004_" + System.currentTimeMillis() + "@gmail.com";
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("firstName"))).sendKeys("Nadin");
+        driver.findElement(By.id("lastName")).sendKeys("Mo");
+        driver.findElement(By.id("email")).sendKeys(email);
+        driver.findElement(By.id("password")).sendKeys("123456");
+        WebElement uploadInput = driver.findElement(By.cssSelector("input[type='file']"));
+        uploadInput.sendKeys("C:\\Users\\Nadaa\\OneDrive\\Pictures\\Screenshots\\Screenshot 2024-10-26 142611.png");
+        driver.findElement(By.cssSelector("button.btn-primary")).click();
+        wait.until(ExpectedConditions.urlContains("/signin"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/signin"));
+        System.out.println("TC-004 PASSED");
+    }
+
+    // TC-005: Password exactly 6 characters
+    @Test
+    public void TC005_passwordSixChars() {
+        driver.get("about:blank");
+        driver.get("http://localhost:4200/signup");
+        String email = "tc005_" + System.currentTimeMillis() + "@gmail.com";
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("firstName"))).sendKeys("Nadin");
+        driver.findElement(By.id("lastName")).sendKeys("Abdelaal");
+        driver.findElement(By.id("email")).sendKeys(email);
+        driver.findElement(By.id("password")).sendKeys("abc123");
+        WebElement uploadInput = driver.findElement(By.cssSelector("input[type='file']"));
+        uploadInput.sendKeys("C:\\Users\\Nadaa\\OneDrive\\Pictures\\Screenshots\\Screenshot 2024-10-26 142611.png");
+        driver.findElement(By.cssSelector("button.btn-primary")).click();
+        wait.until(ExpectedConditions.urlContains("/signin"));
+        Assert.assertTrue(driver.getCurrentUrl().contains("/signin"));
+        System.out.println("TC-005 PASSED");
+    }
 
     // TC-006: All fields empty
     @Test
@@ -122,9 +210,10 @@ public class SignUpTest {
     // System.out.println("TC-012 PASSED");
     // }
 
-    // TC-013: Upload image then remove it
+    // TC-012: Upload image then remove it
     @Test
-    public void TC013_uploadImageThenRemove() {
+    public void TC012_uploadImageThenRemove() {
+        driver.get("about:blank");
         driver.get("http://localhost:4200/signup");
         WebElement uploadInput = wait.until(ExpectedConditions.presenceOfElementLocated(
                 By.cssSelector("input[type='file']")));
@@ -135,12 +224,13 @@ public class SignUpTest {
         WebElement uploadArea = wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.xpath("//*[contains(text(),'Click to upload')]")));
         Assert.assertTrue(uploadArea.isDisplayed());
-        System.out.println("TC-013 PASSED");
+        System.out.println("TC-012 PASSED");
     }
 
-    // TC-015: Duplicate email
+    // TC-013: Duplicate email
     @Test
-    public void TC015_duplicateEmail() {
+    public void TC013_duplicateEmail() {
+        driver.get("about:blank");
         driver.get("http://localhost:4200/signup");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("firstName"))).sendKeys("Nada");
         driver.findElement(By.id("lastName")).sendKeys("Fouad");
@@ -153,21 +243,21 @@ public class SignUpTest {
         WebElement error = longWait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.xpath("//*[contains(text(),'already') or contains(text(),'exists') or contains(text(),'email')]")));
         Assert.assertTrue(error.isDisplayed());
-        System.out.println("TC-015 PASSED");
+        System.out.println("TC-013 PASSED");
     }
 
-    // TC-016: Navigate to sign in
+    // TC-014: Navigate to sign in
     @Test
-    public void TC016_navigateToSignIn() {
+    public void TC014_navigateToSignIn() {
+        driver.get("about:blank");
         driver.get("http://localhost:4200/signup");
         WebElement signInLink = wait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//*[contains(text(),'Sign in') or contains(text(),'Sign In')]")));
         signInLink.click();
         wait.until(ExpectedConditions.urlContains("/signin"));
         Assert.assertTrue(driver.getCurrentUrl().contains("/signin"));
-        System.out.println("TC-016 PASSED");
+        System.out.println("TC-014 PASSED");
     }
-
     // ==================== SIGN IN TESTS ====================
 
     // TC-017: Sign in with correct credentials
