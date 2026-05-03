@@ -110,6 +110,7 @@ this.authService.updateProfilePicture(base64).subscribe({
     input.value = '';
   }
 
+
   togglePassword(): void {
     this.showPassword = !this.showPassword;
     this.cdr.detectChanges();

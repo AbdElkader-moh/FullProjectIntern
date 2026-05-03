@@ -41,12 +41,14 @@ export class Signin {
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.signinForm.disable();
 
     this.authService
   .login(this.signinForm.value)
   .pipe(
     finalize(() => {
       this.isLoading = false;
+      this.signinForm.enable();
       this.cdr.detectChanges();
     })
   )

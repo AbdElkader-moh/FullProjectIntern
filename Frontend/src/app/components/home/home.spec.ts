@@ -33,4 +33,16 @@ describe('Home', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should display the brand name', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.brand-name')?.textContent).toContain('Home');
+  });
+
+  it('should call logout on logout button click', () => {
+    const logoutSpy = vi.spyOn(mockAuthService, 'logout').mockReturnValue(of({ message: 'Success' }));
+    component.logout();
+    expect(logoutSpy).toHaveBeenCalled();
+  });
 });

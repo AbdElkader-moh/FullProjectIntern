@@ -6,7 +6,7 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private String profilePicture;
-    private String password; // returns the bcrypt hash, never plaintext
+    private String password;
 
     public UserResponse(Long id, String email, String firstName, String lastName, String profilePicture, String password) {
         this.id = id;

@@ -31,7 +31,6 @@
           type="email"
           formControlName="email"
           placeholder="john.doe@example.com"
-          [disabled]="isLoading"
           [class.invalid]="signinForm.get('email')?.invalid && signinForm.get('email')?.touched"
         />
         @if (signinForm.get('email')?.invalid && signinForm.get('email')?.touched) {
@@ -46,7 +45,6 @@
           type="password"
           formControlName="password"
           placeholder="••••••••"
-          [disabled]="isLoading"
           [class.invalid]="signinForm.get('password')?.invalid && signinForm.get('password')?.touched"
         />
         @if (signinForm.get('password')?.invalid && signinForm.get('password')?.touched) {

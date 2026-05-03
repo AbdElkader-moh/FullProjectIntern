@@ -409,3 +409,34 @@
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+
+/* ── Password Row Alignment ── */
+.password-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.password-text {
+  word-break: break-all;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.btn-toggle-password {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  margin-top: -2px;
+}
+
+.btn-toggle-password:hover {
+  color: var(--text-primary);
+}
