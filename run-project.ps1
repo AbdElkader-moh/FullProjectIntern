@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 Write-Host "Creating Docker network..."
-
+docker network create project-net
 Write-Host "Removing old containers..."
 docker rm -f internship-frontend internship-backend internship-mysql 2>$null
 
@@ -10,9 +10,7 @@ docker run -d --name internship-mysql `
   --network project-net `
   -p 3306:3306 `
   -v mysql_data:/var/lib/mysql `
-  -e MYSQL_DATABASE=project_db `
   -e MYSQL_ROOT_PASSWORD=root123 `
-  -e MYSQL_USER=appuser `
   -e MYSQL_PASSWORD=app123 `
   mysql:8.0
 

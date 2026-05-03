@@ -1,5 +1,9 @@
 $DockerUsername = "abdelkader112002"
 
+Write-Host "Building MySQL image..."
+docker build -t custom-mysql ./db
+docker tag custom-mysql omarash15/custom-mysql:v1.0
+
 Write-Host "Building backend..."
 cd backend/user
 docker build -t backend-service:v1.0 .
@@ -13,6 +17,7 @@ docker tag frontend-service:v1.0 "$DockerUsername/frontend-service:v1.0"
 cd ..
 
 Write-Host "Pushing images..."
+docker push "omarash15/custom-mysql:v1.0"
 docker push "$DockerUsername/backend-service:v1.0"
 docker push "$DockerUsername/frontend-service:v1.0"
 
