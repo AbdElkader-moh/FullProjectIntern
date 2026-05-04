@@ -329,7 +329,6 @@
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-sm);
   padding: 0.85rem 1rem;
-  padding-right: 3rem; /* Space for icon */
   color: var(--text-primary);
   font-size: 0.95rem;
   font-family: inherit;
@@ -343,23 +342,6 @@
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-.btn-icon-inside {
-  position: absolute;
-  right: 0.75rem;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-}
-
-.btn-icon-inside:hover {
-  color: var(--text-primary);
-}
 
 .btn-save-password {
   margin-top: 0.5rem;
@@ -424,19 +406,3 @@
   line-height: 1.4;
 }
 
-.btn-toggle-password {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-  margin-top: -2px;
-}
-
-.btn-toggle-password:hover {
-  color: var(--text-primary);
-}

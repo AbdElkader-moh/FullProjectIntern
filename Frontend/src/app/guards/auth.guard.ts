@@ -7,18 +7,17 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Already verified in-memory — skip the network call.
-  // This prevents a getProfile() HTTP request on every navigation
-  // between protected routes, and avoids the catchError below
-  // firing and redirecting to /signin while an error message is displayed.
+  // Already verified in-memory — allow navigation.
   if (authService.isLoggedIn) {
     return true;
   }
 
-  // Cold start only: check if a server session exists (e.g. page refresh).
+  // Cold start: check server session. If fails, redirect to /signin.
   return authService.getProfile().pipe(
     map(() => true),
     catchError(() => {
+      // Navigate to sign‑in page on auth failure without a full page refresh.
+      router.navigate(['/signin']);
       return of(false);
     })
   );

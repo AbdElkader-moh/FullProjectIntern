@@ -17,7 +17,6 @@ export class Profile implements OnInit {
   isLoading = true;
   errorMessage = '';
   isUploadingPhoto = false;
-  showPassword = false;
   
   // Password change fields
   oldPassword = '';
@@ -29,9 +28,6 @@ export class Profile implements OnInit {
   
   // Visibility toggles
   isChangePasswordVisible = false;
-  showNewPassword = false;
-  showConfirmPassword = false;
-  showOldPassword = false;
 
   constructor(
     private authService: AuthService,
@@ -111,11 +107,6 @@ this.authService.updateProfilePicture(base64).subscribe({
   }
 
 
-  togglePassword(): void {
-    this.showPassword = !this.showPassword;
-    this.cdr.detectChanges();
-  }
-
   logout(): void {
     this.authService.logout().subscribe({
       next: () => this.router.navigate(['/signin']),
@@ -175,21 +166,6 @@ changePassword(): void {
 
   toggleChangePassword(): void {
     this.isChangePasswordVisible = !this.isChangePasswordVisible;
-    this.cdr.detectChanges();
-  }
-
-  toggleNewPassword(): void {
-    this.showNewPassword = !this.showNewPassword;
-    this.cdr.detectChanges();
-  }
-
-  toggleConfirmPassword(): void {
-    this.showConfirmPassword = !this.showConfirmPassword;
-    this.cdr.detectChanges();
-  }
-
-  toggleOldPassword(): void {
-    this.showOldPassword = !this.showOldPassword;
     this.cdr.detectChanges();
   }
 
