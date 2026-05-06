@@ -36,9 +36,9 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "User created successfully",
                     content = @Content(schema = @Schema(implementation = UserResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields",
-                    content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponse"))),
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Email already registered",
-                    content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponse")))
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ResponseEntity<?> signup(@Valid @ModelAttribute SignupRequest request, HttpSession session) {
         UserResponse response = userService.signup(request);

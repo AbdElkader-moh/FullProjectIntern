@@ -1,9 +1,22 @@
 $ErrorActionPreference = "Stop"
 
-Write-Host "Creating Docker network..."
-if (-not (docker network ls --filter name=project-net -q)) {
-  docker network create project-net
+Write-Host "Checking if Docker is running..."
+$oldErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+$dockerStatus = docker info 2>&1
+$exitCode = $LASTEXITCODE
+$ErrorActionPreference = $oldErrorActionPreference
+
+if ($exitCode -ne 0) {
+  Write-Host "Error: Docker daemon is not running! Please start Docker Desktop and try again." -ForegroundColor Red
+  exit 1
 }
+
+Write-Host "Creating Docker network..."
+try {
+  # Attempt to create network; if it already exists, it will fail, which we can ignore.
+  docker network create project-net 2>$null
+} catch {}
 
 Write-Host "Removing old containers..."
 # Attempt to remove containers; ignore errors if they do not exist
@@ -39,6 +52,11 @@ if (Get-Command mvn -ErrorAction SilentlyContinue) {
   exit 1
 }
 
+if (-not (Test-Path "target/user*.jar" -PathType Leaf)) {
+  Write-Host "Error: User JAR not found in target directory after build!"
+  exit 1
+}
+
 docker build --no-cache -t spring-user-app .
 
 Write-Host "Starting backend..."
@@ -62,10 +80,17 @@ Set-Location ../sensor_data
 Write-Host "Building sensor backend..."
 if (Get-Command mvn -ErrorAction SilentlyContinue) {
   mvn clean package -DskipTests
-} elseif (Test-Path "..\user\mvnw.cmd") {
-  ..\user\mvnw.cmd clean package -DskipTests
+} elseif (Test-Path "../user/mvnw.cmd") {
+  $mvnwPath = Resolve-Path "../user/mvnw.cmd"
+  & $mvnwPath clean package -DskipTests
 } else {
-  Write-Host "Warning: Maven not found. Skipping sensor build..."
+  Write-Host "Error: Maven not found and wrapper missing. Cannot build sensor service."
+  exit 1
+}
+
+if (-not (Test-Path "target/sensor_data*.jar" -PathType Leaf)) {
+  Write-Host "Error: Sensor JAR not found in target directory after build!"
+  exit 1
 }
 
 docker build --no-cache -t spring-sensor-app .
