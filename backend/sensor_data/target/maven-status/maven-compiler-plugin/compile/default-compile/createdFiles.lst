@@ -6,5 +6,6 @@ com\backend\sensor_data\entity\AirPollutionData.class
 com\backend\sensor_data\entity\Status.class
 com\backend\sensor_data\entity\Notification.class
 com\backend\sensor_data\entity\PollutionLevel.class
+com\backend\sensor_data\config\OpenApiConfig.class
 com\backend\sensor_data\entity\CongestionLevel.class
 com\backend\sensor_data\exception\GlobalExceptionHandler.class

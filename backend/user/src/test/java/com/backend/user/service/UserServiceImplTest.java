@@ -29,6 +29,9 @@ class UserServiceImplTest {
     private com.backend.user.repository.SettingsRepository settingsRepository;
 
     @Mock
+    private com.backend.user.repository.NotificationRepository notificationRepository;
+
+    @Mock
     private HttpSession session;
 
     @Captor
@@ -39,7 +42,7 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, settingsRepository);
+        userService = new UserServiceImpl(userRepository, settingsRepository, notificationRepository);
         passwordEncoder = new BCryptPasswordEncoder();
     }
 

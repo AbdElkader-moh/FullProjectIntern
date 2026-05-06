@@ -1,10 +1,23 @@
 package com.backend.user.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Alert threshold setting")
 public class SettingsDTO {
+
+    @Schema(description = "Setting ID (UUID)", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
     private String id;
+
+    @Schema(description = "Sensor type", example = "Traffic", allowableValues = {"Traffic", "Air", "Light"})
     private String type;
+
+    @Schema(description = "Metric name", example = "trafficDensity")
     private String metric;
+
+    @Schema(description = "Threshold value to trigger alert", example = "80.0")
     private Float thresholdValue;
+
+    @Schema(description = "Alert trigger direction", example = "above", allowableValues = {"above", "below"})
     private String alertType;
 
     public SettingsDTO() {

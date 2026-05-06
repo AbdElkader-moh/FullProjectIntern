@@ -1,6 +1,12 @@
 package com.backend.sensor_data.controller;
 
 import com.backend.sensor_data.entity.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -14,6 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/sensors")
+@Tag(name = "Sensor Data Ingestion", description = "Endpoints for receiving IoT sensor telemetry — traffic, air quality, and street lighting")
 public class SensorController {
     private static final Logger logger = LoggerFactory.getLogger(SensorController.class);
 
@@ -22,6 +29,11 @@ public class SensorController {
 
     @PostMapping("/traffic")
     @Transactional
+    @Operation(summary = "Submit traffic sensor data", description = "Persists a traffic sensor reading and checks user-configured alert thresholds for trafficDensity and avgSpeed.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Traffic data saved successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
+    })
     public ResponseEntity<?> receiveTrafficData(@Valid @RequestBody TrafficData data) {
         entityManager.persist(data);
         checkAlerts("Traffic", "trafficDensity", data.getTrafficDensity(), data.getLocation());
@@ -31,6 +43,11 @@ public class SensorController {
 
     @PostMapping("/air")
     @Transactional
+    @Operation(summary = "Submit air pollution sensor data", description = "Persists an air quality sensor reading and checks user-configured alert thresholds for CO and ozone levels.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Air pollution data saved successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
+    })
     public ResponseEntity<?> receiveAirData(@Valid @RequestBody AirPollutionData data) {
         entityManager.persist(data);
         checkAlerts("Air", "co", data.getCo(), data.getLocation());
@@ -40,6 +57,11 @@ public class SensorController {
 
     @PostMapping("/light")
     @Transactional
+    @Operation(summary = "Submit street light sensor data", description = "Persists a street light sensor reading and checks user-configured alert thresholds for brightnessLevel and powerConsumption.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Street light data saved successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
+    })
     public ResponseEntity<?> receiveLightData(@Valid @RequestBody StreetLightData data) {
         entityManager.persist(data);
         checkAlerts("Light", "brightnessLevel", data.getBrightnessLevel(), data.getLocation());
