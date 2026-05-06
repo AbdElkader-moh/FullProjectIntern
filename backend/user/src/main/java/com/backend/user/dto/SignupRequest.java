@@ -27,7 +27,8 @@ public class SignupRequest {
     @Schema(description = "Password (min 6 characters)", example = "abc123")
     private String password;
 
-    @Schema(description = "Profile picture file (multipart upload)")
+    @NotNull(message = "Profile picture is required")
+    @Schema(description = "Profile picture file (multipart upload)", requiredMode = Schema.RequiredMode.REQUIRED)
     private org.springframework.web.multipart.MultipartFile profilePicture;
 
     public String getEmail() {

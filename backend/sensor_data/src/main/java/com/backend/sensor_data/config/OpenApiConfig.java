@@ -12,16 +12,17 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
 
-    @Bean
-    public OpenAPI sensorServiceOpenAPI() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("Sensor Data Microservice API")
-                        .description("REST API for ingesting IoT sensor data — traffic, air pollution, and street light telemetry.")
-                        .version("1.0.0")
-                        .contact(new Contact()
-                                .name("DXC Internship Team")))
-                .servers(List.of(
-                        new Server().url("http://localhost:8081").description("Local dev server")));
-    }
+        @Bean
+        public OpenAPI sensorServiceOpenAPI() {
+                return new OpenAPI()
+                                .info(new Info()
+                                                .title("Sensor Data Microservice API")
+                                                .description("REST API for ingesting IoT sensor data — traffic, air pollution, and street light telemetry.")
+                                                .version("1.0.0")
+                                                .contact(new Contact()
+                                                                .name("DXC Internship Team")))
+                                .servers(List.of(
+                                                new Server().url("http://localhost:8081")
+                                                                .description("Local dev server")));
+        }
 }
