@@ -66,43 +66,23 @@ export class Profile implements OnInit {
     const file = input.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const base64 = reader.result as string;
-
-      this.isUploadingPhoto = true;
-      this.errorMessage = '';
-      this.cdr.detectChanges();
-
-this.authService.updateProfilePicture(base64).subscribe({
-  next: (updatedUser) => {
-    const userWithPicture = {
-      ...updatedUser,
-      profilePicture: updatedUser.profilePicture || base64,
-    };
-
-    this.user = userWithPicture;
-    (this.authService as any)._currentUser = userWithPicture;
-
-    this.isUploadingPhoto = false;
+    this.isUploadingPhoto = true;
+    this.errorMessage = '';
     this.cdr.detectChanges();
-  },
-  error: () => {
-    this.errorMessage = 'Failed to update profile picture.';
-    this.isUploadingPhoto = false;
-    this.cdr.detectChanges();
-  },
-});
-    };
 
-    reader.onerror = () => {
-      this.errorMessage = 'Failed to read image.';
-      this.isUploadingPhoto = false;
-      this.cdr.detectChanges();
-    };
-
-    reader.readAsDataURL(file);
+    this.authService.updateProfilePicture(file).subscribe({
+      next: (updatedUser) => {
+        this.user = updatedUser;
+        this.isUploadingPhoto = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.errorMessage = 'Failed to update profile picture.';
+        this.isUploadingPhoto = false;
+        this.cdr.detectChanges();
+      },
+    });
+    
     input.value = '';
   }
 

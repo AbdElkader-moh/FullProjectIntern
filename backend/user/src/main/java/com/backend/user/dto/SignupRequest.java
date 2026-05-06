@@ -2,6 +2,8 @@ package com.backend.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class SignupRequest {
 
@@ -15,11 +17,11 @@ public class SignupRequest {
     @NotBlank
     private String lastName;
 
-    @NotBlank
-    private String profilePicture;
-
-    @NotBlank
+    @NotNull(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
+
+    private org.springframework.web.multipart.MultipartFile profilePicture;
 
     public String getEmail() {
         return email;
@@ -45,11 +47,11 @@ public class SignupRequest {
         this.lastName = lastName;
     }
 
-    public String getProfilePicture() {
+    public org.springframework.web.multipart.MultipartFile getProfilePicture() {
         return profilePicture;
     }
 
-    public void setProfilePicture(String profilePicture) {
+    public void setProfilePicture(org.springframework.web.multipart.MultipartFile profilePicture) {
         this.profilePicture = profilePicture;
     }
 

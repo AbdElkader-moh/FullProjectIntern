@@ -1,8 +1,17 @@
 package com.backend.user.dto;
 
-public class UpdateProfilePictureRequest {
-    private String profilePicture;
+import jakarta.validation.constraints.NotNull;
 
-    public String getProfilePicture() { return profilePicture; }
-    public void setProfilePicture(String profilePicture) { this.profilePicture = profilePicture; }
+public class UpdateProfilePictureRequest {
+
+    @NotNull(message = "Profile picture cannot be null")
+    private org.springframework.web.multipart.MultipartFile profilePicture;
+
+    public org.springframework.web.multipart.MultipartFile getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(org.springframework.web.multipart.MultipartFile profilePicture) {
+        this.profilePicture = profilePicture;
+    }
 }

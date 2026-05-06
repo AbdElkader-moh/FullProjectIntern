@@ -19,7 +19,7 @@ export interface SignupRequest {
   email: string;
   firstName: string;
   lastName: string;
-  profilePicture?: string;
+  profilePicture?: File | null;
   password: string;
 }
 
@@ -33,7 +33,7 @@ export interface ChangePasswordRequest {
 }
 
 export interface UpdateProfilePictureRequest {
-  profilePicture: string;
+  profilePicture: File;
 }
 
 @Injectable({
@@ -87,8 +87,17 @@ private handleError(err: HttpErrorResponse): Observable<never> {
 }
 
   signup(request: SignupRequest): Observable<UserResponse> {
+    const formData = new FormData();
+    formData.append('email', request.email);
+    formData.append('firstName', request.firstName);
+    formData.append('lastName', request.lastName);
+    formData.append('password', request.password);
+    if (request.profilePicture) {
+      formData.append('profilePicture', request.profilePicture);
+    }
+
     return this.http
-      .post<UserResponse>(`${this.apiUrl}/signup`, request, this.httpOptions)
+      .post<UserResponse>(`${this.apiUrl}/signup`, formData, this.httpOptions)
       .pipe(catchError((err) => this.handleError(err)));
   }
 
@@ -116,11 +125,14 @@ login(request: LoginRequest): Observable<ApiResponse> {
       );
   }
 
-  updateProfilePicture(profilePicture: string): Observable<UserResponse> {
+  updateProfilePicture(file: File): Observable<UserResponse> {
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+
     return this.http
       .put<UserResponse>(
         `${this.apiUrl}/me`,
-        { profilePicture } as UpdateProfilePictureRequest,
+        formData,
         this.httpOptions
       )
       .pipe(

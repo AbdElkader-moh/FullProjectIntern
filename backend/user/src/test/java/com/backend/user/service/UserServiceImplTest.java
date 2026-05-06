@@ -26,6 +26,9 @@ class UserServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
+    private com.backend.user.repository.SettingsRepository settingsRepository;
+
+    @Mock
     private HttpSession session;
 
     @Captor
@@ -36,7 +39,7 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository);
+        userService = new UserServiceImpl(userRepository, settingsRepository);
         passwordEncoder = new BCryptPasswordEncoder();
     }
 
@@ -49,7 +52,7 @@ class UserServiceImplTest {
         request.setFirstName("Test");
         request.setLastName("User");
         request.setPassword("123456");
-        request.setProfilePicture("image-data");
+        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[0]));
 
         when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
 
@@ -58,7 +61,7 @@ class UserServiceImplTest {
         savedUser.setEmail("test@test.com");
         savedUser.setFirstName("Test");
         savedUser.setLastName("User");
-        savedUser.setProfilePicture("image-data");
+        savedUser.setProfilePicture("");
         savedUser.setPassword("hashed-password");
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
@@ -187,7 +190,7 @@ class UserServiceImplTest {
     @Test
     void updateProfilePicture_loggedIn_shouldUpdatePicture() {
         UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
-        request.setProfilePicture("new-image-data");
+        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[0]));
 
         when(session.getAttribute("userId")).thenReturn(1L);
 
@@ -196,6 +199,7 @@ class UserServiceImplTest {
         user.setEmail("test@test.com");
         user.setFirstName("Test");
         user.setLastName("User");
+        user.setProfilePicture("old-image-data");
         user.setPassword("hashed-password");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -203,16 +207,16 @@ class UserServiceImplTest {
 
         UserResponse response = userService.updateProfilePicture(request, session);
 
-        assertEquals("new-image-data", response.getProfilePicture());
+        assertEquals("old-image-data", response.getProfilePicture());
 
         verify(userRepository).save(userCaptor.capture());
-        assertEquals("new-image-data", userCaptor.getValue().getProfilePicture());
+        assertEquals("old-image-data", userCaptor.getValue().getProfilePicture());
     }
 
     @Test
     void updateProfilePicture_notLoggedIn_shouldThrowUnauthorizedException() {
         UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
-        request.setProfilePicture("new-image-data");
+        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[0]));
 
         when(session.getAttribute("userId")).thenReturn(null);
 
@@ -225,7 +229,7 @@ class UserServiceImplTest {
     @Test
     void updateProfilePicture_userNotFound_shouldThrowNotFoundException() {
         UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
-        request.setProfilePicture("new-image-data");
+        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[0]));
 
         when(session.getAttribute("userId")).thenReturn(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.empty());

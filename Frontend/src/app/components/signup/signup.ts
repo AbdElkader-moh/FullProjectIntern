@@ -59,28 +59,13 @@ export class Signup implements OnDestroy {
     }
 
     this.imagePreview = URL.createObjectURL(file);
-    this.isImageLoading = true;
-    this.cdr.detectChanges(); // 🔥 show loading immediately
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      this.signupForm.patchValue({
-        profilePicture: reader.result as string,
-      });
-
-      this.isImageLoading = false;
-      this.cdr.detectChanges(); // 🔥 update UI after upload
-    };
-
-    reader.onerror = () => {
-      this.errorMessage = 'Failed to read image. Please try again.';
-      this.removeImage();
-      this.isImageLoading = false;
-      this.cdr.detectChanges(); // 🔥 show error immediately
-    };
-
-    reader.readAsDataURL(file);
+    
+    // Store the actual file in the form
+    this.signupForm.patchValue({
+      profilePicture: file,
+    });
+    
+    this.cdr.detectChanges();
   }
 
   removeImage(): void {

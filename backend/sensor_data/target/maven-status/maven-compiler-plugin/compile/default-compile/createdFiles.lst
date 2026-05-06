@@ -1,0 +1,10 @@
+com\backend\sensor_data\entity\TrafficData.class
+com\backend\sensor_data\SensorDataApplication.class
+com\backend\sensor_data\entity\StreetLightData.class
+com\backend\sensor_data\controller\SensorController.class
+com\backend\sensor_data\entity\AirPollutionData.class
+com\backend\sensor_data\entity\Status.class
+com\backend\sensor_data\entity\Notification.class
+com\backend\sensor_data\entity\PollutionLevel.class
+com\backend\sensor_data\entity\CongestionLevel.class
+com\backend\sensor_data\exception\GlobalExceptionHandler.class
