@@ -13,10 +13,14 @@ if ($exitCode -ne 0) {
 }
 
 Write-Host "Creating Docker network..."
+<<<<<<< HEAD
 try {
   # Attempt to create network; if it already exists, it will fail, which we can ignore.
   docker network create project-net 2>$null
 } catch {}
+=======
+docker network create project-net
+>>>>>>> 7ea8064 (to pull)
 
 Write-Host "Removing old containers..."
 # Attempt to remove containers; ignore errors if they do not exist
