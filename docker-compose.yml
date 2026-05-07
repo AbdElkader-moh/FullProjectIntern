@@ -1,0 +1,126 @@
+version: "3.9"
+
+services:
+
+  mysql:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: internship-mysql
+    ports:
+      - "4306:3306"
+    environment:
+      MYSQL_DATABASE: project_db
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_USER_FILE: /run/secrets/mysql_user
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+    secrets:
+      - mysql_root_password
+      - mysql_user
+      - mysql_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20  
+    networks:
+      - project-net
+
+  user-service:
+    build:
+      context: ./backend/user
+      dockerfile: Dockerfile
+    container_name: internship-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://internship-mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME_FILE: /run/secrets/mysql_user
+      SPRING_DATASOURCE_PASSWORD_FILE: /run/secrets/mysql_password
+
+      CLOUDINARY_CLOUD_NAME_FILE: /run/secrets/cloudinary_cloud_name
+      CLOUDINARY_API_KEY_FILE: /run/secrets/cloudinary_api_key
+      CLOUDINARY_API_SECRET_FILE: /run/secrets/cloudinary_api_secret
+    secrets:
+      - mysql_user
+      - mysql_password
+      - cloudinary_cloud_name
+      - cloudinary_api_key
+      - cloudinary_api_secret
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - project-net
+
+  sensor-service:
+    build:
+      context: ./backend/sensor_data
+      dockerfile: Dockerfile
+    container_name: internship-sensor
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://internship-mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME_FILE: /run/secrets/mysql_user
+      SPRING_DATASOURCE_PASSWORD_FILE: /run/secrets/mysql_password
+      USER_SERVICE_URL: http://user-service:8080
+    secrets:
+      - mysql_user
+      - mysql_password
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+      user-service:
+        condition: service_started
+    networks:
+      - project-net
+
+  simulator:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.sim
+    container_name: internship-simulator
+    environment:
+      SENSOR_HOST: internship-sensor
+    depends_on:
+      - sensor-service
+    networks:
+      - project-net
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: internship-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - user-service
+      - sensor-service
+    networks:
+      - project-net
+
+volumes:
+  mysql_data:
+
+networks:
+  project-net:
+    driver: bridge
+
+secrets:
+  cloudinary_cloud_name:
+    file: ./secrets/cloudinary_cloud_name.txt
+  cloudinary_api_key:
+    file: ./secrets/cloudinary_api_key.txt
+  cloudinary_api_secret:
+    file: ./secrets/cloudinary_api_secret.txt
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
+  mysql_user:
+    file: ./secrets/mysql_user.txt
+  mysql_password:
+    file: ./secrets/mysql_password.txt

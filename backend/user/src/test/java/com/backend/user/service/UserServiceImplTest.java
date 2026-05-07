@@ -6,6 +6,7 @@ import com.backend.user.exception.ConflictException;
 import com.backend.user.exception.NotFoundException;
 import com.backend.user.exception.UnauthorizedException;
 import com.backend.user.repository.UserRepository;
+import com.cloudinary.Cloudinary;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,8 @@ class UserServiceImplTest {
 
     @Mock
     private com.backend.user.repository.NotificationRepository notificationRepository;
-
+    @Mock
+    private Cloudinary cloudinary;
     @Mock
     private HttpSession session;
 
@@ -42,7 +44,7 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, settingsRepository, notificationRepository);
+        userService = new UserServiceImpl(userRepository, settingsRepository, notificationRepository,cloudinary);
         passwordEncoder = new BCryptPasswordEncoder();
     }
 

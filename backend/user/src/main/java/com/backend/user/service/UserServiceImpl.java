@@ -1,15 +1,16 @@
 package com.backend.user.service;
 
 import com.backend.user.dto.*;
+import com.backend.user.entity.Notification;
 import com.backend.user.entity.User;
 import com.backend.user.exception.ConflictException;
 import com.backend.user.exception.NotFoundException;
 import com.backend.user.exception.UnauthorizedException;
+import com.backend.user.repository.NotificationRepository;
 import com.backend.user.repository.UserRepository;
 import com.backend.user.repository.SettingsRepository;
 import com.backend.user.entity.Settings;
 import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,32 +27,22 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
-    private final com.backend.user.repository.NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final Cloudinary cloudinary;
 
-    public UserServiceImpl(UserRepository userRepository, SettingsRepository settingsRepository,
-                           com.backend.user.repository.NotificationRepository notificationRepository) {
+
+    public UserServiceImpl(
+            UserRepository userRepository,
+            SettingsRepository settingsRepository,
+            NotificationRepository notificationRepository,
+            Cloudinary cloudinary
+    ) {
         this.userRepository = userRepository;
         this.settingsRepository = settingsRepository;
         this.notificationRepository = notificationRepository;
         this.passwordEncoder = new BCryptPasswordEncoder();
-        
-        String cloudName = System.getenv("CLOUDINARY_CLOUD_NAME");
-        String apiKey = System.getenv("CLOUDINARY_API_KEY");
-        String apiSecret = System.getenv("CLOUDINARY_API_SECRET");
-        
-        if (cloudName != null && apiKey != null && apiSecret != null) {
-            this.cloudinary = new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", cloudName,
-                "api_key", apiKey,
-                "api_secret", apiSecret
-            ));
-            logger.info("Cloudinary configured successfully.");
-        } else {
-            this.cloudinary = null;
-            logger.warn("Cloudinary credentials not found in environment variables. Image uploads are disabled.");
-        }
+        this.cloudinary = cloudinary;
     }
 
     @Override
@@ -70,7 +61,10 @@ public class UserServiceImpl implements UserService {
                 if (cloudinary == null) {
                     throw new RuntimeException("Server configuration error: Cloudinary secrets missing. Image upload disabled.");
                 }
-                Map uploadResult = cloudinary.uploader().upload(request.getProfilePicture().getBytes(), ObjectUtils.emptyMap());
+                Map uploadResult = cloudinary.uploader().upload(
+                        request.getProfilePicture().getBytes(),
+                        com.cloudinary.utils.ObjectUtils.emptyMap()
+                );
                 user.setProfilePicture(uploadResult.get("url").toString());
             } else {
                 user.setProfilePicture("");
@@ -136,7 +130,10 @@ public class UserServiceImpl implements UserService {
                 if (cloudinary == null) {
                     throw new RuntimeException("Server configuration error: Cloudinary secrets missing. Image upload disabled.");
                 }
-                Map uploadResult = cloudinary.uploader().upload(request.getProfilePicture().getBytes(), ObjectUtils.emptyMap());
+                Map uploadResult = cloudinary.uploader().upload(
+                        request.getProfilePicture().getBytes(),
+                        com.cloudinary.utils.ObjectUtils.emptyMap()
+                );
                 user.setProfilePicture(uploadResult.get("url").toString());
             }
         } catch (IOException e) {
@@ -182,24 +179,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<com.backend.user.dto.SettingsDTO> getSettings(HttpSession session) {
+    public List<SettingsDTO> getSettings(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
         return settingsRepository.findByUserId(userId).stream()
-            .map(s -> new com.backend.user.dto.SettingsDTO(s.getId(), s.getType(), s.getMetric(), s.getThresholdValue(), s.getAlertType()))
+            .map(s -> new SettingsDTO(s.getId(), s.getType(), s.getMetric(), s.getThresholdValue(), s.getAlertType()))
             .collect(Collectors.toList());
     }
 
     @Override
-    public List<com.backend.user.dto.SettingsDTO> updateSettings(List<com.backend.user.dto.SettingsDTO> requests, HttpSession session) {
+    public List<SettingsDTO> updateSettings(List<SettingsDTO> requests, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
         
-        for (com.backend.user.dto.SettingsDTO req : requests) {
+        for (SettingsDTO req : requests) {
             Settings settings = null;
             
             // 1. Try to find by ID
@@ -229,7 +226,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public com.backend.user.dto.SettingsDTO updateSetting(String id, com.backend.user.dto.SettingsDTO request, HttpSession session) {
+    public SettingsDTO updateSetting(String id, SettingsDTO request, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
@@ -242,7 +239,7 @@ public class UserServiceImpl implements UserService {
         settings.setThresholdValue(request.getThresholdValue());
         settings.setAlertType(request.getAlertType());
         Settings saved = settingsRepository.save(settings);
-        return new com.backend.user.dto.SettingsDTO(saved.getId(), saved.getType(), saved.getMetric(), saved.getThresholdValue(), saved.getAlertType());
+        return new SettingsDTO(saved.getId(), saved.getType(), saved.getMetric(), saved.getThresholdValue(), saved.getAlertType());
     }
 
     @Override
@@ -260,13 +257,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<com.backend.user.dto.NotificationDTO> getNotifications(HttpSession session) {
+    public List<NotificationDTO> getNotifications(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-            .map(n -> new com.backend.user.dto.NotificationDTO(
+            .map(n -> new NotificationDTO(
                 n.getId(), n.getType(), n.getMetric(), n.getValue(),
                 n.getThresholdValue(), n.getAlertType(), n.getLocation(),
                 n.getIsRead(), n.getCreatedAt()))
@@ -279,7 +276,7 @@ public class UserServiceImpl implements UserService {
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
-        com.backend.user.entity.Notification notification = notificationRepository.findById(id)
+        Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Notification not found."));
         if (!notification.getUserId().equals(userId)) {
             throw new UnauthorizedException("You are not authorized to update this notification.");
@@ -294,8 +291,8 @@ public class UserServiceImpl implements UserService {
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
-        List<com.backend.user.entity.Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        for (com.backend.user.entity.Notification n : notifications) {
+        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        for (Notification n : notifications) {
             n.setIsRead(true);
         }
         notificationRepository.saveAll(notifications);
@@ -307,7 +304,7 @@ public class UserServiceImpl implements UserService {
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
-        com.backend.user.entity.Notification notification = notificationRepository.findById(id)
+        Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Notification not found."));
         if (!notification.getUserId().equals(userId)) {
             throw new UnauthorizedException("You are not authorized to delete this notification.");

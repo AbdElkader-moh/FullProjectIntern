@@ -1,4 +1,4 @@
-package com.backend.sensor_data.config;
+package com.backend.user.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
@@ -12,17 +12,17 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
 
-        @Bean
-        public OpenAPI sensorServiceOpenAPI() {
-                return new OpenAPI()
-                                .info(new Info()
-                                                .title("Sensor Data Microservice API")
-                                                .description("REST API for ingesting IoT sensor data — traffic, air pollution, and street light telemetry.")
-                                                .version("1.0.0")
-                                                .contact(new Contact()
-                                                                .name("DXC Internship Team")))
-                                .servers(List.of(
-                                                new Server().url("http://localhost:8081")
-                                                                .description("Local dev server")));
-        }
+    @Bean
+    public OpenAPI userServiceOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("User Microservice API")
+                        .description("REST API for user management — signup, login, profile, settings, and notifications.")
+                        .version("1.0.0")
+                        .contact(new Contact()
+                                .name("DXC Internship Team")))
+                .servers(List.of(
+                        new Server().url("http://localhost:8080").description("Local dev server"),
+                        new Server().url("http://localhost:4200").description("Via Nginx proxy")));
+    }
 }
