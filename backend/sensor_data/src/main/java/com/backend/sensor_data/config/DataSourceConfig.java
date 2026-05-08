@@ -1,6 +1,6 @@
 package com.backend.sensor_data.config;
 
-import com.backend.user.util.SecretReader;
+import com.backend.sensor_data.util.SecretReader;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

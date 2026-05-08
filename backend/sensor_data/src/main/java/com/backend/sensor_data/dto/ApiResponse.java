@@ -1,4 +1,4 @@
-package com.backend.user.dto;
+package com.backend.sensor_data.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

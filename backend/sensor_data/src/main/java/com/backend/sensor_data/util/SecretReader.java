@@ -1,4 +1,4 @@
-package com.backend.user.util;
+package com.backend.sensor_data.util;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

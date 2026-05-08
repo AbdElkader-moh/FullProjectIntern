@@ -13,20 +13,19 @@ if ($exitCode -ne 0) {
 }
 
 Write-Host "Creating Docker network..."
-<<<<<<< HEAD
 try {
   # Attempt to create network; if it already exists, it will fail, which we can ignore.
   docker network create project-net 2>$null
-} catch {}
-=======
-docker network create project-net
->>>>>>> 7ea8064 (to pull)
+}
+catch {}
+
 
 Write-Host "Removing old containers..."
 # Attempt to remove containers; ignore errors if they do not exist
 try {
   docker rm -f internship-frontend internship-backend internship-sensor internship-simulator internship-mysql 2>$null
-} catch {}
+}
+catch {}
 
 Write-Host "Starting MySQL..."
 if (Test-Path ".env") {
@@ -36,7 +35,8 @@ if (Test-Path ".env") {
     -v mysql_data:/var/lib/mysql `
     --env-file .env `
     mysql:8.0
-} else {
+}
+else {
   Write-Host "Error: .env file missing! Cannot start database securely."
   exit 1
 }
@@ -49,9 +49,11 @@ Set-Location backend/user
 # Ensure Maven is available or use wrapper
 if (Get-Command mvn -ErrorAction SilentlyContinue) {
   mvn clean package -DskipTests
-} elseif (Test-Path ".\mvnw.cmd") {
+}
+elseif (Test-Path ".\mvnw.cmd") {
   .\mvnw.cmd clean package -DskipTests
-} else {
+}
+else {
   Write-Host "Error: Maven (mvn) not found and mvnw wrapper missing. Install Maven or ensure mvnw.cmd is present in backend/user."
   exit 1
 }
@@ -71,7 +73,8 @@ if (Test-Path "..\..\.env") {
     -p 8080:8080 `
     --env-file ..\..\.env `
     spring-user-app
-} else {
+}
+else {
   Write-Host "No .env file found. Running without secrets..."
   docker run -d --name internship-backend `
     --network project-net `
@@ -84,10 +87,12 @@ Set-Location ../sensor_data
 Write-Host "Building sensor backend..."
 if (Get-Command mvn -ErrorAction SilentlyContinue) {
   mvn clean package -DskipTests
-} elseif (Test-Path "../user/mvnw.cmd") {
+}
+elseif (Test-Path "../user/mvnw.cmd") {
   $mvnwPath = Resolve-Path "../user/mvnw.cmd"
   & $mvnwPath clean package -DskipTests
-} else {
+}
+else {
   Write-Host "Error: Maven not found and wrapper missing. Cannot build sensor service."
   exit 1
 }
@@ -106,7 +111,8 @@ if (Test-Path "..\..\.env") {
     -p 8081:8081 `
     --env-file ..\..\.env `
     spring-sensor-app
-} else {
+}
+else {
   docker run -d --name internship-sensor `
     --network project-net `
     -p 8081:8081 `
@@ -125,7 +131,8 @@ if (Test-Path ".env") {
     -e SENSOR_HOST=internship-sensor `
     --env-file .env `
     sensor-simulator
-} else {
+}
+else {
   docker run -d --name internship-simulator `
     --network project-net `
     -e SENSOR_HOST=internship-sensor `
