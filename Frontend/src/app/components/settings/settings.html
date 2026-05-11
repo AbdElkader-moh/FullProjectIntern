@@ -1,0 +1,113 @@
+<div class="settings-page">
+  <div class="settings-header">
+    <div class="settings-header">
+      <button class="btn-back" (click)="goHome()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        <span>Back</span>
+      </button>
+      <h1 class="page-title">Alert Thresholds</h1>
+      <p class="page-subtitle">Configure when the system should notify you</p>
+    </div>
+    <h1 class="page-title">Alert Thresholds</h1>
+    <p class="page-subtitle">Configure when the system should notify you</p>
+  </div>
+
+  <div class="settings-grid">
+    <!-- Form Panel -->
+    <div class="card form-card">
+      <h2 class="card-title">New Threshold</h2>
+
+      @if (successMessage) {
+      <div class="alert alert-success">{{ successMessage }}</div>
+      }
+      @if (errorMessage) {
+      <div class="alert alert-error">{{ errorMessage }}</div>
+      }
+
+      <div class="form-group">
+        <label class="form-label">Sensor Type</label>
+        <div class="radio-group">
+          <label class="radio-option" [class.active]="sensorType === 'traffic'">
+            <input type="radio" name="sensorType" value="traffic" [(ngModel)]="sensorType"
+              (change)="onSensorTypeChange()" />
+            <span class="radio-icon">🚗</span>
+            <span>Traffic</span>
+          </label>
+          <label class="radio-option" [class.active]="sensorType === 'air'">
+            <input type="radio" name="sensorType" value="air" [(ngModel)]="sensorType"
+              (change)="onSensorTypeChange()" />
+            <span class="radio-icon">💨</span>
+            <span>Air Quality</span>
+          </label>
+          <label class="radio-option" [class.active]="sensorType === 'light'">
+            <input type="radio" name="sensorType" value="light" [(ngModel)]="sensorType"
+              (change)="onSensorTypeChange()" />
+            <span class="radio-icon">💡</span>
+            <span>Street Light</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Metric</label>
+        <select class="form-control" [(ngModel)]="metric" (change)="onMetricChange()">
+          @for (m of availableMetrics; track m) {
+          <option [value]="m">{{ m }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          Threshold Value
+          <span class="constraint-hint">({{ currentConstraint.min }} – {{ currentConstraint.max }})</span>
+        </label>
+        <input type="number" class="form-control" [(ngModel)]="thresholdValue" [min]="currentConstraint.min"
+          [max]="currentConstraint.max" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Alert When Value Is</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" [class.active]="alertType === 'above'" (click)="alertType = 'above'">
+            ↑ Above
+          </button>
+          <button class="toggle-btn" [class.active]="alertType === 'below'" (click)="alertType = 'below'">
+            ↓ Below
+          </button>
+        </div>
+      </div>
+
+      <button class="submit-btn" (click)="onSubmit()" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Saving...' : 'Save Threshold' }}
+      </button>
+    </div>
+
+    <!-- Saved Thresholds Panel -->
+    <div class="card list-card">
+      <h2 class="card-title">Active Thresholds</h2>
+
+      @if (savedThresholds.length === 0) {
+      <div class="empty-state">No thresholds configured yet.</div>
+      }
+
+      <div class="threshold-list">
+        @for (t of savedThresholds; track $index) {
+        <div class="threshold-item">
+          <div class="threshold-info">
+            <span class="threshold-type" [class]="'threshold-type ' + t.sensorType">{{ t.sensorType }}</span>
+            <span class="threshold-metric">{{ t.metric }}</span>
+            <span class="threshold-rule">
+              {{ t.alertType === 'above' ? '↑ above' : '↓ below' }} {{ t.thresholdValue }}
+            </span>
+          </div>
+          <button class="delete-btn" (click)="deleteThreshold(t.metric)">✕</button>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

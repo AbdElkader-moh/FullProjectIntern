@@ -15,7 +15,7 @@ export class Home implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Guard already called getProfile() — use the cached user synchronously

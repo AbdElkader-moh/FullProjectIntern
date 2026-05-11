@@ -15,6 +15,16 @@ export const routes: Routes = [
       import('./components/profile/profile').then((m) => m.Profile),
     canActivate: [authGuard],
   },
+   {
+    path: 'settings',
+    loadComponent: () => import('./components/settings/settings').then((m) => m.Settings),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'notifications',
+    loadComponent: () => import('./components/notifications/notifications').then((m) => m.Notifications),
+    canActivate: [authGuard],
+  },
   {
     path: 'signin',
     loadComponent: () =>
