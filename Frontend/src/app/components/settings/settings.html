@@ -19,10 +19,10 @@
       <h2 class="card-title">New Threshold</h2>
 
       @if (successMessage) {
-      <div class="alert alert-success">{{ successMessage }}</div>
+        <div class="alert alert-success">{{ successMessage }}</div>
       }
       @if (errorMessage) {
-      <div class="alert alert-error">{{ errorMessage }}</div>
+        <div class="alert alert-error">{{ errorMessage }}</div>
       }
 
       <div class="form-group">
@@ -53,7 +53,7 @@
         <label class="form-label">Metric</label>
         <select class="form-control" [(ngModel)]="metric" (change)="onMetricChange()">
           @for (m of availableMetrics; track m) {
-          <option [value]="m">{{ m }}</option>
+            <option [value]="m">{{ m }}</option>
           }
         </select>
       </div>
@@ -63,8 +63,8 @@
           Threshold Value
           <span class="constraint-hint">({{ currentConstraint.min }} – {{ currentConstraint.max }})</span>
         </label>
-        <input type="number" class="form-control" [(ngModel)]="thresholdValue" [min]="currentConstraint.min"
-          [max]="currentConstraint.max" />
+        <input type="number" class="form-control" [(ngModel)]="thresholdValue"
+          [min]="currentConstraint.min" [max]="currentConstraint.max" />
       </div>
 
       <div class="form-group">
@@ -89,21 +89,68 @@
       <h2 class="card-title">Active Thresholds</h2>
 
       @if (savedThresholds.length === 0) {
-      <div class="empty-state">No thresholds configured yet.</div>
+        <div class="empty-state">No thresholds configured yet.</div>
       }
 
       <div class="threshold-list">
-        @for (t of savedThresholds; track $index) {
-        <div class="threshold-item">
-          <div class="threshold-info">
-            <span class="threshold-type" [class]="'threshold-type ' + t.sensorType">{{ t.sensorType }}</span>
-            <span class="threshold-metric">{{ t.metric }}</span>
-            <span class="threshold-rule">
-              {{ t.alertType === 'above' ? '↑ above' : '↓ below' }} {{ t.thresholdValue }}
-            </span>
-          </div>
-          <button class="delete-btn" (click)="deleteThreshold(t.metric)">✕</button>
-        </div>
+        @for (t of savedThresholds; track t.id) {
+
+          <!-- ── Normal (read) row ── -->
+          @if (editingId !== t.id) {
+            <div class="threshold-item">
+              <div class="threshold-info">
+                <span class="threshold-type" [class]="'threshold-type ' + t.type.toLowerCase()">
+                  {{ t.type }}
+                </span>
+                <span class="threshold-metric">{{ t.metric }}</span>
+                <span class="threshold-rule">
+                  {{ t.alertType === 'above' ? '↑ above' : '↓ below' }} {{ t.thresholdValue }}
+                </span>
+              </div>
+              <div class="row-actions">
+                <button class="edit-btn" (click)="startEdit(t)" title="Edit">✎</button>
+                <button class="delete-btn"
+                  [disabled]="deletingId === t.id"
+                  (click)="deleteThreshold(t)"
+                  title="Delete">
+                  {{ deletingId === t.id ? '…' : '✕' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- ── Edit row (shown in place of the read row) ── -->
+          @if (editingId === t.id) {
+            <div class="threshold-item threshold-item--editing">
+              <div class="threshold-info">
+                <span class="threshold-type" [class]="'threshold-type ' + t.type.toLowerCase()">
+                  {{ t.type }}
+                </span>
+                <span class="threshold-metric">{{ t.metric }}</span>
+              </div>
+              <div class="edit-controls">
+                <input
+                  type="number"
+                  class="form-control edit-input"
+                  [(ngModel)]="editValue"
+                  [min]="0"
+                  [max]="9999" />
+                <div class="toggle-group toggle-group--sm">
+                  <button class="toggle-btn"
+                    [class.active]="editAlertType === 'above'"
+                    (click)="editAlertType = 'above'">↑ Above</button>
+                  <button class="toggle-btn"
+                    [class.active]="editAlertType === 'below'"
+                    (click)="editAlertType = 'below'">↓ Below</button>
+                </div>
+                <div class="edit-action-btns">
+                  <button class="submit-btn submit-btn--sm" (click)="saveEdit(t)">Save</button>
+                  <button class="delete-btn" (click)="cancelEdit()">Cancel</button>
+                </div>
+              </div>
+            </div>
+          }
+
         }
       </div>
     </div>

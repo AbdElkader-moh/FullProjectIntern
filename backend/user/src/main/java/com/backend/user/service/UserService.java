@@ -11,6 +11,9 @@ public interface UserService {
     void logout(HttpSession session);
     void changePassword(ChangePasswordRequest request, HttpSession session);
     java.util.List<com.backend.user.dto.SettingsDTO> getSettings(HttpSession session);
+
+    SettingsDTO addSetting(SettingsDTO req, HttpSession session);
+
     java.util.List<com.backend.user.dto.SettingsDTO> updateSettings(java.util.List<com.backend.user.dto.SettingsDTO> requests, HttpSession session);
     com.backend.user.dto.SettingsDTO updateSetting(String id, com.backend.user.dto.SettingsDTO request, HttpSession session);
     void deleteSetting(String id, HttpSession session);

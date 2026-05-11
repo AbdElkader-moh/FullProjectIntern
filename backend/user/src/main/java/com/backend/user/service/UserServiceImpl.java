@@ -77,12 +77,12 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
-        settingsRepository.save(new Settings(savedUser.getId(), "Traffic", "trafficDensity", 200f, "above"));
+        /*settingsRepository.save(new Settings(savedUser.getId(), "Traffic", "trafficDensity", 200f, "above"));
         settingsRepository.save(new Settings(savedUser.getId(), "Traffic", "avgSpeed", 60f, "above"));
         settingsRepository.save(new Settings(savedUser.getId(), "Air", "co", 20f, "above"));
         settingsRepository.save(new Settings(savedUser.getId(), "Air", "ozone", 100f, "above"));
         settingsRepository.save(new Settings(savedUser.getId(), "Light", "brightnessLevel", 80f, "below"));
-        settingsRepository.save(new Settings(savedUser.getId(), "Light", "powerConsumption", 3000f, "above"));
+        settingsRepository.save(new Settings(savedUser.getId(), "Light", "powerConsumption", 3000f, "above"));*/
 
         return mapToResponse(savedUser);
     }
@@ -188,7 +188,15 @@ public class UserServiceImpl implements UserService {
             .map(s -> new SettingsDTO(s.getId(), s.getType(), s.getMetric(), s.getThresholdValue(), s.getAlertType()))
             .collect(Collectors.toList());
     }
+    @Override
+public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
+    Long userId = (Long) session.getAttribute("userId");
+    if (userId == null) throw new UnauthorizedException("You are not logged in.");
 
+    Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
+    Settings saved = settingsRepository.save(newSettings);
+    return new SettingsDTO(saved.getId(), saved.getType(), saved.getMetric(), saved.getThresholdValue(), saved.getAlertType());
+}
     @Override
     public List<SettingsDTO> updateSettings(List<SettingsDTO> requests, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -197,6 +205,7 @@ public class UserServiceImpl implements UserService {
         }
         
         for (SettingsDTO req : requests) {
+            
             Settings settings = null;
             
             // 1. Try to find by ID
@@ -209,18 +218,10 @@ public class UserServiceImpl implements UserService {
                 settings = settingsRepository.findByUserIdAndTypeAndMetric(userId, req.getType(), req.getMetric()).orElse(null);
             }
             
-            if (settings != null) {
-                // Update existing
-                if (settings.getUserId().equals(userId)) {
-                    settings.setThresholdValue(req.getThresholdValue());
-                    settings.setAlertType(req.getAlertType());
-                    settingsRepository.save(settings);
-                }
-            } else {
                 // Create new
                 Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
                 settingsRepository.save(newSettings);
-            }
+           
         }
         return getSettings(session);
     }

@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { NotificationService } from '../../services/notification.service';
+import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 import {
-  ThresholdSetting,
   SensorType,
   AlertType,
   TRAFFIC_METRICS,
@@ -11,6 +11,22 @@ import {
   LIGHT_METRICS,
   METRIC_CONSTRAINTS,
 } from '../../models/threshold.model';
+
+// Matches the backend SettingsDTO exactly
+export interface SettingsDTO {
+  id?: string;
+  type: string;        // "Traffic" | "Air" | "Light"
+  metric: string;
+  thresholdValue: number;
+  alertType: string;   // "above" | "below"
+}
+
+// Maps frontend SensorType ('traffic') → backend type string ('Traffic')
+const SENSOR_TYPE_MAP: Record<SensorType, string> = {
+  traffic: 'Traffic',
+  air: 'Air',
+  light: 'Light',
+};
 
 @Component({
   selector: 'app-settings',
@@ -20,6 +36,7 @@ import {
   styleUrl: './settings.css',
 })
 export class Settings implements OnInit {
+  // ── Form state ────────────────────────────────────────────────
   sensorType: SensorType = 'traffic';
   metric: string = 'trafficDensity';
   thresholdValue: number = 0;
@@ -28,19 +45,35 @@ export class Settings implements OnInit {
   availableMetrics: string[] = TRAFFIC_METRICS;
   currentConstraint = METRIC_CONSTRAINTS['trafficDensity'];
 
-  savedThresholds: ThresholdSetting[] = [];
+  // ── List state ────────────────────────────────────────────────
+  savedThresholds: SettingsDTO[] = [];
+
+  // ── Inline edit state ─────────────────────────────────────────
+  // When non-null, that row is being edited in place
+  editingId: string | null = null;
+  editValue: number = 0;
+  editAlertType: string = 'above';
+
+  // ── UI feedback ───────────────────────────────────────────────
   successMessage: string = '';
   errorMessage: string = '';
   isSubmitting: boolean = false;
+  deletingId: string | null = null;   // tracks which row's delete is in flight
+
+  private readonly apiUrl = '/api/users/settings';
+  private readonly httpOptions = { withCredentials: true };
 
   constructor(
-    private notificationService: NotificationService,
-    private router: Router
+    private http: HttpClient,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadThresholds();
   }
+
+  // ── Form helpers ──────────────────────────────────────────────
 
   onSensorTypeChange(): void {
     if (this.sensorType === 'traffic') this.availableMetrics = TRAFFIC_METRICS;
@@ -52,53 +85,144 @@ export class Settings implements OnInit {
   }
 
   onMetricChange(): void {
-    this.currentConstraint = METRIC_CONSTRAINTS[this.metric] ?? {min: 0, max: 100};
+    this.currentConstraint = METRIC_CONSTRAINTS[this.metric] ?? { min: 0, max: 100 };
     this.thresholdValue = this.currentConstraint.min;
   }
 
+  // ── Load ──────────────────────────────────────────────────────
+
   loadThresholds(): void {
-    this.notificationService.getThresholds().subscribe({
-      next: (data) => (this.savedThresholds = data),
-      error: () => (this.errorMessage = 'Failed to load thresholds.'),
+    this.http.get<SettingsDTO[]>(this.apiUrl, this.httpOptions).subscribe({
+      next: (data) => {
+        this.savedThresholds = data;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.errorMessage = 'Failed to load thresholds.';
+        this.cdr.detectChanges();
+      },
     });
   }
 
-  onSubmit(): void {
-    this.successMessage = '';
-    this.errorMessage = '';
+  // ── Create / upsert ───────────────────────────────────────────
 
-    const { min, max } = this.currentConstraint;
-    if (this.thresholdValue < min || this.thresholdValue > max) {
-      this.errorMessage = `Value must be between ${min} and ${max}.`;
-      return;
-    }
+onSubmit(): void {
+  this.successMessage = '';
+  this.errorMessage = '';
 
-    this.isSubmitting = true;
-    const payload: ThresholdSetting = {
-      sensorType: this.sensorType,
-      metric: this.metric,
-      thresholdValue: this.thresholdValue,
-      alertType: this.alertType,
-    };
+  const { min, max } = this.currentConstraint;
+  if (this.thresholdValue < min || this.thresholdValue > max) {
+    this.errorMessage = `Value must be between ${min} and ${max}.`;
+    this.cdr.detectChanges();
+    return;
+  }
 
-    this.notificationService.saveThreshold(payload).subscribe({
+  this.isSubmitting = true;
+
+  const payload: SettingsDTO = {
+    type: SENSOR_TYPE_MAP[this.sensorType],
+    metric: this.metric,
+    thresholdValue: this.thresholdValue,
+    alertType: this.alertType,
+  };
+
+  this.http
+    .post<SettingsDTO>(this.apiUrl, payload, this.httpOptions)
+    .pipe(finalize(() => { this.isSubmitting = false; this.cdr.detectChanges(); }))
+    .subscribe({
       next: () => {
         this.successMessage = 'Threshold saved successfully!';
-        this.isSubmitting = false;
         this.loadThresholds();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.errorMessage = 'Failed to save threshold. Please try again.';
-        this.isSubmitting = false;
+        this.cdr.detectChanges();
       },
     });
+}
+
+  // ── Inline edit ───────────────────────────────────────────────
+
+  startEdit(setting: SettingsDTO): void {
+    this.editingId = setting.id ?? null;
+    this.editValue = setting.thresholdValue;
+    this.editAlertType = setting.alertType;
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.cdr.detectChanges();
   }
 
-  deleteThreshold(metric: string): void {
-    this.notificationService.deleteThreshold(metric).subscribe({
-      next: () => this.loadThresholds(),
-      error: () => (this.errorMessage = 'Failed to delete threshold.'),
-    });
+  cancelEdit(): void {
+    this.editingId = null;
+    this.cdr.detectChanges();
+  }
+
+  saveEdit(setting: SettingsDTO): void {
+    if (!setting.id) return;
+
+    const constraint = METRIC_CONSTRAINTS[setting.metric] ?? { min: 0, max: 100 };
+    if (this.editValue < constraint.min || this.editValue > constraint.max) {
+      this.errorMessage = `Value must be between ${constraint.min} and ${constraint.max}.`;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // PUT /settings/{id} — targeted single-record update
+    this.http
+      .put<SettingsDTO>(
+        `${this.apiUrl}/${setting.id}`,
+        { thresholdValue: this.editValue, alertType: this.editAlertType },
+        this.httpOptions
+      )
+      .pipe(
+        finalize(() => {
+          this.editingId = null;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.successMessage = 'Threshold updated successfully!';
+          this.loadThresholds();
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.errorMessage = 'Failed to update threshold.';
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  // ── Delete ────────────────────────────────────────────────────
+
+  deleteThreshold(setting: SettingsDTO): void {
+    if (!setting.id) {
+      this.errorMessage = 'Cannot delete: setting has no ID.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.deletingId = setting.id;
+
+    this.http
+      .delete(`${this.apiUrl}/${setting.id}`, this.httpOptions)
+      .pipe(
+        finalize(() => {
+          this.deletingId = null;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.loadThresholds();
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.errorMessage = 'Failed to delete threshold.';
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   goHome(): void {

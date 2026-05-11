@@ -130,10 +130,10 @@ public class UserController {
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = SettingsDTO.class)))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Not authenticated")
     })
-    public ResponseEntity<?> updateSettings(@RequestBody java.util.List<com.backend.user.dto.SettingsDTO> requests,
-            HttpSession session) {
-        return ResponseEntity.ok(userService.updateSettings(requests, session));
-    }
+public ResponseEntity<?> updateSettings(@RequestBody SettingsDTO request, HttpSession session) {
+    return ResponseEntity.ok(userService.addSetting(request, session));
+}
+
 
     @PutMapping("/settings/{id}")
     @Operation(summary = "Update a single alert setting", description = "Updates a specific alert threshold setting by its ID.")
