@@ -8,9 +8,9 @@ export interface ThresholdSetting {
     alertType: AlertType;
 }
 
-export const TRAFFIC_METRICS = ['trafficDensity', 'avgSpeed'];
-export const AIR_METRICS = ['co', 'ozone'];
-export const LIGHT_METRICS = ['brightnessLevel', 'powerConsumption'];
+export const TRAFFIC_METRICS = ['Traffic Density', 'Average Speed'];
+export const AIR_METRICS = ['Carbon Monoxide', 'Ozone'];
+export const LIGHT_METRICS = ['Brightness Level', 'Power Consumption'];
 
 export const METRIC_CONSTRAINTS: Record<string, { min: number; max: number }> = {
   trafficDensity: { min: 0, max: 500 },

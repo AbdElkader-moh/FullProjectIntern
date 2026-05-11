@@ -52,7 +52,7 @@ export class Settings implements OnInit {
   }
 
   onMetricChange(): void {
-    this.currentConstraint = METRIC_CONSTRAINTS[this.metric];
+    this.currentConstraint = METRIC_CONSTRAINTS[this.metric] ?? {min: 0, max: 100};
     this.thresholdValue = this.currentConstraint.min;
   }
 
