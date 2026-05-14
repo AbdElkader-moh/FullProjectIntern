@@ -81,13 +81,17 @@ services:
 
   simulator:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.sim
+      context: ./simulator
+      dockerfile: Dockerfile
     container_name: internship-simulator
     environment:
-      SENSOR_HOST: internship-sensor
+      SENSOR_SERVICE_URL: http://sensor-service:8081
+      TRAFFIC_INTERVAL_SECONDS: 300
+      LIGHT_INTERVAL_SECONDS: 120
+      AIR_INTERVAL_SECONDS: 30
     depends_on:
-      - sensor-service
+      sensor-service:
+        condition: service_started
     networks:
       - project-net
 

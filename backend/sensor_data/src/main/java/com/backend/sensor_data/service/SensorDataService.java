@@ -9,8 +9,10 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class SensorDataService {
@@ -19,14 +21,18 @@ public class SensorDataService {
     private final TrafficDataRepository trafficRepo;
     private final AirPollutionDataRepository airRepo;
     private final StreetLightDataRepository lightRepo;
+    private final SettingsRepository settingsRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final NotificationRepository notificationRepository;
 
-    public SensorDataService(TrafficDataRepository trafficRepo, AirPollutionDataRepository airRepo, StreetLightDataRepository lightRepo) {
+    public SensorDataService(TrafficDataRepository trafficRepo, AirPollutionDataRepository airRepo, StreetLightDataRepository lightRepo, SettingsRepository settingsRepository, SimpMessagingTemplate messagingTemplate, NotificationRepository notificationRepository) {
         this.trafficRepo = trafficRepo;
         this.airRepo = airRepo;
         this.lightRepo = lightRepo;
+        this.settingsRepository = settingsRepository;
+        this.messagingTemplate = messagingTemplate;
+        this.notificationRepository = notificationRepository;
     }
 
     @Transactional
@@ -52,8 +58,8 @@ public class SensorDataService {
 
         trafficRepo.save(data);
 
-        /*checkAlerts("Traffic", "trafficDensity", data.getTrafficDensity(), data.getLocation());
-        checkAlerts("Traffic", "avgSpeed", data.getAvgSpeed(), data.getLocation());*/
+        checkAlerts("Traffic", "Traffic Density", data.getTrafficDensity(), data.getLocation());
+        checkAlerts("Traffic", "avgSpeed", data.getAvgSpeed(), data.getLocation());
 
         return data;
     }
@@ -85,8 +91,8 @@ public class SensorDataService {
 
         airRepo.save(data);
 
-        /*checkAlerts("Air", "co", data.getCo(), data.getLocation());
-        checkAlerts("Air", "ozone", data.getOzone(), data.getLocation());*/
+        checkAlerts("Air", "Carbon Monoxide", data.getCo(), data.getLocation());
+        checkAlerts("Air", "ozone", data.getOzone(), data.getLocation());
 
         return data;
     }
@@ -114,33 +120,45 @@ public class SensorDataService {
 
         lightRepo.save(data);
 
-        /*checkAlerts("Light", "brightnessLevel", data.getBrightnessLevel(), data.getLocation());
-        checkAlerts("Light", "powerConsumption", data.getPowerConsumption(), data.getLocation());*/
+        checkAlerts("Light", "Brightness Level", data.getBrightnessLevel(), data.getLocation());
+        checkAlerts("Light", "powerConsumption", data.getPowerConsumption(), data.getLocation());
 
         return data;
     }
 
     private void checkAlerts(String type, String metric, Number value, String location) {
-        String query = "SELECT threshold_value, alert_type, user_id FROM settings WHERE type = :type AND metric = :metric";
-        List<Object[]> settings = entityManager.createNativeQuery(query)
-            .setParameter("type", type)
-            .setParameter("metric", metric)
-            .getResultList();
+        List<Settings> matchingSettings = settingsRepository.findByTypeAndMetric(type, metric);
 
-        for (Object[] setting : settings) {
-            float threshold = ((Number) setting[0]).floatValue();
-            String alertType = (String) setting[1];
-            Long userId = ((Number) setting[2]).longValue();
-            
-            boolean trigger = false;
-            if ("above".equalsIgnoreCase(alertType) && value.floatValue() > threshold) { trigger = true; }
-            if ("below".equalsIgnoreCase(alertType) && value.floatValue() < threshold) { trigger = true; }
-            
-            if (trigger) {
-                logger.warn("[ALERT] {} {} ({}) exceeded threshold ({}) at Location: {}", type, metric, value, threshold, location);
-                Notification notification = new Notification(userId, type, metric, value.floatValue(), threshold, alertType, location);
-                entityManager.persist(notification);
-            }
+        for (Settings setting : matchingSettings) {
+            float threshold = setting.getThresholdValue();
+            String alertType = setting.getAlertType();
+            Long userId = setting.getUserId();
+            float actual = value.floatValue();
+
+            boolean triggered =
+                    ("above".equalsIgnoreCase(alertType) && actual > threshold) ||
+                            ("below".equalsIgnoreCase(alertType) && actual < threshold);
+
+            if (!triggered) continue;
+
+            logger.warn("[ALERT] {} {} ({}) exceeded threshold ({}) at {}",
+                    type, metric, actual, threshold, location);
+
+            Notification notification = new Notification(
+                    userId, type, metric, actual, threshold, alertType, location);
+            notificationRepository.save(notification);
+
+            messagingTemplate.convertAndSend(
+                    "/topic/alerts/" + userId,
+                    Map.of(
+                            "type", type,
+                            "metric", metric,
+                            "value", actual,
+                            "thresholdValue", threshold,
+                            "alertType", alertType,
+                            "location", location
+                    )
+            );
         }
     }
 }

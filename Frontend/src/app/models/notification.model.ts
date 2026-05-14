@@ -1,11 +1,10 @@
-export interface Notification {
+export interface NotificationItem {
   id: string;
-  userId: number;
   type: string;
   metric: string;
   value: number;
   thresholdValue: number;
-  alertType: 'above' | 'below';
+  alertType: string;
   location: string;
   isRead: boolean;
   createdAt: string;

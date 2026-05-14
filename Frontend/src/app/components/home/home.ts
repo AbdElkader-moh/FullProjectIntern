@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, UserResponse } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -11,25 +12,34 @@ import { CommonModule } from '@angular/common';
 })
 export class Home implements OnInit {
   user: UserResponse | null = null;
+  unreadCount = 0;
 
   constructor(
     private authService: AuthService,
-    private router: Router
-  ) { }
+    private notificationService: NotificationService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  ngOnInit(): void {
-    // Guard already called getProfile() — use the cached user synchronously
-    if (this.authService.currentUser) {
-      this.user = this.authService.currentUser;
-      return;
-    }
-
-    // Fallback: fetch if cache is empty (e.g. hard refresh)
+ ngOnInit(): void {
+  if (this.authService.currentUser) {
+    this.user = this.authService.currentUser;
+  } else {
     this.authService.getProfile().subscribe({
-      next: (user) => (this.user = user),
+      next: (user) => {
+        this.user = user;
+        this.cdr.detectChanges();
+      },
       error: () => this.router.navigate(['/signin']),
     });
   }
+
+  this.notificationService.unreadCount$.subscribe((count: number) => {
+    this.unreadCount = count;
+    this.cdr.detectChanges();
+  });
+}
+
 
   logout(): void {
     this.authService.logout().subscribe({

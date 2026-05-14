@@ -1,36 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Notification } from '../models/notification.model';
-import { ThresholdSetting } from '../models/threshold.model';
-
+import { NotificationItem } from '../models/notification.model';
+import { BehaviorSubject } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private readonly baseUrl = '/api';
-
+  private readonly apiUrl = '/api/users/notifications';
+  private readonly httpOptions = { withCredentials: true };
+  private _unreadCount = new BehaviorSubject<number>(0);
+  unreadCount$ = this._unreadCount.asObservable();
   constructor(private http: HttpClient) {}
 
-  getNotifications(): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`${this.baseUrl}/notifications`);
+  getNotifications(): Observable<NotificationItem[]> {
+    return this.http.get<NotificationItem[]>(this.apiUrl, this.httpOptions);
   }
 
-  markAsRead(id: string): Observable<void> {
-    return this.http.patch<void>(`${this.baseUrl}/notifications/${id}/read`, {});
+  markAsRead(id: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}/read`, {}, this.httpOptions);
   }
 
-  markAllAsRead(): Observable<void> {
-    return this.http.patch<void>(`${this.baseUrl}/notifications/read-all`, {});
+  markAllAsRead(): Observable<any> {
+    return this.http.put(`${this.apiUrl}/read-all`, {}, this.httpOptions);
   }
 
-  saveThreshold(setting: ThresholdSetting): Observable<any> {
-    return this.http.post(`${this.baseUrl}/settings/threshold`, setting);
+  deleteNotification(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, this.httpOptions);
   }
+ setUnreadCount(count: number): void {
+  this._unreadCount.next(count);
+}
 
-  getThresholds(): Observable<ThresholdSetting[]> {
-    return this.http.get<ThresholdSetting[]>(`${this.baseUrl}/settings/threshold`);
-  }
-
-  deleteThreshold(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/settings/threshold/${id}`);
-  }
+incrementUnread(): void {
+  this._unreadCount.next(this._unreadCount.value + 1);
+}
 }

@@ -21,7 +21,9 @@
     <button class="mark-all-btn" (click)="markAllRead()">Mark all as read</button>
     }
   </div>
-
+  @if (alertBanner) {
+  <div class="live-alert-banner">{{ alertBanner }}</div>
+}
   @if (isLoading) {
   <div class="loading">Loading...</div>
   }

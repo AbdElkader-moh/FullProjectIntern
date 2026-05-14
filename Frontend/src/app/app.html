@@ -1,1 +1,9 @@
+@if (alertBanner) {
+  <div class="global-alert-banner">
+    <span>{{ alertBanner }}</span>
+    <button class="global-alert-ok" (click)="dismissAlert()">OK</button>
+  </div>
+}
+
+<router-outlet />
 <router-outlet />
