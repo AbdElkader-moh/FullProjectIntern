@@ -117,15 +117,15 @@
         @if (isChangePasswordVisible) {
           <div class="security-section">
             <h3 class="section-title">Change Password</h3>
-            
+
             <div class="password-form">
               <div class="input-group">
                 <label for="oldPassword">Old Password</label>
                 <div class="input-with-icon">
-                  <input 
+                  <input
                     id="oldPassword"
-                    type="password" 
-                    [(ngModel)]="oldPassword" 
+                    type="password"
+                    [(ngModel)]="oldPassword"
                     placeholder="Enter old password"
                     class="premium-input"
                   />
@@ -135,10 +135,10 @@
               <div class="input-group">
                 <label for="newPassword">New Password</label>
                 <div class="input-with-icon">
-                  <input 
+                  <input
                     id="newPassword"
-                    type="password" 
-                    [(ngModel)]="newPassword" 
+                    type="password"
+                    [(ngModel)]="newPassword"
                     placeholder="Enter new password"
                     class="premium-input"
                   />
@@ -148,10 +148,10 @@
               <div class="input-group">
                 <label for="confirmPassword">Confirm Password</label>
                 <div class="input-with-icon">
-                  <input 
+                  <input
                     id="confirmPassword"
-                    type="password" 
-                    [(ngModel)]="confirmPassword" 
+                    type="password"
+                    [(ngModel)]="confirmPassword"
                     placeholder="Confirm new password"
                     class="premium-input"
                   />
@@ -165,8 +165,8 @@
                 <p class="password-success">{{ passwordMessage }}</p>
               }
 
-              <button 
-                class="btn-save-password" 
+              <button
+                class="btn-save-password"
                 (click)="changePassword()"
                 [disabled]="isUpdatingPassword"
               >
