@@ -18,3 +18,4 @@
 .env
 secrets/
 **/*.log
+bug_report.md

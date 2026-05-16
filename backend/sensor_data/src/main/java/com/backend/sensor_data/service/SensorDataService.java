@@ -43,10 +43,16 @@ public class SensorDataService {
         if (dto.getCongestionLevel() == null) {
             throw new IllegalArgumentException("Invalid congestion level: cannot be null");
         }
-        if (dto.getTrafficDensity() == null || dto.getTrafficDensity() < 0 || dto.getTrafficDensity() > 500) {
+        if (dto.getTrafficDensity() == null) {
+            throw new IllegalArgumentException("trafficDensity is required");
+        }
+        if (dto.getTrafficDensity() < 0 || dto.getTrafficDensity() > 500) {
             throw new IllegalArgumentException("Invalid traffic density: must be between 0 and 500");
         }
-        if (dto.getAvgSpeed() == null || dto.getAvgSpeed() < 0 || dto.getAvgSpeed() > 120) {
+        if (dto.getAvgSpeed() == null) {
+            throw new IllegalArgumentException("avgSpeed is required");
+        }
+        if (dto.getAvgSpeed() < 0 || dto.getAvgSpeed() > 120) {
             throw new IllegalArgumentException("Invalid average speed: must be between 0 and 120");
         }
 
@@ -72,10 +78,16 @@ public class SensorDataService {
         if (dto.getPollutionLevel() == null) {
             throw new IllegalArgumentException("Invalid pollution level: cannot be null");
         }
-        if (dto.getCo() == null || dto.getCo() < 0 || dto.getCo() > 50) {
+        if (dto.getCo() == null) {
+            throw new IllegalArgumentException("co is required");
+        }
+        if (dto.getCo() < 0 || dto.getCo() > 50) {
             throw new IllegalArgumentException("Invalid CO level: must be between 0 and 50");
         }
-        if (dto.getOzone() == null || dto.getOzone() < 0 || dto.getOzone() > 300) {
+        if (dto.getOzone() == null) {
+            throw new IllegalArgumentException("ozone is required");
+        }
+        if (dto.getOzone() < 0 || dto.getOzone() > 300) {
             throw new IllegalArgumentException("Invalid ozone level: must be between 0 and 300");
         }
 
@@ -105,10 +117,16 @@ public class SensorDataService {
         if (dto.getStatus() == null) {
             throw new IllegalArgumentException("Invalid status: cannot be null");
         }
-        if (dto.getBrightnessLevel() == null || dto.getBrightnessLevel() < 0 || dto.getBrightnessLevel() > 100) {
+        if (dto.getBrightnessLevel() == null) {
+            throw new IllegalArgumentException("brightnessLevel is required");
+        }
+        if (dto.getBrightnessLevel() < 0 || dto.getBrightnessLevel() > 100) {
             throw new IllegalArgumentException("Invalid brightness level: must be between 0 and 100");
         }
-        if (dto.getPowerConsumption() == null || dto.getPowerConsumption() < 0 || dto.getPowerConsumption() > 5000) {
+        if (dto.getPowerConsumption() == null) {
+            throw new IllegalArgumentException("powerConsumption is required");
+        }
+        if (dto.getPowerConsumption() < 0 || dto.getPowerConsumption() > 5000) {
             throw new IllegalArgumentException("Invalid power consumption: must be between 0 and 5000");
         }
 
