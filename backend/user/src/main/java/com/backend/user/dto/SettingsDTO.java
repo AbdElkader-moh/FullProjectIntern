@@ -81,7 +81,7 @@ public class SettingsDTO {
             case "Traffic" -> {
                 switch (metric) {
                     case "trafficDensity", "Traffic Density" -> { min = 0; max = 500; }
-                    case "avgSpeed", "Avg Speed"             -> { min = 0; max = 120; }
+                    case "avgSpeed", "Avg Speed", "Average Speed"             -> { min = 0; max = 120; }
                     default -> throw new IllegalArgumentException("Unknown Traffic metric: " + metric);
                 }
             }
