@@ -2453,6 +2453,165 @@
           "response": []
         },
         {
+          "name": "TC-SEN-026 | POST /air — CO above value",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has validation error\", function () {\r",
+                  "    const body = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(body).to.have.property(\"error\");\r",
+                  "    pm.expect(body).to.have.property(\"details\");\r",
+                  "\r",
+                  "    pm.expect(body.error).to.be.a(\"string\").and.not.empty;\r",
+                  "    pm.expect(body.details).to.be.a(\"string\").and.not.empty;\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"location\": \"Downtown\",\r\n  \"pm2_5\": 22.5,\r\n  \"pm10\": 40.0,\r\n  \"co\": 60,\r\n  \"no2\": 0.8,\r\n  \"so2\": 0.4,\r\n  \"ozone\": 0.6,\r\n  \"pollutionLevel\": \"Good\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/air",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "air"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEN-027 | POST /air — Ozone above value",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has validation error\", function () {\r",
+                  "    const body = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(body).to.have.property(\"error\");\r",
+                  "    pm.expect(body).to.have.property(\"details\");\r",
+                  "\r",
+                  "    pm.expect(body.error).to.be.a(\"string\").and.not.empty;\r",
+                  "    pm.expect(body.details).to.be.a(\"string\").and.not.empty;\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"location\": \"Downtown\",\r\n  \"pm2_5\": 22.5,\r\n  \"pm10\": 40.0,\r\n  \"co\": -1,\r\n  \"no2\": 0.8,\r\n  \"so2\": 0.4,\r\n  \"ozone\": 0.6,\r\n  \"pollutionLevel\": \"Good\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/air",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "air"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEN-028| POST /air — Ozone below value",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has validation error\", function () {\r",
+                  "    const body = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(body).to.have.property(\"error\");\r",
+                  "    pm.expect(body).to.have.property(\"details\");\r",
+                  "\r",
+                  "    pm.expect(body.error).to.be.a(\"string\").and.not.empty;\r",
+                  "    pm.expect(body.details).to.be.a(\"string\").and.not.empty;\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"location\": \"Downtown\",\r\n  \"pm2_5\": 22.5,\r\n  \"pm10\": 40.0,\r\n  \"co\": -1,\r\n  \"no2\": 0.8,\r\n  \"so2\": 0.4,\r\n  \"ozone\": 0.6,\r\n  \"pollutionLevel\": \"Good\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/air",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "air"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "TC-SEN-023 | Missing CO",
           "event": [
             {
