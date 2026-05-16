@@ -38,12 +38,12 @@ const SENSOR_TYPE_MAP: Record<SensorType, string> = {
 export class Settings implements OnInit {
   // ── Form state ────────────────────────────────────────────────
   sensorType: SensorType = 'traffic';
-  metric: string = 'trafficDensity';
+  metric: string = 'Traffic Density';
   thresholdValue: number = 0;
   alertType: AlertType = 'above';
 
   availableMetrics: string[] = TRAFFIC_METRICS;
-  currentConstraint = METRIC_CONSTRAINTS['trafficDensity'];
+  currentConstraint = METRIC_CONSTRAINTS['Traffic Density'];
 
   // ── List state ────────────────────────────────────────────────
   savedThresholds: SettingsDTO[] = [];
@@ -76,17 +76,23 @@ export class Settings implements OnInit {
   // ── Form helpers ──────────────────────────────────────────────
 
   onSensorTypeChange(): void {
-    if (this.sensorType === 'traffic') this.availableMetrics = TRAFFIC_METRICS;
-    else if (this.sensorType === 'air') this.availableMetrics = AIR_METRICS;
-    else this.availableMetrics = LIGHT_METRICS;
+  if (this.sensorType === 'traffic') this.availableMetrics = TRAFFIC_METRICS;
+  else if (this.sensorType === 'air') this.availableMetrics = AIR_METRICS;
+  else this.availableMetrics = LIGHT_METRICS;
 
-    this.metric = this.availableMetrics[0];
+  this.metric = this.availableMetrics[0];
+
+  setTimeout(() => {        // ← wait for Angular to render new <option>s
     this.onMetricChange();
-  }
+    this.cdr.detectChanges();
+  });
+}
 
   onMetricChange(): void {
-    this.currentConstraint = METRIC_CONSTRAINTS[this.metric] ?? { min: 0, max: 100 };
-    this.thresholdValue = this.currentConstraint.min;
+  console.log('metric:', this.metric);
+  console.log('constraint:', METRIC_CONSTRAINTS[this.metric]);
+  this.currentConstraint = METRIC_CONSTRAINTS[this.metric] ?? { min: 0, max: 100 };
+  this.thresholdValue = this.currentConstraint.min;
   }
 
   // ── Load ──────────────────────────────────────────────────────

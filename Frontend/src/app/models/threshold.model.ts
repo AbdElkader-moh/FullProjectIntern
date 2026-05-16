@@ -13,10 +13,10 @@ export const AIR_METRICS = ['Carbon Monoxide', 'Ozone'];
 export const LIGHT_METRICS = ['Brightness Level', 'Power Consumption'];
 
 export const METRIC_CONSTRAINTS: Record<string, { min: number; max: number }> = {
-  trafficDensity: { min: 0, max: 500 },
-  avgSpeed: { min: 0, max: 120 },
-  co: { min: 0, max: 50 },
-  ozone: { min: 0, max: 300 },
-  brightnessLevel: { min: 0, max: 100 },
-  powerConsumption: { min: 0, max: 5000 },
+  'Traffic Density': { min: 0, max: 500 },
+  'Average Speed': { min: 0, max: 120 },
+  'Carbon Monoxide': { min: 0, max: 50 },
+  'Ozone': { min: 0, max: 300 },
+  'Brightness Level': { min: 0, max: 100 },
+  'Power Consumption': { min: 0, max: 5000 },
 };
