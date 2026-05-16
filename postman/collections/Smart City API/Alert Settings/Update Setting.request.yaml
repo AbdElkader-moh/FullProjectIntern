@@ -1,0 +1,17 @@
+$kind: http-request
+name: Update Setting
+method: PUT
+url: 'http://localhost:8080/api/users/settings/{{settingId}}'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "type": "Traffic",
+      "metric": "trafficDensity",
+      "thresholdValue": 90.0,
+      "alertType": "above"
+    }

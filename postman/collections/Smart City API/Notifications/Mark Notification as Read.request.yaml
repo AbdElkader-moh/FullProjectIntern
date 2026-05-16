@@ -1,0 +1,5 @@
+$kind: http-request
+name: Mark Notification as Read
+method: PUT
+url: 'http://localhost:8080/api/users/notifications/{{notificationId}}/read'
+order: 2000

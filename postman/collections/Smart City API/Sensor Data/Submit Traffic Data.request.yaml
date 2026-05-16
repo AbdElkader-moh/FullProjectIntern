@@ -1,0 +1,17 @@
+$kind: http-request
+name: Submit Traffic Data
+method: POST
+url: 'http://localhost:8081/api/sensors/traffic'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "location": "Main Street",
+      "trafficDensity": 75,
+      "avgSpeed": 45.5,
+      "congestionLevel": "Moderate"
+    }

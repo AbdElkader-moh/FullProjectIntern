@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="SmartCity Frontend Test Suite" verbose="1" parallel="false">
+
+    <listeners>
+        <listener class-name="com.internship.listeners.TestListener"/>
+        <listener class-name="com.internship.listeners.ExtentReportListener"/>
+    </listeners>
+
+    <!-- Sprint 1: Authentication Tests -->
+    <test name="SignUp Tests">
+        <classes>
+            <class name="com.internship.tests.SignUpTest"/>
+        </classes>
+    </test>
+
+    <test name="SignIn Tests">
+        <classes>
+            <class name="com.internship.tests.SignInTest"/>
+        </classes>
+    </test>
+
+    <!-- Sprint 1: Core Page Tests -->
+    <test name="Profile Tests">
+        <classes>
+            <class name="com.internship.tests.ProfileTest"/>
+        </classes>
+    </test>
+
+    <test name="Home Tests">
+        <classes>
+            <class name="com.internship.tests.HomeTest"/>
+        </classes>
+    </test>
+
+    <!-- Sprint 2: Settings & Notifications Tests -->
+    <test name="Settings Tests">
+        <classes>
+            <class name="com.internship.tests.SettingsTest"/>
+        </classes>
+    </test>
+
+    <test name="Notifications Tests">
+        <classes>
+            <class name="com.internship.tests.NotificationsTest"/>
+        </classes>
+    </test>
+
+    <!-- Full Regression -->
+    <!--
+    <test name="Full Regression">
+        <classes>
+            <class name="com.internship.tests.SignUpTest"/>
+            <class name="com.internship.tests.SignInTest"/>
+            <class name="com.internship.tests.ProfileTest"/>
+            <class name="com.internship.tests.HomeTest"/>
+            <class name="com.internship.tests.SettingsTest"/>
+            <class name="com.internship.tests.NotificationsTest"/>
+        </classes>
+    </test>
+    -->
+</suite>

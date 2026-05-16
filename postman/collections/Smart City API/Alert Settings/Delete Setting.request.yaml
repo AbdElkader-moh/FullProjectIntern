@@ -1,0 +1,5 @@
+$kind: http-request
+name: Delete Setting
+method: DELETE
+url: 'http://localhost:8080/api/users/settings/{{settingId}}'
+order: 4000
