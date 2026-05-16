@@ -41,4 +41,5 @@ public class Settings {
     public void setAlertType(String alertType) { this.alertType = alertType; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
 }

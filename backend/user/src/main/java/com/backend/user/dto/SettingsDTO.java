@@ -70,4 +70,46 @@ public class SettingsDTO {
     public void setAlertType(String alertType) {
         this.alertType = alertType;
     }
+    public void validateThreshold() {
+        validateThreshold(this.type, this.metric);
+    }
+
+    public void validateThreshold(String type, String metric) {
+        float min, max;
+
+        switch (type) {
+            case "Traffic" -> {
+                switch (metric) {
+                    case "trafficDensity", "Traffic Density" -> { min = 0; max = 500; }
+                    case "avgSpeed", "Avg Speed"             -> { min = 0; max = 120; }
+                    default -> throw new IllegalArgumentException("Unknown Traffic metric: " + metric);
+                }
+            }
+            case "Air" -> {
+                switch (metric) {
+                    case "co", "Carbon Monoxide" -> { min = 0; max = 50;  }
+                    case "ozone", "Ozone"        -> { min = 0; max = 300; }
+                    default -> throw new IllegalArgumentException("Unknown Air metric: " + metric);
+                }
+            }
+            case "Light" -> {
+                switch (metric) {
+                    case "brightnessLevel", "Brightness Level"     -> { min = 0; max = 100;  }
+                    case "powerConsumption", "Power Consumption"   -> { min = 0; max = 5000; }
+                    default -> throw new IllegalArgumentException("Unknown Light metric: " + metric);
+                }
+            }
+            default -> throw new IllegalArgumentException("Unknown sensor type: " + type);
+        }
+
+        if (thresholdValue == null || thresholdValue < min || thresholdValue > max) {
+            throw new IllegalArgumentException(
+                    "Threshold for " + metric + " must be between " + (int) min + " and " + (int) max + "."
+            );
+        }
+
+        if (!"above".equalsIgnoreCase(alertType) && !"below".equalsIgnoreCase(alertType)) {
+            throw new IllegalArgumentException("alertType must be 'above' or 'below'.");
+        }
+    }
 }

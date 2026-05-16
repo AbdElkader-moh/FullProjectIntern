@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.io.IOException;
 import java.util.Map;
@@ -44,6 +45,13 @@ public class UserServiceImpl implements UserService {
         this.passwordEncoder = new BCryptPasswordEncoder();
         this.cloudinary = cloudinary;
     }
+    // Allowed metrics per sensor type (BUG-SET-001, BUG-SET-005)
+    private static final Map<String, Set<String>> VALID_METRICS = Map.of(
+            "Traffic", Set.of("Traffic Density", "Average Speed"),
+            "Air", Set.of("Carbon Monoxide", "Ozone"),
+            "Light", Set.of("Brightness Level", "Power Consumption")
+    );
+    private static final Set<String> VALID_ALERT_TYPES = Set.of("above", "below");
 
     @Override
     public UserResponse signup(SignupRequest request) {
@@ -73,16 +81,14 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Could not upload profile picture to Cloudinary.");
         }
 
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters long.");
+        }
+
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
 
-        /*settingsRepository.save(new Settings(savedUser.getId(), "Traffic", "trafficDensity", 200f, "above"));
-        settingsRepository.save(new Settings(savedUser.getId(), "Traffic", "avgSpeed", 60f, "above"));
-        settingsRepository.save(new Settings(savedUser.getId(), "Air", "co", 20f, "above"));
-        settingsRepository.save(new Settings(savedUser.getId(), "Air", "ozone", 100f, "above"));
-        settingsRepository.save(new Settings(savedUser.getId(), "Light", "brightnessLevel", 80f, "below"));
-        settingsRepository.save(new Settings(savedUser.getId(), "Light", "powerConsumption", 3000f, "above"));*/
 
         return mapToResponse(savedUser);
     }
@@ -174,6 +180,16 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("Old password is incorrect.");
         }
 
+        // ✅ NEW: Check new password length
+        if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
+            throw new IllegalArgumentException("New password must be at least 6 characters long.");
+        }
+
+        // ✅ NEW: Check new password is different from old one
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("New password must be different from the old password.");
+        }
+
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }
@@ -192,7 +208,7 @@ public class UserServiceImpl implements UserService {
 public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
     Long userId = (Long) session.getAttribute("userId");
     if (userId == null) throw new UnauthorizedException("You are not logged in.");
-
+    req.validateThreshold();
     Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
     Settings saved = settingsRepository.save(newSettings);
     return new SettingsDTO(saved.getId(), saved.getType(), saved.getMetric(), saved.getThresholdValue(), saved.getAlertType());
@@ -237,6 +253,7 @@ public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
         if (!settings.getUserId().equals(userId)) {
             throw new UnauthorizedException("You are not authorized to update this setting.");
         }
+        request.validateThreshold(settings.getType(), settings.getMetric()); // ← uses DB values
         settings.setThresholdValue(request.getThresholdValue());
         settings.setAlertType(request.getAlertType());
         Settings saved = settingsRepository.save(settings);
@@ -312,4 +329,44 @@ public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
         }
         notificationRepository.deleteById(id);
     }
+    @Override
+    public String validateSettingsRequest(SettingsDTO request) {
+        // BUG-SET-005 / BUG-SET-008: type must not be null or empty
+        if (request.getType() == null || request.getType().trim().isEmpty()) {
+            return "type is required";
+        }
+        // BUG-SET-003 / BUG-SET-008: metric must not be null or empty
+        if (request.getMetric() == null || request.getMetric().trim().isEmpty()) {
+            return "metric is required";
+        }
+        // BUG-SET-004 / BUG-SET-008: alertType must not be null or empty
+        if (request.getAlertType() == null || request.getAlertType().trim().isEmpty()) {
+            return "alertType is required";
+        }
+        // BUG-SET-006: thresholdValue must not be null
+        if (request.getThresholdValue() == null) {
+            return "thresholdValue is required";
+        }
+        // BUG-SET-007: thresholdValue must be non-negative
+        if (request.getThresholdValue() < 0) {
+            return "thresholdValue must be a non-negative number";
+        }
+        // BUG-SET-005: type must be a supported sensor type
+        if (!VALID_METRICS.containsKey(request.getType())) {
+            return "Invalid type: must be one of " + VALID_METRICS.keySet();
+        }
+        // BUG-SET-001: metric must be valid for the given type
+        Set<String> allowedMetrics = VALID_METRICS.get(request.getType());
+        if (!allowedMetrics.contains(request.getMetric())) {
+            return "Invalid metric '" + request.getMetric() + "' for type '" + request.getType()
+                    + "'. Allowed values: " + allowedMetrics;
+        }
+        // BUG-SET-002: alertType must be "above" or "below"
+        if (!VALID_ALERT_TYPES.contains(request.getAlertType())) {
+            return "Invalid alertType '" + request.getAlertType()
+                    + "'. Allowed values: " + VALID_ALERT_TYPES;
+        }
+        return null; // valid
+    }
+
 }
