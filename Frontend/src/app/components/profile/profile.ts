@@ -17,7 +17,7 @@ export class Profile implements OnInit {
   isLoading = true;
   errorMessage = '';
   isUploadingPhoto = false;
-  
+
   // Password change fields
   oldPassword = '';
   newPassword = '';
@@ -25,7 +25,7 @@ export class Profile implements OnInit {
   isUpdatingPassword = false;
   passwordMessage = '';
   passwordError = '';
-  
+
   // Visibility toggles
   isChangePasswordVisible = false;
 
@@ -82,7 +82,7 @@ export class Profile implements OnInit {
         this.cdr.detectChanges();
       },
     });
-    
+
     input.value = '';
   }
 

@@ -1,0 +1,11 @@
+$kind: http-request
+name: Update Profile Picture
+method: PUT
+url: 'http://localhost:8080/api/users/me'
+order: 4000
+body:
+  type: formdata
+  content:
+    - key: profilePicture
+      type: file
+      src: ''

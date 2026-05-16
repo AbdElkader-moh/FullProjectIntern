@@ -1,0 +1,11 @@
+# Use this workspace to collaborate
+workspace:
+  id: d4506775-eaf7-44c0-82ce-38e6a4b01bd3
+
+localResources:
+  collections:
+    - ..\Backend_Tests.postman_collection.json
+
+cloudResources:
+  collections:
+    ..\postman\collections\Smart City API: 54841806-b26f33bf-af98-46bc-a67d-32df57a2a28d

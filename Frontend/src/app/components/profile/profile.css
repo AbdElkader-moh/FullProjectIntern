@@ -342,7 +342,6 @@
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-
 .btn-save-password {
   margin-top: 0.5rem;
   background: var(--accent-gradient);
@@ -405,4 +404,3 @@
   flex: 1;
   line-height: 1.4;
 }
-

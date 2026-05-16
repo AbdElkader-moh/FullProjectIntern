@@ -1,0 +1,9 @@
+This file is intentionally a placeholder.
+Replace this with a real PNG image (e.g., copy any small PNG here) named test-image.png
+before running TC-002, TC-003, TC-004, TC-005, TC-012, TC-013, TC-027.
+
+If running locally, update config.properties:
+  signup.image.path=src/test/resources/test-image.png
+
+Or use an absolute path:
+  signup.image.path=C:/Users/youruser/Pictures/sample.png

@@ -1,0 +1,5 @@
+$kind: http-request
+name: Logout
+method: POST
+url: 'http://localhost:8080/api/users/logout'
+order: 5000

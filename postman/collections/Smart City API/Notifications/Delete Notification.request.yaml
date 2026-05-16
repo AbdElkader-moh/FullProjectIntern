@@ -1,0 +1,5 @@
+$kind: http-request
+name: Delete Notification
+method: DELETE
+url: 'http://localhost:8080/api/users/notifications/{{notificationId}}'
+order: 4000
