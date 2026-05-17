@@ -9,23 +9,47 @@
 }
 
 :root {
-  --bg-dark: #0a0a1a;
-  --bg-card: rgba(255, 255, 255, 0.05);
-  --bg-card-hover: rgba(255, 255, 255, 0.08);
-  --border-glass: rgba(255, 255, 255, 0.1);
-  --text-primary: #f0f0f5;
-  --text-secondary: #a0a0b8;
-  --text-muted: #6b6b80;
-  --accent-primary: #6c5ce7;
-  --accent-secondary: #a29bfe;
-  --accent-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #fd79a8 100%);
-  --danger: #ff6b6b;
-  --success: #00cec9;
-  --shadow-glow: 0 0 40px rgba(108, 92, 231, 0.15);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* ── Backgrounds ── */
+  --bg-dark: #0a0a1a;        /* page background */
+  --bg-card: rgba(255, 255, 255, 0.05);       /* glass card fill */
+  --bg-card-hover: rgba(255, 255, 255, 0.08); /* glass card hover */
+
+  /* ── Borders ── */
+  --border-glass: rgba(255, 255, 255, 0.1); /* glass border */
+
+  /* ── Text ── */
+  --text-primary: #f0f0f5;   /* headings / primary content */
+  --text-secondary: #a0a0b8; /* subtitles / labels */
+  --text-muted: #6b6b80;     /* hints / placeholders */
+
+  /* ── Accent ── */
+  --accent-primary: #6c5ce7;                                                            /* primary action color */
+  --accent-secondary: #a29bfe;                                                          /* lighter accent */
+  --accent-gradient: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #fd79a8 100%);   /* gradient for buttons / avatars */
+
+  /* ── Semantic ── */
+  --danger: #ff6b6b;  /* destructive actions */
+  --success: #00cec9; /* success states */
+
+  /* ── Misc ── */
+  --shadow-glow: 0 0 40px rgba(108, 92, 231, 0.15); /* purple glow shadow */
+  --radius-sm: 8px;   /* small corners */
+  --radius-md: 12px;  /* medium corners */
+  --radius-lg: 20px;  /* large corners / cards */
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* smooth easing */
+
+   --bg: #0a0a1a;
+  --surface: #151820;
+  --surface-2: #1c2030;
+  --border: #2a2f42;
+  --accent: #6c5ce7;
+  --accent-dim: rgba(108, 92, 231, 0.15);
+  --text: #f0f0f5;
+  --error: #ff6b6b;
+  --warning: #fdcb6e;
+  --traffic: #f59e0b;
+  --air: #34d399;
+  --light: #a78bfa;
 }
 
 html,

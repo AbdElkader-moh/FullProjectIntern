@@ -53,25 +53,23 @@
   gap: 0.75rem;
 }
 
+
 .btn-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border-radius: var(--radius-sm);
-  padding: 0.55rem 1.1rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  font-family: inherit;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
   cursor: pointer;
-  transition: var(--transition);
+  padding: 8px;
+  border-radius: var(--radius-sm);
   text-decoration: none;
-  border: 1px solid transparent;
+  transition: var(--transition);
 }
 
-.btn-profile {
-  background: rgba(108, 92, 231, 0.1);
-  border-color: rgba(108, 92, 231, 0.2);
-  color: var(--accent-secondary);
+.btn-header span {
+  display: none;
 }
 
 .btn-profile:hover {

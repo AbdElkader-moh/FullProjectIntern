@@ -2,9 +2,9 @@
   <div class="notif-header">
     <div class="notif-header-left">
       <button class="btn-back" (click)="goHome()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6" />
+          <path d="M15 18l-6-6 6-6" />
         </svg>
         <span>Back</span>
       </button>
@@ -23,7 +23,7 @@
   </div>
   @if (alertBanner) {
   <div class="live-alert-banner">{{ alertBanner }}</div>
-}
+  }
   @if (isLoading) {
   <div class="loading">Loading...</div>
   }
