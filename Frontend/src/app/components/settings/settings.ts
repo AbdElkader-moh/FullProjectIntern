@@ -115,6 +115,7 @@ export class Settings implements OnInit {
 onSubmit(): void {
   this.successMessage = '';
   this.errorMessage = '';
+  
 
   const { min, max } = this.currentConstraint;
   if (this.thresholdValue < min || this.thresholdValue > max) {
@@ -131,6 +132,8 @@ onSubmit(): void {
     thresholdValue: this.thresholdValue,
     alertType: this.alertType,
   };
+
+  console.log('payload:', JSON.stringify(payload));
 
   this.http
     .post<SettingsDTO>(this.apiUrl, payload, this.httpOptions)

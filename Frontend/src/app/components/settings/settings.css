@@ -2,7 +2,6 @@
   font-family: 'Sora', sans-serif;
   display: block;
   min-height: 100vh;
-  background: var(--bg);
   color: var(--text);
 }
 
