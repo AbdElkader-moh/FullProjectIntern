@@ -21,4 +21,6 @@ public interface UserService {
     void markNotificationAsRead(String id, HttpSession session);
     void markAllNotificationsAsRead(HttpSession session);
     void deleteNotification(String id, HttpSession session);
+
+    String validateSettingsRequest(SettingsDTO request);
 }

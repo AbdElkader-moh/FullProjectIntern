@@ -65,7 +65,7 @@ public class SensorDataService {
         trafficRepo.save(data);
 
         checkAlerts("Traffic", "Traffic Density", data.getTrafficDensity(), data.getLocation());
-        checkAlerts("Traffic", "avgSpeed", data.getAvgSpeed(), data.getLocation());
+        checkAlerts("Traffic", "Average Speed", data.getAvgSpeed(), data.getLocation());
 
         return data;
     }
@@ -139,7 +139,7 @@ public class SensorDataService {
         lightRepo.save(data);
 
         checkAlerts("Light", "Brightness Level", data.getBrightnessLevel(), data.getLocation());
-        checkAlerts("Light", "powerConsumption", data.getPowerConsumption(), data.getLocation());
+        checkAlerts("Light", "Power Consumption", data.getPowerConsumption(), data.getLocation());
 
         return data;
     }

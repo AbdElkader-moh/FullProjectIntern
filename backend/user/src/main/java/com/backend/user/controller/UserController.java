@@ -28,15 +28,9 @@ public class UserController {
 
     private final UserService userService;
 
-    // Allowed metrics per sensor type (BUG-SET-001, BUG-SET-005)
-    private static final Map<String, Set<String>> VALID_METRICS = Map.of(
-            "Traffic", Set.of("trafficDensity", "avgSpeed"),
-            "Air", Set.of("co", "ozone"),
-            "Light", Set.of("brightnessLevel", "powerConsumption")
-    );
+
 
     // Allowed alert types (BUG-SET-002)
-    private static final Set<String> VALID_ALERT_TYPES = Set.of("above", "below");
 
     public UserController(UserService userService) {
         this.userService = userService;
@@ -45,44 +39,6 @@ public class UserController {
     /**
      * Validates a SettingsDTO and returns an error message if invalid, or null if valid.
      */
-    private String validateSettingsRequest(SettingsDTO request) {
-        // BUG-SET-005 / BUG-SET-008: type must not be null or empty
-        if (request.getType() == null || request.getType().trim().isEmpty()) {
-            return "type is required";
-        }
-        // BUG-SET-003 / BUG-SET-008: metric must not be null or empty
-        if (request.getMetric() == null || request.getMetric().trim().isEmpty()) {
-            return "metric is required";
-        }
-        // BUG-SET-004 / BUG-SET-008: alertType must not be null or empty
-        if (request.getAlertType() == null || request.getAlertType().trim().isEmpty()) {
-            return "alertType is required";
-        }
-        // BUG-SET-006: thresholdValue must not be null
-        if (request.getThresholdValue() == null) {
-            return "thresholdValue is required";
-        }
-        // BUG-SET-007: thresholdValue must be non-negative
-        if (request.getThresholdValue() < 0) {
-            return "thresholdValue must be a non-negative number";
-        }
-        // BUG-SET-005: type must be a supported sensor type
-        if (!VALID_METRICS.containsKey(request.getType())) {
-            return "Invalid type: must be one of " + VALID_METRICS.keySet();
-        }
-        // BUG-SET-001: metric must be valid for the given type
-        Set<String> allowedMetrics = VALID_METRICS.get(request.getType());
-        if (!allowedMetrics.contains(request.getMetric())) {
-            return "Invalid metric '" + request.getMetric() + "' for type '" + request.getType()
-                    + "'. Allowed values: " + allowedMetrics;
-        }
-        // BUG-SET-002: alertType must be "above" or "below"
-        if (!VALID_ALERT_TYPES.contains(request.getAlertType())) {
-            return "Invalid alertType '" + request.getAlertType()
-                    + "'. Allowed values: " + VALID_ALERT_TYPES;
-        }
-        return null; // valid
-    }
 
     @PostMapping("/signup")
     @Operation(summary = "Register a new user", description = "Creates a new user account and automatically logs them in. Accepts multipart form data for profile picture upload.")
@@ -186,7 +142,7 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Not authenticated")
     })
     public ResponseEntity<?> updateSettings(@RequestBody SettingsDTO request, HttpSession session) {
-        String validationError = validateSettingsRequest(request);
+        String validationError = userService.validateSettingsRequest(request);
         if (validationError != null) {
             return ResponseEntity.badRequest().body(Map.of("message", validationError));
         }
@@ -206,6 +162,7 @@ public class UserController {
             @Parameter(description = "Setting ID") @PathVariable String id,
             @RequestBody com.backend.user.dto.SettingsDTO request,
             HttpSession session) {
+ 
         return ResponseEntity.ok(userService.updateSetting(id, request, session));
     }
 
