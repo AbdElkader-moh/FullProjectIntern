@@ -1,6 +1,5 @@
 package com.internship.pages;
 
-import com.internship.utils.ConfigReader;
 import com.internship.utils.RetryHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -10,69 +9,76 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * SettingsPage — Page Object for /settings (Alert Thresholds)
  *
- * ── WHY EVERY PREVIOUS LOCATOR WAS WRONG (settings.html analysis) ────────
+ * ── KNOWN FRONTEND BUG ───────────────────────────────────────────────────────
  *
- * SENSOR TYPE BUTTONS — critical finding:
- *   Our code:  //button[contains(.,'Traffic')]
- *   Real DOM:  <label class="radio-option"><input type="radio" .../><span>Traffic</span></label>
+ *   The UI always displays "(0 - 100)" as the constraint hint regardless of
+ *   the selected metric. This is a frontend defect — the hint is hardcoded.
  *
- *   The sensor type selectors are <label> elements wrapping radio inputs — NOT buttons.
- *   There is no <button> for Traffic/Air Quality/Street Light anywhere in the HTML.
- *   This is the single root cause of ALL TC038–TC046 failures — the XPath literally
- *   found zero elements because it searched for buttons that do not exist.
+ *   Backend validation enforces the REAL ranges (from API spec screenshot):
+ *     Traffic Density   : 0 – 500
+ *     Average Speed     : 0 – 120
+ *     Carbon Monoxide   : 0 – 50  (ppm)
+ *     Ozone             : 0 – 300 (ppb)
+ *     Brightness Level  : 0 – 100
+ *     Power Consumption : 0 – 5000
  *
- * ABOVE/BELOW — are real <button class="toggle-btn"> ✓
- *   BUT: identical toggle buttons also exist inside the edit-row inline form.
- *   Must scope to .form-card to avoid hitting edit-row buttons.
+ *   Tests target backend validation, not the broken UI hint.
  *
- * DELETE BUTTON — class "delete-btn", title="Delete", text is "✕" (U+2715)
- *   Our code searched for "×" (U+00D7) — wrong Unicode character entirely.
- *   Fix: target by CSS class .delete-btn scoped to .threshold-item.
+ * ── DOM ANALYSIS (settings.html) ─────────────────────────────────────────────
  *
- * THRESHOLD VALUE INPUT — <input type="number" class="form-control">
- *   Edit rows also have <input type="number"> — must scope to .form-card.
+ *   SENSOR TYPE — <label class="radio-option"> wrapping <input type="radio">
+ *     NOT <button> elements. Previous XPath //button[contains(.,'Traffic')]
+ *     found zero elements — root cause of all original TC038–TC046 failures.
  *
- * METRIC SELECT — <select class="form-control">
- *   Must scope to .form-card to avoid any other selects.
+ *   ABOVE/BELOW — <button class="toggle-btn"> scoped to .form-card
+ *     (edit rows have identical buttons — scoping prevents collision).
  *
- * ERROR MESSAGE — <div class="alert alert-error">
- *   Fix: By.cssSelector(".alert-error") — exact and unambiguous.
+ *   DELETE — <button class="delete-btn" title="Delete">✕</button> (U+2715)
+ *     Previous code used × (U+00D7) — wrong Unicode. Fixed via CSS class.
  *
- * ACTIVE THRESHOLD ROWS — <div class="threshold-item"> inside .threshold-list ✓
- *   Two divs per saved threshold when editing (normal row + edit row).
- *   Must count only non-editing rows: .threshold-item:not(.threshold-item--editing)
+ *   ERROR MESSAGE  — <div class="alert alert-error">
+ *   SUCCESS MESSAGE— <div class="alert alert-success">
  *
- * BACK BUTTON — <button class="btn-back"> ✓ same pattern as all other pages.
+ *   ACTIVE ROWS — .threshold-item:not(.threshold-item--editing)
+ *     Excludes inline-edit rows to avoid double-counting.
  */
 public class SettingsPage extends BasePage {
 
-    // ── Locators — derived directly from settings.html ────────────────────────
+    // ── Backend constraint map  key = "sensor:metricIndex" → [min, max] ───────
+    // Source: API spec screenshot (backend enforced — UI hint is bugged at 0-100)
+    public static final Map<String, int[]> CONSTRAINTS = new HashMap<>();
+    static {
+        CONSTRAINTS.put("traffic:0",      new int[]{0, 500});   // Traffic Density
+        CONSTRAINTS.put("traffic:1",      new int[]{0, 120});   // Average Speed
+        CONSTRAINTS.put("air quality:0",  new int[]{0, 50});    // Carbon Monoxide (ppm)
+        CONSTRAINTS.put("air quality:1",  new int[]{0, 300});   // Ozone (ppb)
+        CONSTRAINTS.put("street light:0", new int[]{0, 100});   // Brightness Level
+        CONSTRAINTS.put("street light:1", new int[]{0, 5000});  // Power Consumption
+    }
 
-    /**
-     * Page-load anchor: "Sensor Type" form label is the earliest stable element.
-     * Real DOM: <label class="form-label">Sensor Type</label>
-     */
+    public static final Map<String, String> METRIC_NAMES = new HashMap<>();
+    static {
+        METRIC_NAMES.put("traffic:0",      "Traffic Density (0–500)");
+        METRIC_NAMES.put("traffic:1",      "Average Speed (0–120)");
+        METRIC_NAMES.put("air quality:0",  "Carbon Monoxide (0–50 ppm)");
+        METRIC_NAMES.put("air quality:1",  "Ozone (0–300 ppb)");
+        METRIC_NAMES.put("street light:0", "Brightness Level (0–100)");
+        METRIC_NAMES.put("street light:1", "Power Consumption (0–5000)");
+    }
+
+    // ── Locators ──────────────────────────────────────────────────────────────
+
     private static final By SENSOR_TYPE_LABEL =
             By.xpath("//label[contains(text(),'Sensor Type')]");
 
-    /**
-     * FIXED: Sensor type selectors are <label class="radio-option">, NOT buttons.
-     * Real DOM:
-     *   <label class="radio-option" [class.active]="sensorType === 'traffic'">
-     *     <input type="radio" name="sensorType" value="traffic"/>
-     *     <span class="radio-icon">🚗</span>
-     *     <span>Traffic</span>
-     *   </label>
-     *
-     * Strategy: click the <label> — this triggers the radio input's change event
-     * via standard HTML label-for behaviour.
-     * CSS targets the label by its text span content.
-     */
+    // Sensor labels — <label class="radio-option">
     private static final By TRAFFIC_LABEL =
             By.xpath("//label[contains(@class,'radio-option')][.//span[text()='Traffic']]");
     private static final By AIR_QUALITY_LABEL =
@@ -80,90 +86,34 @@ public class SettingsPage extends BasePage {
     private static final By STREET_LIGHT_LABEL =
             By.xpath("//label[contains(@class,'radio-option')][.//span[text()='Street Light']]");
 
-    /**
-     * Alternatively: click the hidden radio input directly via JS.
-     * Used as fallback if clicking the label doesn't trigger Angular's (change) binding.
-     * Real DOM: <input type="radio" name="sensorType" value="traffic"/>
-     */
+    // Radio inputs — JS fallback when label click does not fire Angular (change)
     private static final By TRAFFIC_RADIO      = By.cssSelector("input[value='traffic']");
     private static final By AIR_QUALITY_RADIO  = By.cssSelector("input[value='air']");
     private static final By STREET_LIGHT_RADIO = By.cssSelector("input[value='light']");
 
-    /**
-     * Metric dropdown — scoped to .form-card to avoid any future conflicts.
-     * Real DOM: <select class="form-control" [(ngModel)]="metric">
-     */
+    // Form controls — scoped to .form-card to avoid edit-row collisions
     private static final By METRIC_DROPDOWN =
             By.cssSelector(".form-card select.form-control");
-
-    /**
-     * Threshold value number input — scoped to .form-card.
-     * Real DOM: <input type="number" class="form-control" [(ngModel)]="thresholdValue"/>
-     * Edit rows also have number inputs — scoping prevents hitting them.
-     */
     private static final By THRESHOLD_VALUE_INPUT =
             By.cssSelector(".form-card input[type='number']");
-
-    /**
-     * Above/Below toggle buttons — scoped to .form-card's .toggle-group.
-     * Real DOM: <button class="toggle-btn" (click)="alertType = 'above'">↑ Above</button>
-     * Edit rows contain identical buttons — scoping is essential.
-     */
     private static final By ABOVE_BTN =
             By.cssSelector(".form-card .toggle-group .toggle-btn:first-child");
     private static final By BELOW_BTN =
             By.cssSelector(".form-card .toggle-group .toggle-btn:last-child");
-
-    /**
-     * Save Threshold button.
-     * Real DOM: <button class="submit-btn" (click)="onSubmit()" [disabled]="isSubmitting">
-     *   {{ isSubmitting ? 'Saving...' : 'Save Threshold' }}
-     * </button>
-     * Scoped to .form-card — the edit rows have their own Save buttons with class submit-btn--sm.
-     */
     private static final By SAVE_THRESHOLD_BTN =
             By.cssSelector(".form-card .submit-btn:not(.submit-btn--sm)");
 
-    /**
-     * Active threshold rows — read-only (non-editing) rows only.
-     * Real DOM: <div class="threshold-item"> (normal) and
-     *           <div class="threshold-item threshold-item--editing"> (edit mode)
-     * We count only normal rows so edit mode doesn't double-count.
-     */
+    // Threshold list
     private static final By ACTIVE_THRESHOLD_ROWS =
             By.cssSelector(".threshold-list .threshold-item:not(.threshold-item--editing)");
-
-    /**
-     * All threshold rows (including editing) — used for polling after delete.
-     */
-    private static final By ALL_THRESHOLD_ROWS =
-            By.cssSelector(".threshold-list .threshold-item");
-
-    /**
-     * FIXED: Delete button — class "delete-btn", inside a normal (non-editing) row.
-     * Real DOM: <button class="delete-btn" title="Delete">✕</button>
-     * Previous code searched for "×" (wrong Unicode). CSS class is exact.
-     */
     private static final By DELETE_BTN =
             By.cssSelector(".threshold-item:not(.threshold-item--editing) .delete-btn");
 
-    /**
-     * FIXED: Error message — exact CSS class from HTML.
-     * Real DOM: <div class="alert alert-error">{{ errorMessage }}</div>
-     */
-    private static final By ERROR_MSG =
-            By.cssSelector(".alert.alert-error");
+    // Alerts
+    private static final By ERROR_MSG   = By.cssSelector(".alert.alert-error");
+    private static final By SUCCESS_MSG = By.cssSelector(".alert.alert-success");
 
-    /**
-     * Success message — used to confirm save completed.
-     * Real DOM: <div class="alert alert-success">{{ successMessage }}</div>
-     */
-    private static final By SUCCESS_MSG =
-            By.cssSelector(".alert.alert-success");
-
-    /** Back button — confirmed same pattern as all pages. */
-    private static final By BACK_BTN =
-            By.cssSelector("button.btn-back");
+    private static final By BACK_BTN = By.cssSelector("button.btn-back");
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -171,13 +121,8 @@ public class SettingsPage extends BasePage {
         super(driver);
     }
 
-    // ── JavaScript helpers ────────────────────────────────────────────────────
+    // ── JS helpers ────────────────────────────────────────────────────────────
 
-    /**
-     * JS click — used for all button/label interactions.
-     * Bypasses any overlay interception that Selenium's coordinate-based
-     * click check would fail on.
-     */
     private void jsClick(WebElement element) {
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
     }
@@ -199,14 +144,13 @@ public class SettingsPage extends BasePage {
     // ── Sensor type selection ─────────────────────────────────────────────────
 
     /**
-     * Selects a sensor type by clicking its <label class="radio-option">.
+     * Clicks the radio-option label for the given sensor type.
      *
-     * Strategy A (primary): jsClick the <label> — triggers the radio + Angular (change).
-     * Strategy B (fallback): directly set the radio input checked via JS and dispatch
-     *   a 'change' event — guarantees Angular's ngModel picks up the value.
+     * Strategy A — jsClick the label (fires radio + Angular change event).
+     * Strategy B — JS radio.checked = true + dispatchEvent fallback when
+     *              label click does not propagate to Angular ngModel.
      *
-     * After clicking, waits for the metric dropdown to refresh (confirms Angular
-     * onSensorTypeChange() ran and repopulated availableMetrics).
+     * Waits for metric dropdown to reload before returning.
      */
     public SettingsPage selectSensorType(String type) {
         By labelLocator;
@@ -222,15 +166,17 @@ public class SettingsPage extends BasePage {
             case "air quality": case "airquality":
                 labelLocator = AIR_QUALITY_LABEL;
                 radioLocator = AIR_QUALITY_RADIO;
-                radioValue   = "air";
+                radioValue   = "air quality";
                 break;
             case "street light": case "streetlight":
                 labelLocator = STREET_LIGHT_LABEL;
                 radioLocator = STREET_LIGHT_RADIO;
-                radioValue   = "light";
+                radioValue   = "street light";
                 break;
             default:
-                throw new IllegalArgumentException("Unknown sensor type: " + type);
+                throw new IllegalArgumentException(
+                    "[SETTINGS] Unknown sensor type: '" + type +
+                    "'. Valid: traffic | air quality | street light");
         }
 
         final By finalLabel = labelLocator;
@@ -238,25 +184,20 @@ public class SettingsPage extends BasePage {
         final String finalValue = radioValue;
 
         RetryHelper.retryVoid(() -> {
-            // Strategy A: click the label
             WebElement label = wait.waitForVisible(finalLabel);
             jsClick(label);
 
-            // Verify Angular received the change by checking the radio is checked
             WebElement radio = driver.findElement(finalRadio);
-            boolean isChecked = Boolean.parseBoolean(
-                    radio.getAttribute("checked") != null ? "true" : "false");
+            boolean isChecked = radio.getAttribute("checked") != null;
 
             if (!isChecked) {
-                // Strategy B: directly fire the radio change via JS
-                System.out.println("[SETTINGS] Label click didn't check radio — using JS dispatch");
+                System.out.println("[SETTINGS] Label click did not register — using JS dispatch");
                 ((JavascriptExecutor) driver).executeScript(
                     "arguments[0].checked = true;" +
                     "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
                     radio);
             }
 
-            // Wait for metric dropdown to reload (confirms onSensorTypeChange() ran)
             wait.waitForVisible(METRIC_DROPDOWN);
             System.out.println("[SETTINGS] Sensor type '" + finalValue + "' selected");
         }, "select sensor type: " + type);
@@ -267,12 +208,16 @@ public class SettingsPage extends BasePage {
     // ── Metric selection ──────────────────────────────────────────────────────
 
     /**
-     * Metric index reference (from HTML + screenshots):
-     *   Traffic:      0=Traffic Density,   1=Average Speed
-     *   Air Quality:  0=Carbon Monoxide,   1=Ozone
-     *   Street Light: 0=Brightness Level,  1=Power Consumption
+     * Selects a metric by index.
+     *   Traffic:      0=Traffic Density, 1=Average Speed
+     *   Air Quality:  0=Carbon Monoxide, 1=Ozone
+     *   Street Light: 0=Brightness Level, 1=Power Consumption
      */
     public SettingsPage selectMetricByIndex(int index) {
+        if (index < 0 || index > 1) {
+            throw new IllegalArgumentException(
+                "[SETTINGS] Metric index must be 0 or 1, got: " + index);
+        }
         WebElement dropdown = wait.waitForVisible(METRIC_DROPDOWN);
         new Select(dropdown).selectByIndex(index);
         System.out.println("[SETTINGS] Metric index " + index + " selected");
@@ -282,21 +227,49 @@ public class SettingsPage extends BasePage {
     public SettingsPage selectMetric(String metricText) {
         WebElement dropdown = wait.waitForVisible(METRIC_DROPDOWN);
         new Select(dropdown).selectByVisibleText(metricText);
+        System.out.println("[SETTINGS] Metric '" + metricText + "' selected");
         return this;
     }
 
     // ── Threshold value ───────────────────────────────────────────────────────
 
-    public SettingsPage enterThresholdValue(String value) {
+    /**
+     * Enters a threshold value with range logging.
+     * Logs [WITHIN RANGE] or [OUT OF RANGE] based on backend spec constraints.
+     * Note: UI always shows "(0 - 100)" — this is a known frontend display bug.
+     */
+    public SettingsPage enterThresholdValue(String value, String sensorType, int metricIndex) {
+        if (sensorType != null) {
+            String key  = sensorType.toLowerCase().trim() + ":" + metricIndex;
+            int[] range = CONSTRAINTS.get(key);
+            String name = METRIC_NAMES.getOrDefault(key, key);
+            if (range != null) {
+                try {
+                    double v = Double.parseDouble(value);
+                    if (v < range[0] || v > range[1]) {
+                        System.out.println("[SETTINGS][OUT OF RANGE] " + value +
+                            " exceeds backend range [" + range[0] + "–" + range[1] +
+                            "] for " + name + " → expect rejection");
+                    } else {
+                        System.out.println("[SETTINGS][WITHIN RANGE] " + value +
+                            " in [" + range[0] + "–" + range[1] + "] for " + name);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
         WebElement input = wait.waitForVisible(THRESHOLD_VALUE_INPUT);
-        // JS clear handles cases where normal clear() leaves stale value in number inputs
         ((JavascriptExecutor) driver).executeScript("arguments[0].value = '';", input);
         input.sendKeys(value);
-        System.out.println("[SETTINGS] Threshold value set to: " + value);
+        System.out.println("[SETTINGS] Threshold value entered: " + value);
         return this;
     }
 
-    // ── Alert direction toggles ───────────────────────────────────────────────
+    /** Overload without range logging — for simple/toggle-only tests. */
+    public SettingsPage enterThresholdValue(String value) {
+        return enterThresholdValue(value, null, -1);
+    }
+
+    // ── Alert direction ───────────────────────────────────────────────────────
 
     public SettingsPage clickAbove() {
         RetryHelper.retryVoid(() -> jsClick(ABOVE_BTN), "click Above toggle");
@@ -308,11 +281,10 @@ public class SettingsPage extends BasePage {
         return this;
     }
 
-    // ── Save ─────────────────────────────────────────────────────────────────
+    // ── Save ──────────────────────────────────────────────────────────────────
 
     public SettingsPage clickSaveThreshold() {
         RetryHelper.retryVoid(() -> jsClick(SAVE_THRESHOLD_BTN), "click Save Threshold");
-        // Wait for either success or error message to confirm Angular processed the submit
         try {
             wait.waitForCondition(d ->
                 !d.findElements(SUCCESS_MSG).isEmpty() ||
@@ -323,12 +295,12 @@ public class SettingsPage extends BasePage {
         return this;
     }
 
-    /** Full create-threshold flow. */
+    /** Full flow: select sensor → select metric → enter value → direction → save. */
     public SettingsPage createThreshold(String sensorType, int metricIndex,
                                         int thresholdValue, boolean above) {
         selectSensorType(sensorType);
         selectMetricByIndex(metricIndex);
-        enterThresholdValue(String.valueOf(thresholdValue));
+        enterThresholdValue(String.valueOf(thresholdValue), sensorType, metricIndex);
         if (above) clickAbove(); else clickBelow();
         clickSaveThreshold();
         return this;
@@ -336,34 +308,23 @@ public class SettingsPage extends BasePage {
 
     // ── Delete ────────────────────────────────────────────────────────────────
 
-    /**
-     * Deletes the first active threshold.
-     *
-     * The delete button: <button class="delete-btn" title="Delete">✕</button>
-     * Note: while deleting, Angular sets deletingId = t.id and shows "…" instead
-     * of "✕" and disables the button — the wait-for-count-decrease handles this.
-     */
     public SettingsPage deleteFirstActiveThreshold() {
-        List<WebElement> deleteButtons = driver.findElements(DELETE_BTN);
-        if (deleteButtons.isEmpty()) {
+        List<WebElement> buttons = driver.findElements(DELETE_BTN);
+        if (buttons.isEmpty()) {
             System.out.println("[SETTINGS] No delete buttons found");
             return this;
         }
-
         int countBefore = getActiveThresholdCount();
-        System.out.println("[SETTINGS] Deleting — count before: " + countBefore);
-
-        RetryHelper.retryVoid(() -> jsClick(deleteButtons.get(0)), "click delete button");
-
-        // Wait for async API DELETE to reflect in DOM
+        RetryHelper.retryVoid(() -> jsClick(buttons.get(0)), "click delete button");
         try {
             wait.waitForCondition(d -> {
                 int current = d.findElements(ACTIVE_THRESHOLD_ROWS).size();
-                System.out.println("[SETTINGS] Delete poll: " + current + " rows (was " + countBefore + ")");
+                System.out.println("[SETTINGS] Delete poll: " + current +
+                    " rows (was " + countBefore + ")");
                 return current < countBefore;
             });
         } catch (TimeoutException e) {
-            System.out.println("[SETTINGS] Count did not decrease after delete");
+            System.out.println("[SETTINGS] Row count did not decrease after delete");
         }
         return this;
     }
@@ -375,7 +336,25 @@ public class SettingsPage extends BasePage {
         return this;
     }
 
-    // ── Validations ───────────────────────────────────────────────────────────
+    // ── Constraint helpers ────────────────────────────────────────────────────
+
+    public int[] getConstraint(String sensorType, int metricIndex) {
+        String key = sensorType.toLowerCase().trim() + ":" + metricIndex;
+        int[] range = CONSTRAINTS.get(key);
+        if (range == null) throw new IllegalArgumentException(
+            "[SETTINGS] No constraint for: '" + key + "'");
+        return range;
+    }
+
+    public int getMin(String sensorType, int metricIndex) {
+        return getConstraint(sensorType, metricIndex)[0];
+    }
+
+    public int getMax(String sensorType, int metricIndex) {
+        return getConstraint(sensorType, metricIndex)[1];
+    }
+
+    // ── State / assertions ────────────────────────────────────────────────────
 
     public boolean isOnSettingsPage() { return urlContains("/settings"); }
 
@@ -387,46 +366,33 @@ public class SettingsPage extends BasePage {
 
     public int getActiveThresholdCount() { return getActiveThresholds().size(); }
 
-    /**
-     * Checks for the .alert-error div rendered by Angular when errorMessage is set.
-     * Real DOM: <div class="alert alert-error">{{ errorMessage }}</div>
-     */
     public boolean isThresholdErrorDisplayed() {
         try {
-            List<WebElement> errors = driver.findElements(ERROR_MSG);
-            for (WebElement e : errors) {
+            for (WebElement e : driver.findElements(ERROR_MSG)) {
                 if (e.isDisplayed() && !e.getText().trim().isEmpty()) {
-                    System.out.println("[SETTINGS] Error message: " + e.getText().trim());
+                    System.out.println("[SETTINGS] Error: " + e.getText().trim());
                     return true;
                 }
             }
             return false;
-        } catch (StaleElementReferenceException e) {
-            return false;
-        }
+        } catch (StaleElementReferenceException e) { return false; }
     }
 
     public boolean isSuccessMessageDisplayed() {
         try {
-            List<WebElement> msgs = driver.findElements(SUCCESS_MSG);
-            return msgs.stream().anyMatch(e -> e.isDisplayed() && !e.getText().trim().isEmpty());
-        } catch (StaleElementReferenceException e) {
-            return false;
-        }
+            return driver.findElements(SUCCESS_MSG)
+                .stream().anyMatch(e -> e.isDisplayed() && !e.getText().trim().isEmpty());
+        } catch (StaleElementReferenceException e) { return false; }
     }
 
-    /**
-     * Checks if Traffic label has the Angular [class.active] applied.
-     * Real DOM: <label class="radio-option active"> when sensorType === 'traffic'
-     */
-    public boolean isTrafficBtnSelected() {
+    public boolean isTrafficSensorSelected() {
         try {
-            WebElement label = driver.findElement(TRAFFIC_LABEL);
-            String cls = label.getAttribute("class");
-            System.out.println("[SETTINGS] Traffic label class: " + cls);
+            String cls = driver.findElement(TRAFFIC_LABEL).getAttribute("class");
             return cls != null && cls.contains("active");
-        } catch (Exception e) {
-            return false;
-        }
+        } catch (Exception e) { return false; }
     }
+
+    /** @deprecated Use isTrafficSensorSelected() */
+    @Deprecated
+    public boolean isTrafficBtnSelected() { return isTrafficSensorSelected(); }
 }
