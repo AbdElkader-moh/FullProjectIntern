@@ -11,6 +11,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.backend.sensor_data.entity.CongestionLevel;
+import com.backend.sensor_data.entity.TrafficData;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.util.List;
+import java.util.Map;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/sensors")
@@ -55,5 +63,80 @@ public class SensorController {
     public ResponseEntity<?> receiveLightData(@RequestBody StreetLightDataDto data) {
         sensorDataService.saveStreetLightData(data);
         return ResponseEntity.status(HttpStatus.CREATED).body("Street light data saved successfully.");
+    }
+
+    // @GetMapping("/traffic")
+    // @Operation(summary = "Get traffic sensor data", description = "Retrieves
+    // traffic sensor readings with optional filtering by location, congestion
+    // level, date range, sorting, and pagination.")
+    // public ResponseEntity<Page<TrafficData>> getTrafficData(
+    // @RequestParam(required = false) String location,
+
+    // @RequestParam(required = false) CongestionLevel congestionLevel,
+
+    // @RequestParam(required = false) @DateTimeFormat(iso =
+    // DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+
+    // @RequestParam(required = false) @DateTimeFormat(iso =
+    // DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+
+    // Pageable pageable) {
+    // Page<TrafficData> trafficData = sensorDataService.getTrafficData(
+    // location,
+    // congestionLevel,
+    // from,
+    // to,
+    // pageable);
+    // return ResponseEntity.ok(trafficData);
+    // }
+    @GetMapping("/traffic")
+    @Operation(summary = "Get traffic sensor data", description = "Retrieves traffic sensor readings with optional filtering by location, congestion level, date range, sorting, and pagination.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Traffic data retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
+    })
+    public ResponseEntity<Page<TrafficData>> getTrafficData(
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) CongestionLevel congestionLevel,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            Pageable pageable) {
+        Page<TrafficData> trafficData = sensorDataService.getTrafficData(
+                location,
+                congestionLevel,
+                from,
+                to,
+                pageable);
+        return ResponseEntity.ok(trafficData);
+    }
+
+    @GetMapping("/traffic/stats")
+    @Operation(summary = "Get traffic dashboard statistics", description = "Returns aggregated traffic statistics for dashboard charts and summary cards.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Traffic statistics retrieved successfully")
+    })
+    public ResponseEntity<TrafficStatsDto> getTrafficStats() {
+
+        TrafficStatsDto stats = sensorDataService.getTrafficStats();
+
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/traffic/trends")
+    @Operation(summary = "Get traffic trend data", description = "Returns recent traffic density and average speed readings ordered by timestamp for dashboard charts.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Traffic trend data retrieved successfully")
+    })
+    public ResponseEntity<List<TrafficTrendDto>> getTrafficTrends() {
+        return ResponseEntity.ok(sensorDataService.getTrafficTrends());
+    }
+
+    @GetMapping("/traffic/congestion-summary")
+    @Operation(summary = "Get traffic congestion summary", description = "Returns count of traffic records grouped by congestion level for dashboard charts.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Traffic congestion summary retrieved successfully")
+    })
+    public ResponseEntity<Map<String, Long>> getTrafficCongestionSummary() {
+        return ResponseEntity.ok(sensorDataService.getTrafficCongestionSummary());
     }
 }

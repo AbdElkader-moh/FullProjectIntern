@@ -6,6 +6,10 @@ import com.backend.sensor_data.repository.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,7 +30,9 @@ public class SensorDataService {
 
     private final NotificationRepository notificationRepository;
 
-    public SensorDataService(TrafficDataRepository trafficRepo, AirPollutionDataRepository airRepo, StreetLightDataRepository lightRepo, SettingsRepository settingsRepository, SimpMessagingTemplate messagingTemplate, NotificationRepository notificationRepository) {
+    public SensorDataService(TrafficDataRepository trafficRepo, AirPollutionDataRepository airRepo,
+            StreetLightDataRepository lightRepo, SettingsRepository settingsRepository,
+            SimpMessagingTemplate messagingTemplate, NotificationRepository notificationRepository) {
         this.trafficRepo = trafficRepo;
         this.airRepo = airRepo;
         this.lightRepo = lightRepo;
@@ -144,6 +150,34 @@ public class SensorDataService {
         return data;
     }
 
+    public Page<TrafficData> getTrafficData(
+            String location,
+            CongestionLevel congestionLevel,
+            LocalDateTime from,
+            LocalDateTime to,
+            Pageable pageable) {
+        Specification<TrafficData> spec = Specification.where(null);
+
+        if (location != null && !location.trim().isEmpty()) {
+            spec = spec.and(
+                    (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+        }
+
+        if (congestionLevel != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("congestionLevel"), congestionLevel));
+        }
+
+        if (from != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+        }
+
+        if (to != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+        }
+
+        return trafficRepo.findAll(spec, pageable);
+    }
+
     private void checkAlerts(String type, String metric, Number value, String location) {
         List<Settings> matchingSettings = settingsRepository.findByTypeAndMetric(type, metric);
 
@@ -153,11 +187,11 @@ public class SensorDataService {
             Long userId = setting.getUserId();
             float actual = value.floatValue();
 
-            boolean triggered =
-                    ("above".equalsIgnoreCase(alertType) && actual > threshold) ||
-                            ("below".equalsIgnoreCase(alertType) && actual < threshold);
+            boolean triggered = ("above".equalsIgnoreCase(alertType) && actual > threshold) ||
+                    ("below".equalsIgnoreCase(alertType) && actual < threshold);
 
-            if (!triggered) continue;
+            if (!triggered)
+                continue;
 
             logger.warn("[ALERT] {} {} ({}) exceeded threshold ({}) at {}",
                     type, metric, actual, threshold, location);
@@ -174,9 +208,54 @@ public class SensorDataService {
                             "value", actual,
                             "thresholdValue", threshold,
                             "alertType", alertType,
-                            "location", location
-                    )
-            );
+                            "location", location));
         }
     }
+
+    public TrafficStatsDto getTrafficStats() {
+
+        long totalRecords = trafficRepo.count();
+
+        double averageTrafficDensity = trafficRepo.findAll()
+                .stream()
+                .mapToInt(TrafficData::getTrafficDensity)
+                .average()
+                .orElse(0);
+
+        double averageSpeed = trafficRepo.findAll()
+                .stream()
+                .mapToDouble(TrafficData::getAvgSpeed)
+                .average()
+                .orElse(0);
+
+        long highCongestionCount = trafficRepo.countByCongestionLevel(CongestionLevel.High);
+
+        long severeCongestionCount = trafficRepo.countByCongestionLevel(CongestionLevel.Severe);
+
+        return new TrafficStatsDto(
+                totalRecords,
+                averageTrafficDensity,
+                averageSpeed,
+                highCongestionCount,
+                severeCongestionCount);
+    }
+
+    public List<TrafficTrendDto> getTrafficTrends() {
+        return trafficRepo.findTop50ByOrderByTimestampDesc()
+                .stream()
+                .map(data -> new TrafficTrendDto(
+                        data.getTimestamp(),
+                        data.getTrafficDensity(),
+                        data.getAvgSpeed()))
+                .toList();
+    }
+
+    public Map<String, Long> getTrafficCongestionSummary() {
+        return Map.of(
+                "Low", trafficRepo.countByCongestionLevel(CongestionLevel.Low),
+                "Moderate", trafficRepo.countByCongestionLevel(CongestionLevel.Moderate),
+                "High", trafficRepo.countByCongestionLevel(CongestionLevel.High),
+                "Severe", trafficRepo.countByCongestionLevel(CongestionLevel.Severe));
+    }
+
 }
