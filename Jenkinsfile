@@ -57,10 +57,10 @@ pipeline {
         stage('Automated Infrastructure Deploy') {
             steps {
                 // Gracefully shutdown old services
-                sh 'docker-compose down'
+                sh 'docker compose down'
                 
                 // Launch cleanly in detached mode
-                sh 'docker-compose up -d'
+                sh 'docker compose up -d'
                 
                 // Prune dangling, intermediate image layers to maintain disk health
                 sh 'docker image prune -f'
