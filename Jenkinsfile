@@ -10,12 +10,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                // Pulls down the latest code from the configured SCM (GitHub)
-                checkout scm
-            }
-        }
 
         stage('Backend Integration & Unit Tests') {
             steps {
@@ -76,9 +70,15 @@ pipeline {
     
     post {
         always {
-            // Clean up workspace and docker login credentials
-            sh 'docker logout'
-            cleanWs()
+            script {
+                try {
+                    // Clean up workspace and docker login credentials
+                    sh 'docker logout || true'
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "Could not clean workspace or logout: ${e.message}"
+                }
+            }
         }
     }
 }
