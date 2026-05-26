@@ -4,79 +4,94 @@ pipeline {
     environment {
         DOCKER_HUB_ID = 'docker-hub-credentials'
         DOCKER_HUB_USER = 'shahd22'
+        IMAGE_USER_SERVICE = "${DOCKER_HUB_USER}/user-service"
+        IMAGE_SENSOR_SERVICE = "${DOCKER_HUB_USER}/sensor-service"
+        IMAGE_SIMULATOR = "${DOCKER_HUB_USER}/simulator"
         IMAGE_FRONTEND = "${DOCKER_HUB_USER}/frontend"
-        IMAGE_BACKEND = "${DOCKER_HUB_USER}/backend"
         TAG_SPRINT = 'sprint3'
     }
 
     stages {
+        stage('Initialization & Clean Checkout') {
+            steps {
+                cleanWs()
+                checkout scm
+            }
+        }
 
         stage('Backend Integration & Unit Tests') {
             steps {
                 dir('backend/user') {
-                    // Triggers the test framework using Maven wrapper for the user service
-                    sh 'chmod +x mvnw'
+                    sh 'chmod +x mvnw || true'
                     sh './mvnw clean test'
                 }
                 dir('backend/sensor_data') {
-                    // Triggers the test framework using Maven wrapper for the sensor service
-                    sh 'chmod +x mvnw'
+                    sh 'chmod +x mvnw || true'
                     sh './mvnw clean test'
                 }
             }
         }
 
-        stage('Docker Hub Login & Build Push') {
+        stage('Build Stage') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                        // Securely login to Docker Hub
-                        sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
-                        
-                        // Build and tag Backend services
-                        sh "docker build -t ${IMAGE_BACKEND}-user:latest -t ${IMAGE_BACKEND}-user:${TAG_SPRINT} ./backend/user"
-                        sh "docker build -t ${IMAGE_BACKEND}-sensor:latest -t ${IMAGE_BACKEND}-sensor:${TAG_SPRINT} ./backend/sensor_data"
-                        
-                        // Build and tag Frontend
-                        sh "docker build -t ${IMAGE_FRONTEND}:latest -t ${IMAGE_FRONTEND}:${TAG_SPRINT} ./Frontend"
-                        
-                        // Push Backend images
-                        sh "docker push ${IMAGE_BACKEND}-user:latest"
-                        sh "docker push ${IMAGE_BACKEND}-user:${TAG_SPRINT}"
-                        sh "docker push ${IMAGE_BACKEND}-sensor:latest"
-                        sh "docker push ${IMAGE_BACKEND}-sensor:${TAG_SPRINT}"
-                        
-                        // Push Frontend images
-                        sh "docker push ${IMAGE_FRONTEND}:latest"
-                        sh "docker push ${IMAGE_FRONTEND}:${TAG_SPRINT}"
-                    }
+                echo 'Building Docker images...'
+                sh "docker build -t ${IMAGE_USER_SERVICE}:latest -t ${IMAGE_USER_SERVICE}:${TAG_SPRINT} ./backend/user"
+                sh "docker build -t ${IMAGE_SENSOR_SERVICE}:latest -t ${IMAGE_SENSOR_SERVICE}:${TAG_SPRINT} ./backend/sensor_data"
+                sh "docker build -t ${IMAGE_SIMULATOR}:latest -t ${IMAGE_SIMULATOR}:${TAG_SPRINT} ./simulator"
+                sh "docker build -t ${IMAGE_FRONTEND}:latest -t ${IMAGE_FRONTEND}:${TAG_SPRINT} ./Frontend"
+            }
+        }
+
+        stage('Registry Stage') {
+            steps {
+                echo 'Logging in to Docker Hub and pushing images...'
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    
+                    // Push latest tags
+                    sh "docker push ${IMAGE_USER_SERVICE}:latest"
+                    sh "docker push ${IMAGE_SENSOR_SERVICE}:latest"
+                    sh "docker push ${IMAGE_SIMULATOR}:latest"
+                    sh "docker push ${IMAGE_FRONTEND}:latest"
+                    
+                    // Push sprint tags
+                    sh "docker push ${IMAGE_USER_SERVICE}:${TAG_SPRINT}"
+                    sh "docker push ${IMAGE_SENSOR_SERVICE}:${TAG_SPRINT}"
+                    sh "docker push ${IMAGE_SIMULATOR}:${TAG_SPRINT}"
+                    sh "docker push ${IMAGE_FRONTEND}:${TAG_SPRINT}"
                 }
             }
         }
 
-        stage('Automated Infrastructure Deploy') {
+        stage('Deployment Stage') {
             steps {
-                // Gracefully shutdown old services
+                echo 'Deploying infrastructure using Docker Compose...'
                 sh 'docker compose down || true'
-                
-                // Launch cleanly in detached mode
+                sh 'docker compose pull'
                 sh 'docker compose up -d'
-                
-                // Prune dangling, intermediate image layers to maintain disk health
                 sh 'docker image prune -f'
             }
         }
+
+        stage('Validation Stage') {
+            steps {
+                echo 'Waiting for services to initialize...'
+                sleep time: 20, unit: 'SECONDS'
+                echo 'Verifying running containers...'
+                sh 'docker compose ps'
+            }
+        }
     }
-    
+
     post {
         always {
             script {
                 try {
-                    // Clean up workspace and docker login credentials
+                    echo 'Cleaning up environment...'
                     sh 'docker logout || true'
                     cleanWs()
                 } catch (Exception e) {
-                    echo "Could not clean workspace or logout: ${e.message}"
+                    echo "Cleanup bypassed: ${e.message}"
                 }
             }
         }

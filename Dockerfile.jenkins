@@ -18,6 +18,9 @@ RUN apt-get update && \
 # Add jenkins user to the docker group
 RUN groupadd -f docker && usermod -aG docker jenkins
 
+# Configure Git globally to avoid dubious ownership errors during pipeline checkouts
+RUN git config --system --add safe.directory '*'
+
 # Copy and set up the custom entrypoint that fixes Docker socket permissions on startup
 COPY jenkins-entrypoint.sh /usr/local/bin/jenkins-entrypoint.sh
 RUN chmod +x /usr/local/bin/jenkins-entrypoint.sh
