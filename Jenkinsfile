@@ -57,7 +57,18 @@ pipeline {
         stage('Automated Infrastructure Deploy') {
             steps {
                 // Gracefully shutdown old services
-                sh 'docker compose down'
+                sh 'docker compose down || true'
+                
+                // Recreate the secrets directory that is ignored by Git
+                sh '''
+                    mkdir -p secrets
+                    echo "rootpass" > secrets/mysql_root_password.txt
+                    echo "dbuser" > secrets/mysql_user.txt
+                    echo "dbpass" > secrets/mysql_password.txt
+                    echo "dummy_cloud" > secrets/cloudinary_cloud_name.txt
+                    echo "dummy_key" > secrets/cloudinary_api_key.txt
+                    echo "dummy_secret" > secrets/cloudinary_api_secret.txt
+                '''
                 
                 // Launch cleanly in detached mode
                 sh 'docker compose up -d'
