@@ -48,17 +48,19 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                     sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                     
-                    // Push latest tags
-                    sh "docker push ${IMAGE_USER_SERVICE}:latest"
-                    sh "docker push ${IMAGE_SENSOR_SERVICE}:latest"
-                    sh "docker push ${IMAGE_SIMULATOR}:latest"
-                    sh "docker push ${IMAGE_FRONTEND}:latest"
-                    
-                    // Push sprint tags
-                    sh "docker push ${IMAGE_USER_SERVICE}:${TAG_SPRINT}"
-                    sh "docker push ${IMAGE_SENSOR_SERVICE}:${TAG_SPRINT}"
-                    sh "docker push ${IMAGE_SIMULATOR}:${TAG_SPRINT}"
-                    sh "docker push ${IMAGE_FRONTEND}:${TAG_SPRINT}"
+                    retry(3) {
+                        // Push latest tags
+                        sh "docker push ${IMAGE_USER_SERVICE}:latest"
+                        sh "docker push ${IMAGE_SENSOR_SERVICE}:latest"
+                        sh "docker push ${IMAGE_SIMULATOR}:latest"
+                        sh "docker push ${IMAGE_FRONTEND}:latest"
+                        
+                        // Push sprint tags
+                        sh "docker push ${IMAGE_USER_SERVICE}:${TAG_SPRINT}"
+                        sh "docker push ${IMAGE_SENSOR_SERVICE}:${TAG_SPRINT}"
+                        sh "docker push ${IMAGE_SIMULATOR}:${TAG_SPRINT}"
+                        sh "docker push ${IMAGE_FRONTEND}:${TAG_SPRINT}"
+                    }
                 }
             }
         }
