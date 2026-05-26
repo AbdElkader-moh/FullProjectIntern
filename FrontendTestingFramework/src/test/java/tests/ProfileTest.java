@@ -1,7 +1,7 @@
-package com.internship.tests;
+package tests;
 
-import com.internship.base.BaseTest;
-import com.internship.pages.ProfilePage;
+import base.BaseTest;
+import pages.ProfilePage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;

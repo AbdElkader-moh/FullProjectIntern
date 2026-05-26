@@ -1,8 +1,8 @@
-package com.internship.base;
+package base;
 
-import com.internship.utils.ConfigReader;
-import com.internship.utils.DriverFactory;
-import com.internship.utils.WaitHelper;
+import utils.ConfigReader;
+import utils.DriverFactory;
+import utils.WaitHelper;
 import org.openqa.selenium.WebDriver;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

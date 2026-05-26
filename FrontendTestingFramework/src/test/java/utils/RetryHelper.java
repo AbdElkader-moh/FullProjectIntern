@@ -1,4 +1,4 @@
-package com.internship.utils;
+package utils;
 
 import java.util.function.Supplier;
 

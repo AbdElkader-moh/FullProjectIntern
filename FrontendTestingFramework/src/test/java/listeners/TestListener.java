@@ -1,7 +1,7 @@
-package com.internship.listeners;
+package listeners;
 
-import com.internship.utils.DriverFactory;
-import com.internship.utils.ScreenshotHelper;
+import utils.DriverFactory;
+import utils.ScreenshotHelper;
 import org.openqa.selenium.WebDriver;
 import org.testng.ITestListener;
 import org.testng.ITestResult;

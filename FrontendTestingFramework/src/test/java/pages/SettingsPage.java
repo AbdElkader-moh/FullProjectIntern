@@ -1,6 +1,6 @@
-package com.internship.pages;
+package pages;
 
-import com.internship.utils.RetryHelper;
+import utils.RetryHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.StaleElementReferenceException;

@@ -1,11 +1,11 @@
-package com.internship.tests;
+package tests;
 
-import com.internship.base.BaseTest;
-import com.internship.data.TestDataProvider;
-import com.internship.pages.HomePage;
-import com.internship.pages.SignInPage;
-import com.internship.pages.SignUpPage;
-import com.internship.utils.ConfigReader;
+import base.BaseTest;
+import data.TestDataProvider;
+import pages.HomePage;
+import pages.SignInPage;
+import pages.SignUpPage;
+import utils.ConfigReader;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

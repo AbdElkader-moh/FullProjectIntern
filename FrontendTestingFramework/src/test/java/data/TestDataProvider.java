@@ -1,4 +1,4 @@
-package com.internship.data;
+package data;
 
 /**
  * TestDataProvider: Centralizes all test data generation and retrieval.

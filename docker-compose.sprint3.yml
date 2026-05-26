@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: db_service
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      POSTGRES_DB: ${DB_NAME:-app_db}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app_bridge
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend_service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db_service:5432/${DB_NAME:-app_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - app_bridge
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: frontend_service
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - app_bridge
+
+volumes:
+  db_data:
+
+networks:
+  app_bridge:
+    driver: bridge

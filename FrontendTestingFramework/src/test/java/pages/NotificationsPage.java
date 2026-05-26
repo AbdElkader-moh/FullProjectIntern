@@ -1,7 +1,7 @@
-package com.internship.pages;
+package pages;
 
-import com.internship.utils.ConfigReader;
-import com.internship.utils.RetryHelper;
+import utils.ConfigReader;
+import utils.RetryHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;

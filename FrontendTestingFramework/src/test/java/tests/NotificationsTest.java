@@ -1,8 +1,8 @@
-package com.internship.tests;
+package tests;
 
-import com.internship.base.BaseTest;
-import com.internship.pages.NotificationsPage;
-import com.internship.utils.ConfigReader;
+import base.BaseTest;
+import pages.NotificationsPage;
+import utils.ConfigReader;
 import org.openqa.selenium.By;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
