@@ -5,11 +5,19 @@ import io.qameta.allure.*;
 import pages.HomePage;
 import pages.NotificationsPage;
 import pages.ProfilePage;
+import pages.TrafficDashboardPage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+/**
+ * HomeTest — updated for Sprint 3.
+ *
+ * Added TC-036b: clicking the Traffic Monitoring card navigates to /traffic.
+ * The home page now has 3 dashboard cards (Traffic, Street Light, Air Pollution)
+ * driven by the dashboardCards array in home.ts. Existing TC-031 to TC-036 unchanged.
+ */
 @Epic("Core pages")
 @Feature("Home page")
 public class HomeTest extends BaseTest {
@@ -42,7 +50,7 @@ public class HomeTest extends BaseTest {
     @Test(description = "TC-032: Home page is accessible and URL is /home")
     @Story("Page load")
     @Severity(SeverityLevel.BLOCKER)
-    @Description("Verifies that after login the URL contains /home, confirming the home page loaded correctly.")
+    @Description("Verifies that after login the URL contains /home.")
     public void TC032_homePageLoads() {
         Assert.assertTrue(homePage.isOnHomePage(),
                 "TC-032 FAILED: Not on /home after navigation.");
@@ -52,7 +60,7 @@ public class HomeTest extends BaseTest {
     @Test(description = "TC-033: Notifications link is visible on home page")
     @Story("Header elements")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Checks that the notification bell link is present and enabled in the home page header.")
+    @Description("Checks that the notification bell link is present and enabled in the header.")
     public void TC033_notificationBellDisplayed() {
         Assert.assertTrue(homePage.isNotificationBellDisplayed(),
                 "TC-033 FAILED: Notification bell not found.");
@@ -94,5 +102,29 @@ public class HomeTest extends BaseTest {
         Assert.assertTrue(url.contains("/signin"),
                 "TC-036 FAILED: Expected redirect to /signin but got: " + url);
         System.out.println("TC-036 PASSED");
+    }
+
+    /**
+     * TC-036b — Sprint 3 addition.
+     * The home page now shows 3 dashboard cards. This test verifies the Traffic
+     * Monitoring card is present and clickable, and navigates to /traffic.
+     * Locator: .dashboard-card containing the text "Traffic Monitoring".
+     */
+    @Test(description = "TC-036b: Clicking the Traffic Monitoring dashboard card navigates to /traffic")
+    @Story("Dashboard cards")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Finds the Traffic Monitoring card on the home page by its title text, clicks it, and verifies navigation to /traffic.")
+    public void TC036b_trafficCardNavigatesToDashboard() {
+        // Find the Traffic Monitoring card by title text
+        org.openqa.selenium.By trafficCard = org.openqa.selenium.By.xpath(
+                "//div[contains(@class,'dashboard-card') and .//h2[contains(text(),'Traffic')]]"
+        );
+        wait.waitForClickable(trafficCard).click();
+        wait.waitForUrlToContain("/traffic");
+
+        TrafficDashboardPage trafficPage = new TrafficDashboardPage(driver);
+        Assert.assertTrue(trafficPage.isOnTrafficDashboard(),
+                "TC-036b FAILED: Expected navigation to /traffic after clicking Traffic card.");
+        System.out.println("TC-036b PASSED");
     }
 }
