@@ -61,6 +61,26 @@
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.12</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-testng</artifactId>
+            <version>2.27.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>1.9.22</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -73,11 +93,22 @@
                     <suiteXmlFiles>
                         <suiteXmlFile>testng.xml</suiteXmlFile>
                     </suiteXmlFiles>
+                    <!-- After -->
+                    <argLine>
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/1.9.22/aspectjweaver-1.9.22.jar"
+                    </argLine>
                     <systemPropertyVariables>
                         <app.url>${env.APP_URL}</app.url>
-                        <app.email>${env.APP_EMAIL}</app.email>
-                        <app.password>${env.APP_PASSWORD}</app.password>
                     </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.12.0</version>
+                <configuration>
+                    <reportVersion>2.27.0</reportVersion>
+                    <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
                 </configuration>
             </plugin>
             <plugin>

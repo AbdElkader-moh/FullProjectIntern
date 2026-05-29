@@ -1,16 +1,28 @@
-package com.internship.data;
+package data;
+import utils.ExcelDataReader;
+import org.testng.annotations.DataProvider;
 
 /**
- * TestDataProvider: Centralizes all test data generation and retrieval.
- * No credentials or PII are hardcoded here; use ConfigReader for sensitive values.
+ * TestDataProvider — Excel-driven replacement for the old static-constant class.
+ *
+ * All data now comes from test_data.xlsx (src/test/resources/).
+ * The static helper methods preserve the exact same API as before so that
+ * all existing test classes compile without changes.
+ *
+ * New: @DataProvider methods supply parametric data to tests that use
+ * TestNG's data-driven approach (see SignUpTest, SignInTest, SettingsTest).
+ *
+ * ── How it works ─────────────────────────────────────────────────────────────
+ *  ExcelDataReader.getBoundaryValue(key) → reads the "BoundaryValues" sheet.
+ *  ExcelDataReader.getCredential(key)    → reads the "Credentials" sheet.
+ *  ExcelDataReader.getDataRows(sheet)    → returns Object[][] for @DataProvider.
  */
 public class TestDataProvider {
 
     private TestDataProvider() {}
 
-    // ─── Email generators ───────────────────────────────────────────────────
+    // ─── Email generators (unchanged API) ────────────────────────────────────
 
-    /** Generates a unique email to avoid duplicate-registration conflicts */
     public static String generateUniqueEmail() {
         return "tc_auto_" + System.currentTimeMillis() + "@testdomain.com";
     }
@@ -19,36 +31,90 @@ public class TestDataProvider {
         return prefix + "_" + System.currentTimeMillis() + "@testdomain.com";
     }
 
-    // ─── Name data ──────────────────────────────────────────────────────────
+    // ─── Name data (now Excel-backed) ────────────────────────────────────────
 
-    public static String validFirstName() { return "TestFirst"; }
-    public static String validLastName()  { return "TestLast"; }
+    public static String validFirstName()      { return bv("validFirstName"); }
+    public static String validLastName()       { return bv("validLastName"); }
+    public static String minLengthFirstName()  { return bv("minFirstName"); }
+    public static String minLengthLastName()   { return bv("minLastName"); }
+    public static String tooShortFirstName()   { return bv("tooShortFirstName"); }
+    public static String tooShortLastName()    { return bv("tooShortLastName"); }
 
-    public static String minLengthFirstName() { return "Ab"; }   // exactly 2 chars
-    public static String minLengthLastName()  { return "Mo"; }   // exactly 2 chars
+    // ─── Password data (now Excel-backed) ────────────────────────────────────
 
-    public static String tooShortFirstName() { return "A"; }     // 1 char – invalid
-    public static String tooShortLastName()  { return "B"; }     // 1 char – invalid
+    public static String validPassword()       { return bv("validPassword"); }
+    public static String minLengthPassword()   { return bv("minPassword"); }
+    public static String tooShortPassword()    { return bv("tooShortPassword"); }
+    public static String wrongPassword()       { return bv("wrongPassword"); }
 
-    // ─── Password data ──────────────────────────────────────────────────────
+    // ─── Email data (now Excel-backed) ───────────────────────────────────────
 
-    public static String validPassword()       { return "Secure@123"; }
-    public static String minLengthPassword()   { return "abc123"; }   // exactly 6 chars
-    public static String tooShortPassword()    { return "abc12"; }    // 5 chars – invalid
-    public static String wrongPassword()       { return "WrongPass!"; }
+    public static String invalidEmailNoAt()        { return bv("invalidEmailNoAt"); }
+    public static String invalidEmailNoAtSymbol()  { return bv("invalidEmailNoAtSymbol"); }
+    public static String invalidEmailNoAfterAt()   { return bv("invalidEmailNoAfterAt"); }
+    public static String nonExistentEmail()        {
+        return "ghost_" + System.currentTimeMillis() + "@nowhere.com";
+    }
 
-    // ─── Email data ─────────────────────────────────────────────────────────
+    // ─── Threshold data (now Excel-backed) ───────────────────────────────────
 
-    public static String invalidEmailNoAt()        { return "notanemail"; }
-    public static String invalidEmailNoAtSymbol()  { return "ahmedtest.com"; }
-    public static String invalidEmailNoAfterAt()   { return "ahmed@"; }
-    public static String nonExistentEmail()        { return "ghost_" + System.currentTimeMillis() + "@nowhere.com"; }
+    public static int validThresholdValue() { return Integer.parseInt(bv("validThreshold")); }
+    public static int minThresholdValue()   { return Integer.parseInt(bv("minThreshold")); }
 
-    // ─── Threshold data (Settings page) ─────────────────────────────────────
+    // ─── Credentials (replaces ConfigReader.getEmail/getPassword) ────────────
 
-    public static int validThresholdValue()   { return 50; }
-    public static int minThresholdValue()     { return 0; }
-    public static int maxThresholdValue()     { return 500; }
-    public static int aboveMaxThreshold()     { return 501; }
-    public static int belowMinThreshold()     { return -1; }
+    /**
+     * Returns the default login email from the Credentials sheet.
+     * ConfigReader still works for infrastructure config (URL, browser, timeouts).
+     * Only human-readable test inputs live here.
+     */
+    public static String getEmail()    { return ExcelDataReader.getCredential("app.email"); }
+    public static String getPassword() { return ExcelDataReader.getCredential("app.password"); }
+    public static String getDuplicateEmail() {
+        return ExcelDataReader.getCredential("signup.duplicate.email");
+    }
+
+    // ─── @DataProvider methods for parametric tests ───────────────────────────
+
+    /**
+     * Provides all SignUp rows from the "SignUp" sheet.
+     *
+     * Column order: tcId, firstName, lastName, emailPrefix, password,
+     *               imagePath, expectedResult, description
+     *
+     * Usage in test:
+     *   @Test(dataProvider = "signUpData", dataProviderClass = TestDataProvider.class)
+     *   public void myTest(String tcId, String firstName, ...) { ... }
+     */
+    @DataProvider(name = "signUpData")
+    public static Object[][] signUpData() {
+        return ExcelDataReader.getDataRows("SignUp");
+    }
+
+    /**
+     * Provides all SignIn rows from the "SignIn" sheet.
+     *
+     * Column order: tcId, email, password, expectedResult, description
+     */
+    @DataProvider(name = "signInData")
+    public static Object[][] signInData() {
+        return ExcelDataReader.getDataRows("SignIn");
+    }
+
+    /**
+     * Provides all Threshold rows from the "Thresholds" sheet.
+     *
+     * Column order: tcId, sensor, metricIndex, value, direction,
+     *               expectedResult, description
+     */
+    @DataProvider(name = "thresholdData")
+    public static Object[][] thresholdData() {
+        return ExcelDataReader.getDataRows("Thresholds");
+    }
+
+    // ─── Private convenience helper ───────────────────────────────────────────
+
+    private static String bv(String key) {
+        return ExcelDataReader.getBoundaryValue(key);
+    }
 }

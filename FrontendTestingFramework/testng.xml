@@ -3,46 +3,48 @@
 <suite name="SmartCity Frontend Test Suite" verbose="1" parallel="false">
 
     <listeners>
-        <listener class-name="com.internship.listeners.TestListener"/>
-        <listener class-name="com.internship.listeners.ExtentReportListener"/>
+        <listener class-name="listeners.TestListener"/>
+        <listener class-name="listeners.ExtentReportListener"/>
+        <listener class-name="listeners.AllureListener"/>
+
     </listeners>
 
     <!-- Sprint 1: Authentication Tests -->
     <test name="SignUp Tests">
         <classes>
-            <class name="com.internship.tests.SignUpTest"/>
+            <class name="tests.SignUpTest"/>
         </classes>
     </test>
 
     <test name="SignIn Tests">
         <classes>
-            <class name="com.internship.tests.SignInTest"/>
+            <class name="tests.SignInTest"/>
         </classes>
     </test>
 
     <!-- Sprint 1: Core Page Tests -->
     <test name="Profile Tests">
         <classes>
-            <class name="com.internship.tests.ProfileTest"/>
+            <class name="tests.ProfileTest"/>
         </classes>
     </test>
 
     <test name="Home Tests">
         <classes>
-            <class name="com.internship.tests.HomeTest"/>
+            <class name="tests.HomeTest"/>
         </classes>
     </test>
 
     <!-- Sprint 2: Settings & Notifications Tests -->
     <test name="Settings Tests">
         <classes>
-            <class name="com.internship.tests.SettingsTest"/>
+            <class name="tests.SettingsTest"/>
         </classes>
     </test>
 
     <test name="Notifications Tests">
         <classes>
-            <class name="com.internship.tests.NotificationsTest"/>
+            <class name="tests.NotificationsTest"/>
         </classes>
     </test>
 
@@ -50,12 +52,12 @@
     <!--
     <test name="Full Regression">
         <classes>
-            <class name="com.internship.tests.SignUpTest"/>
-            <class name="com.internship.tests.SignInTest"/>
-            <class name="com.internship.tests.ProfileTest"/>
-            <class name="com.internship.tests.HomeTest"/>
-            <class name="com.internship.tests.SettingsTest"/>
-            <class name="com.internship.tests.NotificationsTest"/>
+            <class name="tests.SignUpTest"/>
+            <class name="tests.SignInTest"/>
+            <class name="tests.ProfileTest"/>
+            <class name="tests.HomeTest"/>
+            <class name="tests.SettingsTest"/>
+            <class name="tests.NotificationsTest"/>
         </classes>
     </test>
     -->

@@ -32,9 +32,10 @@ services:
     build:
       context: ./backend/user
       dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/user-service:${IMAGE_TAG}  
     container_name: internship-backend
     ports:
-      - "8080:8080"
+      - "8088:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://internship-mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME_FILE: /run/secrets/mysql_user
@@ -59,9 +60,11 @@ services:
     build:
       context: ./backend/sensor_data
       dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/sensor-service:${IMAGE_TAG}
     container_name: internship-sensor
     ports:
       - "8081:8081"
+
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://internship-mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME_FILE: /run/secrets/mysql_user
@@ -83,12 +86,13 @@ services:
     build:
       context: ./simulator
       dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/simulator:${IMAGE_TAG}
     container_name: internship-simulator
     environment:
       SENSOR_SERVICE_URL: http://sensor-service:8081
-      TRAFFIC_INTERVAL_SECONDS: 300
+      TRAFFIC_INTERVAL_SECONDS: 120
       LIGHT_INTERVAL_SECONDS: 120
-      AIR_INTERVAL_SECONDS: 30
+      AIR_INTERVAL_SECONDS: 120
     depends_on:
       sensor-service:
         condition: service_started
@@ -99,6 +103,7 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/frontend-app:${IMAGE_TAG}
     container_name: internship-frontend
     ports:
       - "4200:80"
@@ -107,10 +112,24 @@ services:
       - sensor-service
     networks:
       - project-net
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
 
+    container_name: internship-jenkins
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - project-net
 volumes:
   mysql_data:
-
+  jenkins_home:
 networks:
   project-net:
     driver: bridge

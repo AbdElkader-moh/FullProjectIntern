@@ -1,7 +1,7 @@
-package com.internship.pages;
+package pages;
 
-import com.internship.utils.ConfigReader;
-import com.internship.utils.WaitHelper;
+import utils.ConfigReader;
+import utils.WaitHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;

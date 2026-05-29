@@ -1,14 +1,17 @@
-package com.internship.tests;
+package tests;
 
-import com.internship.base.BaseTest;
-import com.internship.pages.HomePage;
-import com.internship.pages.NotificationsPage;
-import com.internship.pages.ProfilePage;
+import base.BaseTest;
+import io.qameta.allure.*;
+import pages.HomePage;
+import pages.NotificationsPage;
+import pages.ProfilePage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+@Epic("Core pages")
+@Feature("Home page")
 public class HomeTest extends BaseTest {
 
     private HomePage homePage;
@@ -19,18 +22,6 @@ public class HomeTest extends BaseTest {
         super.setUp();
     }
 
-    /**
-     * FIX — openHome TimeoutException:
-     *
-     * Root cause: @BeforeClass called loginWithDefaultUser() exactly once.
-     * TC-036 (priority=10) deletes all cookies mid-suite. Any @BeforeMethod
-     * that runs afterwards navigates to /home with no session, gets redirected
-     * to /signin, and the waitForPageToLoad condition times out at 10 s.
-     *
-     * Fix: call loginWithDefaultUser() in @BeforeMethod so every test starts
-     * with a guaranteed valid session. loginWithDefaultUser() should be
-     * idempotent (skip login if already on /home).
-     */
     @BeforeMethod(alwaysRun = true)
     public void openHome() {
         loginWithDefaultUser();
@@ -39,6 +30,9 @@ public class HomeTest extends BaseTest {
     }
 
     @Test(description = "TC-031: Profile avatar is visible in the home page header")
+    @Story("Header elements")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Checks that the profile avatar link is displayed in the home page header after login.")
     public void TC031_homeShowsProfilePicture() {
         Assert.assertTrue(homePage.isProfileAvatarDisplayed(),
                 "TC-031 FAILED: Profile avatar not displayed on home page.");
@@ -46,6 +40,9 @@ public class HomeTest extends BaseTest {
     }
 
     @Test(description = "TC-032: Home page is accessible and URL is /home")
+    @Story("Page load")
+    @Severity(SeverityLevel.BLOCKER)
+    @Description("Verifies that after login the URL contains /home, confirming the home page loaded correctly.")
     public void TC032_homePageLoads() {
         Assert.assertTrue(homePage.isOnHomePage(),
                 "TC-032 FAILED: Not on /home after navigation.");
@@ -53,6 +50,9 @@ public class HomeTest extends BaseTest {
     }
 
     @Test(description = "TC-033: Notifications link is visible on home page")
+    @Story("Header elements")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Checks that the notification bell link is present and enabled in the home page header.")
     public void TC033_notificationBellDisplayed() {
         Assert.assertTrue(homePage.isNotificationBellDisplayed(),
                 "TC-033 FAILED: Notification bell not found.");
@@ -60,6 +60,9 @@ public class HomeTest extends BaseTest {
     }
 
     @Test(description = "TC-034: Clicking avatar navigates to /profile")
+    @Story("Navigation")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Clicks the profile avatar in the header. Expects navigation to /profile.")
     public void TC034_navigateToProfileViaAvatar() {
         ProfilePage profilePage = homePage.clickProfileAvatar();
         Assert.assertTrue(profilePage.isOnProfilePage(),
@@ -68,6 +71,9 @@ public class HomeTest extends BaseTest {
     }
 
     @Test(description = "TC-035: Clicking notification bell navigates to /notifications")
+    @Story("Navigation")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Clicks the notification bell in the header. Expects navigation to /notifications.")
     public void TC035_navigateToNotifications() {
         NotificationsPage notificationsPage = homePage.clickNotificationBell();
         Assert.assertTrue(notificationsPage.isOnNotificationsPage(),
@@ -75,15 +81,11 @@ public class HomeTest extends BaseTest {
         System.out.println("TC-035 PASSED");
     }
 
-    /**
-     * TC-036: Unauthenticated access — runs at priority=10 (last).
-     * Deletes cookies then verifies redirect to /signin.
-     * Does NOT need loginWithDefaultUser() because it intentionally tests
-     * the unauthenticated state. The @BeforeMethod re-login runs first,
-     * then this test deletes the cookies again for its own assertion.
-     */
     @Test(description = "TC-036: Accessing /home while unauthenticated redirects to /signin",
-          priority = 10)
+            priority = 10)
+    @Story("Access control")
+    @Severity(SeverityLevel.BLOCKER)
+    @Description("Deletes all cookies then navigates to /home. Expects the Angular route guard to redirect to /signin.")
     public void TC036_unauthenticatedAccessToHome() {
         driver.manage().deleteAllCookies();
         navigateTo("/home");

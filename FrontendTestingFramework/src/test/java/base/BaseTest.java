@@ -1,8 +1,9 @@
-package com.internship.base;
+package base;
 
-import com.internship.utils.ConfigReader;
-import com.internship.utils.DriverFactory;
-import com.internship.utils.WaitHelper;
+import data.TestDataProvider;
+import utils.ConfigReader;
+import utils.DriverFactory;
+import utils.WaitHelper;
 import org.openqa.selenium.WebDriver;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -37,7 +38,9 @@ public class BaseTest {
     /** Helper: perform a fresh sign-in before tests that require authentication */
     protected void loginAs(String email, String password) {
         navigateTo("/signin");
+        wait.waitForVisible(org.openqa.selenium.By.id("email"));
         driver.findElement(org.openqa.selenium.By.id("email")).clear();
+
         driver.findElement(org.openqa.selenium.By.id("email")).sendKeys(email);
         driver.findElement(org.openqa.selenium.By.id("password")).clear();
         driver.findElement(org.openqa.selenium.By.id("password")).sendKeys(password);
@@ -58,6 +61,6 @@ public class BaseTest {
     }
 
     protected void loginWithDefaultUser() {
-        loginAs(ConfigReader.getEmail(), ConfigReader.getPassword());
+        loginAs(TestDataProvider.getEmail(), TestDataProvider.getPassword());
     }
 }

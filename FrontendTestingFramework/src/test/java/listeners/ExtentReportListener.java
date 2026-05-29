@@ -1,13 +1,13 @@
-package com.internship.listeners;
+package listeners;
 
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 import com.aventstack.extentreports.reporter.configuration.Theme;
-import com.internship.utils.ConfigReader;
-import com.internship.utils.DriverFactory;
-import com.internship.utils.ScreenshotHelper;
+import utils.ConfigReader;
+import utils.DriverFactory;
+import utils.ScreenshotHelper;
 import org.openqa.selenium.WebDriver;
 import org.testng.ITestContext;
 import org.testng.ITestListener;

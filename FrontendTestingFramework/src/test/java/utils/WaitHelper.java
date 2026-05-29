@@ -1,4 +1,4 @@
-package com.internship.utils;
+package utils;
 
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedCondition;
