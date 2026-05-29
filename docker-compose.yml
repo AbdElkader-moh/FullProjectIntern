@@ -137,14 +137,14 @@ networks:
 
 secrets:
   cloudinary_cloud_name:
-    file: ./secrets/cloudinary_cloud_name.txt
+    file: ${HOST_PROJECT_PATH:-.}/secrets/cloudinary_cloud_name.txt
   cloudinary_api_key:
-    file: ./secrets/cloudinary_api_key.txt
+    file: ${HOST_PROJECT_PATH:-.}/secrets/cloudinary_api_key.txt
   cloudinary_api_secret:
-    file: ./secrets/cloudinary_api_secret.txt
+    file: ${HOST_PROJECT_PATH:-.}/secrets/cloudinary_api_secret.txt
   mysql_root_password:
-    file: ./secrets/mysql_root_password.txt
+    file: ${HOST_PROJECT_PATH:-.}/secrets/mysql_root_password.txt
   mysql_user:
-    file: ./secrets/mysql_user.txt
+    file: ${HOST_PROJECT_PATH:-.}/secrets/mysql_user.txt
   mysql_password:
-    file: ./secrets/mysql_password.txt
+    file: ${HOST_PROJECT_PATH:-.}/secrets/mysql_password.txt
