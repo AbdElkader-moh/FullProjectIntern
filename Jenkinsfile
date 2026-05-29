@@ -73,8 +73,7 @@ pipeline {
             steps {
                 echo 'Deploying infrastructure using Docker Compose...'
                 sh 'docker compose down || true'
-                sh 'docker compose pull'
-                sh 'docker compose up -d'
+                sh 'docker compose up -d --build'
                 sh 'docker image prune -f'
             }
         }
