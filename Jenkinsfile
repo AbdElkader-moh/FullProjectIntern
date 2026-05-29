@@ -71,18 +71,10 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                script {
-                    // Stop and remove the old application containers (ignoring Jenkins)
-                    sh 'docker compose stop mysql user-service sensor-service frontend simulator || true'
-                    sh 'docker compose rm -f mysql user-service sensor-service frontend simulator || true'
-                    
-                    // Dynamically determine the host path of the Jenkins workspace so it is completely generic
-                    def jenkinsMount = sh(script: "docker inspect -f '{{range .Mounts}}{{if eq .Destination \"/var/jenkins_home\"}}{{.Source}}{{end}}{{end}}' internship-jenkins", returnStdout: true).trim()
-                    def hostProjectPath = "${jenkinsMount}/workspace/${env.JOB_NAME}"
-                    
-                    // Bring up the application containers using the dynamic host path
-                    sh "HOST_PROJECT_PATH=\"${hostProjectPath}\" docker compose -p fullprojectintern up -d mysql user-service sensor-service frontend simulator"
-                }
+
+                sh 'docker compose down'
+
+                sh 'docker compose up -d'
             }
         }
     }
