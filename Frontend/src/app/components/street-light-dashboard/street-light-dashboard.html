@@ -1,0 +1,91 @@
+<div class="dash-page">
+  <header class="dash-header">
+    <div class="dash-header-left">
+      <button class="btn-back" (click)="goHome()" aria-label="Back to home">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Back
+      </button>
+      <div>
+        <h1 class="dash-title" style="--c: var(--light)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+          Street Light Management
+        </h1>
+        <p class="dash-subtitle">
+          @if (lastRefreshed) { Last refreshed {{ lastRefreshed | date:'hh:mm:ss a' }} · auto-refresh every 60s }
+          @else { Loading sensor data… }
+        </p>
+      </div>
+    </div>
+    @if (hasError) { <div class="error-pill" role="alert">⚠ Could not reach sensor service</div> }
+  </header>
+
+  <!-- Stats -->
+  <section class="stats-row" aria-label="Street light statistics">
+    @if (!isLoading && stats) {
+      <div class="stat-card" style="--c: var(--light)"><span class="stat-label">Total Records</span><span class="stat-val">{{ stats.totalRecords | number }}</span></div>
+      <div class="stat-card" style="--c: var(--light)"><span class="stat-label">Avg Brightness</span><span class="stat-val">{{ stats.averageBrightness | number:'1.1-1' }}</span><span class="stat-unit">%</span></div>
+      <div class="stat-card" style="--c: var(--light)"><span class="stat-label">Avg Power</span><span class="stat-val">{{ stats.averagePower | number:'1.1-1' }}</span><span class="stat-unit">W</span></div>
+      <div class="stat-card" style="--c: #a78bfa"><span class="stat-label">Lights ON</span><span class="stat-val">{{ stats.onCount | number }}</span></div>
+      <div class="stat-card" style="--c: #6b7280"><span class="stat-label">Lights OFF</span><span class="stat-val">{{ stats.offCount | number }}</span></div>
+    } @else {
+      @for (i of [1,2,3,4,5]; track i) { <div class="stat-card stat-card--skeleton"><div class="skel skel-sm"></div><div class="skel skel-lg"></div></div> }
+    }
+  </section>
+
+  <!-- Filters -->
+  <section class="filter-panel">
+    <div class="filter-grid">
+      <div class="filter-field"><label class="filter-label" for="sl-loc">Location</label><input id="sl-loc" type="text" class="filter-input" [(ngModel)]="filterLocation" placeholder="e.g. Main Street" autocomplete="off"/></div>
+      <div class="filter-field"><label class="filter-label" for="sl-status">Status</label>
+        <select id="sl-status" class="filter-input" [(ngModel)]="filterStatus">
+          <option value="">All</option>
+          @for (s of statusOptions; track s) { <option [value]="s">{{ s }}</option> }
+        </select>
+      </div>
+      <div class="filter-field"><label class="filter-label" for="sl-from">From</label><input id="sl-from" type="datetime-local" class="filter-input" [(ngModel)]="filterFrom"/></div>
+      <div class="filter-field"><label class="filter-label" for="sl-to">To</label><input id="sl-to" type="datetime-local" class="filter-input" [(ngModel)]="filterTo"/></div>
+      <div class="filter-field"><label class="filter-label" for="sl-sort">Sort</label>
+        <select id="sl-sort" class="filter-input" [(ngModel)]="sortBy">
+          @for (opt of sortOptions; track opt.value) { <option [value]="opt.value">{{ opt.label }}</option> }
+        </select>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-apply" style="--c: var(--light)" (click)="applyFilters()" [disabled]="isLoading">Apply</button>
+      <button class="btn-clear" (click)="clearFilters()" [disabled]="isLoading">Clear</button>
+    </div>
+  </section>
+
+  <!-- Table -->
+  <section class="table-section">
+    @if (isLoading) { <div class="table-loading"><div class="spinner" style="--c:var(--light)"></div></div> }
+    @if (!isLoading && page && page.content.length === 0) {
+      <div class="empty-state"><span class="empty-icon">💡</span><p>No street light records match your filters.</p><button class="btn-clear" (click)="clearFilters()">Clear Filters</button></div>
+    }
+    @if (!isLoading && page && page.content.length > 0) {
+      <div class="table-wrap">
+        <table class="data-table" aria-label="Street light sensor data">
+          <thead><tr><th>Location</th><th>Timestamp</th><th>Brightness (%)</th><th>Power (W)</th><th>Status</th></tr></thead>
+          <tbody>
+            @for (r of page.content; track r.id) {
+              <tr>
+                <td>{{ r.location }}</td>
+                <td>{{ r.timestamp | date:'dd MMM yyyy, hh:mm a' }}</td>
+                <td>{{ r.brightnessLevel | number }}</td>
+                <td>{{ r.powerConsumption | number:'1.1-1' }}</td>
+                <td><span class="badge" [ngStyle]="statusStyle(r.status)">{{ r.status }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button class="pag-btn" (click)="prevPage()" [disabled]="currentPage === 0 || isLoading">← Prev</button>
+        <span class="pag-info">Page {{ currentPage + 1 }} of {{ totalPages }} · {{ page.totalElements | number }} records</span>
+        <button class="pag-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1 || isLoading">Next →</button>
+      </div>
+    }
+  </section>
+</div>

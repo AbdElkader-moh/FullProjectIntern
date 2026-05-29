@@ -8,7 +8,6 @@ export interface UserResponse {
   firstName: string;
   lastName: string;
   profilePicture: string;
-  password: string;
 }
 
 export interface ApiResponse {
