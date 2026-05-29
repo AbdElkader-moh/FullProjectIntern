@@ -8,6 +8,7 @@ services:
     privileged: true
     volumes:
       - C:\jenkins_home:/var/jenkins_home
+      - C:\jenkins_home:/c/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
 
 # remove the volumes section entirely
