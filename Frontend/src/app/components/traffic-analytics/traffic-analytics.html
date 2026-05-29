@@ -1,0 +1,204 @@
+<!-- HEADER BAR -->
+<header class="header-bar">
+  <div class="header-left">
+    <a routerLink="/home" class="brand-link">
+      <span class="brand-icon">🏙️</span>
+      <span class="brand-text">IOT System Tracking</span>
+    </a>
+  </div>
+  <nav class="header-right">
+    <a routerLink="/home" class="nav-link" title="Home">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
+      <span>Home</span>
+    </a>
+    <a routerLink="/traffic" class="nav-link" title="Dashboard">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a routerLink="/traffic-alerts" class="nav-link" title="Alerts">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <span>Alerts</span>
+    </a>
+    <a routerLink="/notifications" class="nav-link notification-link" title="Notifications">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <span>Notifications</span>
+      @if (unreadCount > 0) { <span class="badge">{{ unreadCount }}</span> }
+    </a>
+    <a routerLink="/profile" class="nav-link" title="Profile">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      <span>{{ firstName }}</span>
+    </a>
+    <button class="nav-link logout-btn" (click)="logout()" title="Logout">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      <span>Logout</span>
+    </button>
+  </nav>
+</header>
+
+<main class="analytics-container">
+  <!-- Page Header -->
+  <section class="page-header">
+    <div class="page-header-left">
+      <a routerLink="/traffic" class="back-link">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="page-title-group">
+        <h1 class="page-title">
+          <svg class="title-icon" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Traffic Analytics &amp; Search
+        </h1>
+        <p class="page-subtitle">Advanced filtering, sorting, and search across traffic records</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILTER PANEL -->
+  <section class="filter-panel">
+    <div class="filter-panel-header">
+      <h2 class="section-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+        Search Filters
+      </h2>
+      @if (activeFilterCount > 0) {
+        <span class="filter-active-indicator">{{ activeFilterCount }} active</span>
+      }
+    </div>
+
+    <div class="filter-grid">
+      <!-- Date Range -->
+      <div class="filter-group">
+        <label class="filter-label" for="filterFrom">Start Date / Time</label>
+        <input id="filterFrom" type="datetime-local" class="filter-input" [(ngModel)]="filterFrom" />
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterTo">End Date / Time</label>
+        <input id="filterTo" type="datetime-local" class="filter-input" [(ngModel)]="filterTo" />
+      </div>
+
+      <!-- Location -->
+      <div class="filter-group">
+        <label class="filter-label" for="filterLocation">Location</label>
+        <input id="filterLocation" type="text" class="filter-input" placeholder="Search by location..." [(ngModel)]="filterLocation" (keyup.enter)="applyFilters()" list="locationList" />
+        <datalist id="locationList">
+          @for (loc of locationSuggestions; track loc) {
+            <option [value]="loc"></option>
+          }
+        </datalist>
+      </div>
+
+      <!-- Congestion Level -->
+      <div class="filter-group">
+        <label class="filter-label" for="filterCongestion">Congestion Level</label>
+        <select id="filterCongestion" class="filter-input" [(ngModel)]="filterCongestion">
+          <option value="">All Levels</option>
+          @for (level of congestionLevels; track level) { <option [value]="level">{{ level }}</option> }
+        </select>
+      </div>
+
+      <!-- Sort -->
+      <div class="filter-group">
+        <label class="filter-label" for="filterSort">Sort By</label>
+        <select id="filterSort" class="filter-input" [(ngModel)]="filterSort">
+          @for (opt of sortOptions; track opt.value) { <option [value]="opt.value">{{ opt.label }}</option> }
+        </select>
+      </div>
+    </div>
+
+    @if (filterDateError) {
+      <div class="filter-date-error">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>
+        {{ filterDateError }}
+      </div>
+    }
+
+    <div class="filter-actions">
+      <button class="btn btn-primary" (click)="applyFilters()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        Search
+      </button>
+      <button class="btn btn-secondary" (click)="resetFilters()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        Clear All
+      </button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results-section">
+    <div class="results-header">
+      <h2 class="section-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        Search Results
+      </h2>
+      <div class="results-meta">
+        <span class="record-count">{{ totalElements | number }} record{{ totalElements !== 1 ? 's' : '' }} found</span>
+        <div class="page-size-control">
+          <label for="pageSize">Per page</label>
+          <select id="pageSize" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+            @for (s of pageSizeOptions; track s) { <option [ngValue]="s">{{ s }}</option> }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    @if (tableLoading) {
+      <div class="table-loading"><div class="spinner"></div><p>Searching traffic data...</p></div>
+    } @else if (tableError) {
+      <div class="error-banner">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>
+        <span class="error-text">{{ tableError }}</span>
+        <button class="btn-retry" (click)="loadTable()">Retry</button>
+      </div>
+    } @else if (trafficData.length === 0) {
+      <div class="empty-state">
+        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <p class="empty-title">No matching records found</p>
+        <p class="empty-subtitle">Try broadening your search criteria or clearing some filters.</p>
+        @if (activeFilterCount > 0) {
+          <button class="btn btn-secondary" style="margin-top:12px" (click)="resetFilters()">Clear All Filters</button>
+        }
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead><tr>
+            <th scope="col">#</th>
+            <th scope="col">Location</th>
+            <th scope="col">Timestamp</th>
+            <th scope="col">Traffic Density</th>
+            <th scope="col">Avg Speed</th>
+            <th scope="col">Congestion Level</th>
+          </tr></thead>
+          <tbody>
+            @for (record of trafficData; track record.id; let i = $index) {
+              <tr>
+                <td class="row-num">{{ currentPage * pageSize + i + 1 }}</td>
+                <td class="col-location">{{ record.location }}</td>
+                <td class="col-timestamp">{{ formatTimestamp(record.timestamp) }}</td>
+                <td class="col-density"><span class="density-value">{{ record.trafficDensity }}</span> <span class="density-unit">veh/hr</span></td>
+                <td class="col-speed"><span class="speed-value">{{ record.avgSpeed | number:'1.1-1' }}</span> <span class="speed-unit">km/h</span></td>
+                <td><span class="congestion-badge" [ngStyle]="getCongestionStyle(record.congestionLevel)">{{ record.congestionLevel }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <span class="pagination-info">Showing {{ showingFrom }}–{{ showingTo }} of {{ totalElements | number }}</span>
+          <div class="pagination-controls">
+            <button class="page-btn" [disabled]="currentPage === 0" (click)="goToPage(0)" aria-label="First page">«</button>
+            <button class="page-btn" [disabled]="currentPage === 0" (click)="goToPage(currentPage - 1)" aria-label="Previous page">‹</button>
+            @for (p of pageNumbers; track p) {
+              <button class="page-btn" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p + 1 }}</button>
+            }
+            <button class="page-btn" [disabled]="currentPage >= totalPages - 1" (click)="goToPage(currentPage + 1)" aria-label="Next page">›</button>
+            <button class="page-btn" [disabled]="currentPage >= totalPages - 1" (click)="goToPage(totalPages - 1)" aria-label="Last page">»</button>
+          </div>
+        </div>
+      }
+    }
+  </section>
+</main>
