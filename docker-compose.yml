@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: internship-mysql
     ports:
-      - "4306:3306"
+      - "3307:3306"
     environment:
       MYSQL_DATABASE: project_db
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
@@ -21,10 +21,10 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 5s
       timeout: 5s
-      retries: 20  
+      retries: 20
     networks:
       - project-net
 
@@ -32,7 +32,7 @@ services:
     build:
       context: ./backend/user
       dockerfile: Dockerfile
-    image: ${DOCKERHUB_USERNAME}/user-service:${IMAGE_TAG}  
+    image: ${DOCKERHUB_USERNAME}/user-service:${IMAGE_TAG}
     container_name: internship-backend
     ports:
       - "8088:8080"
