@@ -23,19 +23,24 @@ pipeline {
   stage('Prepare Secrets') {
     steps {
         sh '''
-            mkdir -p secrets
+    mkdir -p secrets
 
-            echo "$MYSQL_PASSWORD">/var/jenkins_home/workspace/sprint3-pipeline/secrets/mysql_password.txt
-            echo "$SECRETSCLOUDINARY_CLOUD_NAME">/var/jenkins_home/workspace/sprint3-pipeline/secrets/secretscloudinary_api_key.txt
-            echo "$CLOUDINARY_CLOUD_NAME">/var/jenkins_home/workspace/sprint3-pipeline/secrets/cloudinary_cloud_name.txt
-            echo "$CLOUDINARY_API_KEY">/var/jenkins_home/workspace/sprint3-pipeline/secrets/cloudinary_api_key.txt
-            echo "$CLOUDINARY_API_SECRET">/var/jenkins_home/workspace/sprint3-pipeline/secrets/cloudinary_api_secret.txt
-            echo "$MYSQL_USER">/var/jenkins_home/workspace/sprint3-pipeline/secrets/mysql_user.txt
-            echo "$MYSQL_ROOT_PASSWORD">/var/jenkins_home/workspace/sprint3-pipeline/secrets/mysql_root_password.txt
-          
-        '''
+    echo "$MYSQL_PASSWORD" > secrets/mysql_password.txt
+    echo "$SECRETSCLOUDINARY_CLOUD_NAME" > secrets/secretscloudinary_api_key.txt
+    echo "$CLOUDINARY_CLOUD_NAME" > secrets/cloudinary_cloud_name.txt
+    echo "$CLOUDINARY_API_KEY" > secrets/cloudinary_api_key.txt
+    echo "$CLOUDINARY_API_SECRET" > secrets/cloudinary_api_secret.txt
+    echo "$MYSQL_USER" > secrets/mysql_user.txt
+    echo "$MYSQL_ROOT_PASSWORD" > secrets/mysql_root_password.txt
+'''
     }
     }
+    stage('Verify Secrets') {
+        steps {
+            sh 'pwd'
+            sh 'ls -la secrets' 
+        }
+    }   
 
         stage('Build Images') {
             steps {
