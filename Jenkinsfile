@@ -76,7 +76,7 @@ pipeline {
                 sh 'docker compose rm -f mysql user-service sensor-service frontend simulator || true'
                 
                 // Bring up the application containers on the same docker network without conflicts
-                sh 'HOST_PROJECT_PATH="d:/DXC_training/dxc_training/FullProjectIntern" docker compose -p fullprojectintern up -d mysql user-service sensor-service frontend simulator'
+                sh 'HOST_PROJECT_PATH="/d/DXC_training/dxc_training/FullProjectIntern" docker compose -p fullprojectintern up -d mysql user-service sensor-service frontend simulator'
             }
         }
     }
