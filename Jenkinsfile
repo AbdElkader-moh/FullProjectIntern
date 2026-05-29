@@ -9,6 +9,10 @@ pipeline {
         IMAGE_SIMULATOR = "${DOCKER_HUB_USER}/simulator"
         IMAGE_FRONTEND = "${DOCKER_HUB_USER}/frontend"
         TAG_SPRINT = 'sprint3'
+        
+        CLOUDINARY_CLOUD_NAME = credentials('cloudinary-cloud-name')
+        CLOUDINARY_API_KEY = credentials('cloudinary-api-key')
+        CLOUDINARY_API_SECRET = credentials('cloudinary-api-secret')
     }
 
     stages {
