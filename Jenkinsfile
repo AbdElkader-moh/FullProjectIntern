@@ -98,14 +98,11 @@ pipeline {
         }
 
         stage('Deploy') {
-            steps {
-
-                dir("$WORKSPACE") {
-                    sh 'docker compose down'
-                    sh 'docker compose up -d'
-                }   
-            }
-        }
+    steps {
+        sh 'docker compose -f /c/jenkins_home/workspace/sprint3-pipeline/docker-compose.yml --project-directory /c/jenkins_home/workspace/sprint3-pipeline down'
+        sh 'docker compose -f /c/jenkins_home/workspace/sprint3-pipeline/docker-compose.yml --project-directory /c/jenkins_home/workspace/sprint3-pipeline up -d'
+    }
+}
     }
 
     post {
