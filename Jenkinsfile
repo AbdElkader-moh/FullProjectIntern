@@ -71,10 +71,12 @@ pipeline {
 
         stage('Deploy') {
             steps {
-
-                sh 'docker compose down'
-
-                sh 'docker compose up -d'
+                // Stop and remove the old application containers (ignoring Jenkins)
+                sh 'docker compose stop mysql user-service sensor-service frontend simulator || true'
+                sh 'docker compose rm -f mysql user-service sensor-service frontend simulator || true'
+                
+                // Bring up the application containers on the same docker network without conflicts
+                sh 'docker compose -p fullprojectintern up -d mysql user-service sensor-service frontend simulator'
             }
         }
     }
