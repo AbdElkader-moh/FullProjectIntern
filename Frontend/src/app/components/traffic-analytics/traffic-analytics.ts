@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -62,6 +62,30 @@ export class TrafficAnalytics implements OnInit, OnDestroy {
     private router: Router,
     // FIX: inject ActivatedRoute for URL query param state persistence
     private route: ActivatedRoute,
+    /**
+     * BUG FIX — Search results not rendering until pagination interaction.
+     *
+     * Root cause: applyFilters() calls syncQueryParams() (which triggers
+     * router.navigate()) and then immediately calls loadTable(). The Angular
+     * Router's navigate() schedules a navigation microtask that internally
+     * triggers a change detection cycle when it settles. The HTTP response
+     * from loadTable() arrives asynchronously AFTER that router-driven CD
+     * cycle has already completed. Because the router navigation's async
+     * teardown can preempt Zone.js's normal CD scheduling, the state mutations
+     * in the subscribe() next callback land in a gap where no further CD run
+     * is automatically scheduled — so the table stays frozen on the old view.
+     * Interacting with pagination works because ngModelChange / click events
+     * independently trigger a new CD cycle, which then picks up the stale
+     * pending state mutations and finally renders them.
+     *
+     * Fix: inject ChangeDetectorRef and call detectChanges() at the end of
+     * both the next and error callbacks in loadTable(). This explicitly
+     * schedules a CD run the moment state is mutated, bypassing the router/zone
+     * timing gap entirely. markForCheck() alone is insufficient here because
+     * the component isn't using OnPush — detectChanges() forces an immediate
+     * synchronous check of this component's view.
+     */
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -186,10 +210,17 @@ export class TrafficAnalytics implements OnInit, OnDestroy {
         this.totalPages = page.totalPages;
         this.currentPage = page.number;
         this.tableLoading = false;
+        // BUG FIX: force a CD run immediately after state mutations.
+        // Without this, the router.navigate() call in syncQueryParams() can
+        // consume the zone's pending CD tick before the HTTP response arrives,
+        // leaving the view stale until the next user interaction triggers CD.
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.tableError = err?.message || 'Failed to load traffic data';
         this.tableLoading = false;
+        // BUG FIX: same fix — ensure error state renders immediately.
+        this.cdr.detectChanges();
       },
     });
   }
