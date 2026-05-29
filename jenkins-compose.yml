@@ -7,7 +7,7 @@ services:
       - "8080:8080"
     privileged: true
     volumes:
-      - //c/jenkins_home:/var/jenkins_home
+      - C:\jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
 
 # remove the volumes section entirely
