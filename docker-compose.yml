@@ -73,7 +73,7 @@ services:
     container_name: internship-simulator
     environment:
       SENSOR_SERVICE_URL: http://sensor-service:8081
-      TRAFFIC_INTERVAL_SECONDS: 300
+      TRAFFIC_INTERVAL_SECONDS: 60
       LIGHT_INTERVAL_SECONDS: 120
       AIR_INTERVAL_SECONDS: 30
     depends_on:
