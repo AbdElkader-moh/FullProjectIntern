@@ -116,7 +116,7 @@ services:
     build:
       context: ./jenkins
       dockerfile: Dockerfile
-
+    user: root
     container_name: internship-jenkins
 
     ports:
