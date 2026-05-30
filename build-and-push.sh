@@ -2,7 +2,7 @@
 
 set -e
 
-DOCKER_USERNAME="abdelkader112002"
+DOCKER_USERNAME="abdelkader1120022"
 
 echo "Building MySQL image..."
 docker build -t custom-mysql ./db
