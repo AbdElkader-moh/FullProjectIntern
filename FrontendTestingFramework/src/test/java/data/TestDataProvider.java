@@ -1,9 +1,8 @@
 package data;
-<<<<<<< HEAD
-=======
+
 import utils.ExcelDataReader;
 import org.testng.annotations.DataProvider;
->>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4
+
 
 /**
  * TestDataProvider — Excel-driven replacement for the old static-constant class.

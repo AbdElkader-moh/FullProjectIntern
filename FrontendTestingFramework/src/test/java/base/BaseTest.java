@@ -1,9 +1,5 @@
 package base;
-
-<<<<<<< HEAD
-=======
 import data.TestDataProvider;
->>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4
 import utils.ConfigReader;
 import utils.DriverFactory;
 import utils.WaitHelper;
