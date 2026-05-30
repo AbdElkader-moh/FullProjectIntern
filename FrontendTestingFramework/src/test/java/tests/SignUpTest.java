@@ -2,10 +2,9 @@ package tests;
 
 import base.BaseTest;
 import data.TestDataProvider;
-<<<<<<< HEAD
-=======
+
 import io.qameta.allure.*;
->>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4
+
 import pages.SignInPage;
 import pages.SignUpPage;
 import utils.ConfigReader;

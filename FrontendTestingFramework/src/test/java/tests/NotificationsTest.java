@@ -1,10 +1,8 @@
 package tests;
 
 import base.BaseTest;
-<<<<<<< HEAD
-=======
+
 import io.qameta.allure.*;
->>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4
 import pages.NotificationsPage;
 import utils.ConfigReader;
 import org.openqa.selenium.By;

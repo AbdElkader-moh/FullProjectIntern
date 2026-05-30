@@ -1,9 +1,5 @@
 package pages;
-
-<<<<<<< HEAD
-=======
 import io.qameta.allure.Step;
->>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4
 import utils.RetryHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
