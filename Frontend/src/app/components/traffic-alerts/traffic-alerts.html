@@ -36,12 +36,31 @@
 </header>
 
 <main class="alerts-container">
-  <!-- Live alert banner -->
-  @if (alertBanner) {
-    <div class="live-alert-banner">
-      <span>{{ alertBanner }}</span>
-    </div>
-  }
+  <!-- Live, non-blocking toast stack (Requirements #6, #11, #12) -->
+  <div class="toast-stack" aria-live="polite" aria-atomic="false">
+    @for (toast of toasts; track toast.id) {
+      <div class="toast" [class.toast-leaving]="toast.leaving" role="status">
+        <span class="toast-icon">{{ toastIcon() }}</span>
+        <div class="toast-body">
+          <div class="toast-title">
+            Traffic Alert
+            <span class="toast-severity" [ngStyle]="getSeverityStyle(toast.severity)">{{ toast.severity }}</span>
+          </div>
+          <div class="toast-message">
+            <strong>{{ toast.metric }}</strong> is
+            <span class="toast-direction">{{ toast.alertType }}</span>
+            threshold — <span class="toast-value">{{ toast.value }}</span>
+            vs <span class="toast-threshold">{{ toast.thresholdValue }}</span>
+          </div>
+          <div class="toast-location">📍 {{ toast.location }}</div>
+        </div>
+        <button class="toast-close" (click)="dismissToast(toast.id)" aria-label="Dismiss alert">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <span class="toast-progress"></span>
+      </div>
+    }
+  </div>
 
   <!-- Page Header -->
   <section class="page-header">
@@ -98,10 +117,10 @@
         </select>
       </div>
       <div class="filter-group">
-        <label class="filter-label" for="aFilterType">Alert Type</label>
-        <select id="aFilterType" class="filter-input" [(ngModel)]="filterType">
-          <option value="">All Types</option>
-          @for (t of alertTypes; track t) { <option [value]="t">{{ t }}</option> }
+        <label class="filter-label" for="aFilterMetric">Alert Classification</label>
+        <select id="aFilterMetric" class="filter-input" [(ngModel)]="filterMetric">
+          <option value="">All Traffic Alerts</option>
+          @for (m of metricOptions; track m) { <option [value]="m">{{ m }}</option> }
         </select>
       </div>
       <div class="filter-group">
@@ -176,7 +195,7 @@
       <div class="table-wrapper">
         <table class="data-table">
           <thead><tr>
-            <th scope="col">Type</th>
+            <th scope="col">Classification</th>
             <th scope="col">Metric</th>
             <th scope="col">Location</th>
             <th scope="col">Value / Threshold</th>
@@ -189,8 +208,9 @@
             @for (alert of pagedAlerts; track alert.id) {
               <tr [class.unread-row]="!alert.isRead">
                 <td class="col-type">
-                  <span class="type-badge" [class]="'type-' + alert.type.toLowerCase()">
-                    {{ typeIcon(alert.type) }} {{ alert.type }}
+                  <span class="type-badge type-traffic">
+                    {{ metricIcon(alert.metric) }}
+                    {{ alert.metric === 'Traffic Density' ? 'Density' : (alert.metric === 'Average Speed' ? 'Speed' : 'Traffic') }}
                   </span>
                 </td>
                 <td class="col-metric">{{ alert.metric }}</td>

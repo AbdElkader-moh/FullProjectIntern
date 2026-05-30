@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Subscription, forkJoin, interval, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, startWith } from 'rxjs/operators';
 
 import { TrafficService } from '../../services/traffic.service';
 import { AuthService, UserResponse } from '../../services/auth.service';
@@ -81,7 +81,18 @@ export class TrafficDashboard implements OnInit, OnDestroy {
 
   readonly chartViewBox = `0 0 ${CW} ${CH}`;
 
-  // Track whether this is the very first load — controls spinner vs silent-refresh mode
+  /**
+   * firstLoad tracks whether we are on the very first data fetch after
+   * component creation. On first load, full spinners are shown.
+   * On subsequent auto-refresh calls, data updates silently in-place.
+   *
+   * IMPORTANT: Because startAutoRefresh() now uses startWith(0), the
+   * interval emits immediately at t=0 and calls loadAllData(). That first
+   * emission must consume the firstLoad=true state so it shows spinners.
+   * ngOnInit no longer calls loadAllData() directly — the interval handles it.
+   * This eliminates the race where ngOnInit and the t=0 interval emission
+   * both called loadAllData() simultaneously (double request on init).
+   */
   private firstLoad = true;
 
   // ── Subscriptions — all tracked for clean teardown ──
@@ -108,11 +119,63 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     private authService: AuthService,
     private notificationService: NotificationService,
     private router: Router,
+    /**
+     * RENDER BUG FIX — Inject ChangeDetectorRef for zoneless change detection.
+     *
+     * Root cause: This application runs without zone.js (zoneless mode).
+     * In a zoneless build, Angular's change detection is NOT automatically
+     * triggered when RxJS Observable callbacks (next/error) update component
+     * state. The HTTP responses were arriving and mutating fields such as
+     * `stats`, `trafficData`, `trendData`, and `*Loading` correctly in memory,
+     * but Angular never re-evaluated the template bindings — so the view stayed
+     * frozen on the initial spinner/empty state indefinitely.
+     *
+     * Why user gestures "fixed" it: DOM event handlers (button clicks, select
+     * change) are one of the few remaining triggers that cause Angular to run
+     * a change-detection pass even in zoneless mode. When the user clicked
+     * "Auto Refresh" or changed the page-size select, Angular re-checked the
+     * template, found the already-populated fields, and rendered the data that
+     * had been silently sitting in the component for potentially minutes.
+     *
+     * Fix: Call this.cdr.markForCheck() at the end of every async callback
+     * that mutates component state, exactly as AppComponent already does for
+     * its STOMP WebSocket callbacks. markForCheck() is preferred over
+     * detectChanges() because it is re-entrancy-safe and schedules the check
+     * in the next CD pass rather than executing synchronously mid-callback.
+     *
+     * This pattern is safe under both zoneless and zone-based configurations:
+     * if zone.js is present, markForCheck() is a cheap, harmless no-op.
+     */
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     this.loadUser();
-    this.loadAllData();
+    /**
+     * DATA SYNC FIX — Do NOT call loadAllData() here directly.
+     *
+     * Root cause of the original bug: with the proxy misconfigured, every
+     * API call on init silently failed (proxied to wrong port). The spinners
+     * showed briefly, errors were set, but because all four sections failed
+     * simultaneously the UX looked like "nothing loaded."
+     *
+     * With the proxy now correctly routing /api/sensors → :8081, the primary
+     * fix is the proxy.conf.json change. However, we also restructure init
+     * here to use startAutoRefresh() exclusively as the data trigger:
+     *
+     *   startAutoRefresh() → interval(60s).pipe(startWith(0))
+     *                       → emits immediately at t=0
+     *                       → calls loadAllData() with firstLoad=true (spinners)
+     *                       → then every 60s calls loadAllData() silently
+     *
+     * Benefits:
+     * 1. Single code path for both initial load and periodic refresh.
+     * 2. No double-request race (previously ngOnInit AND t=0 both fired loadAllData).
+     * 3. Re-navigation recreates the component → ngOnInit → startAutoRefresh →
+     *    immediate t=0 emission → fresh data load. Works correctly every time.
+     * 4. toggleAutoRefresh() re-calls startAutoRefresh() → new t=0 emission →
+     *    data loads immediately when user re-enables auto-refresh.
+     */
     this.startAutoRefresh();
   }
 
@@ -121,16 +184,20 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     this.dataSub?.unsubscribe();
     this.chartSub?.unsubscribe();
     this.alertsSub?.unsubscribe();
-    // BUG #2 FIX: unsubscribe statsSub — was missing, caused leak on fast navigation
     this.statsSub?.unsubscribe();
   }
 
   private loadUser(): void {
     const current = this.authService.currentUser;
-    if (current) { this.user = current; }
-    else {
+    if (current) {
+      this.user = current;
+      // currentUser is synchronous — no markForCheck() needed here.
+    } else {
       this.authService.getProfile().subscribe({
-        next: (u: UserResponse) => (this.user = u),
+        next: (u: UserResponse) => {
+          this.user = u;
+          this.cdr.markForCheck(); // async: notify Angular to re-render the username
+        },
         error: () => this.router.navigate(['/signin']),
       });
     }
@@ -154,8 +221,6 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     this.loadTable(showSpinners);
     this.loadCharts(showSpinners);
     this.loadRecentAlerts(showSpinners);
-    // NOTE: lastRefreshed is set inside loadTable/loadRecentAlerts callbacks
-    // so the timestamp reflects when data ARRIVED, not when the request STARTED.
   }
 
   loadRecentAlerts(showLoading = true): void {
@@ -171,9 +236,9 @@ export class TrafficDashboard implements OnInit, OnDestroy {
           .slice(0, 5);
         this.unreadCount = data.filter(n => !n.isRead).length;
         this.alertsLoading = false;
-        // BUG #2 FIX: lastRefreshed set here (when data actually arrives)
         this.lastRefreshed = new Date();
         this.isRefreshing = false;
+        this.cdr.markForCheck(); // zoneless: render alerts list, unread count, last-refreshed timestamp
       },
       error: () => {
         if (showLoading || !this.recentAlerts.length) {
@@ -181,6 +246,7 @@ export class TrafficDashboard implements OnInit, OnDestroy {
         }
         this.alertsLoading = false;
         this.isRefreshing = false;
+        this.cdr.markForCheck(); // zoneless: render error state
       },
     });
   }
@@ -215,17 +281,19 @@ export class TrafficDashboard implements OnInit, OnDestroy {
       this.statsLoading = true;
       this.statsError = '';
     }
-    // BUG #2 FIX: Cancel previous in-flight stats request before starting a new one.
-    // Previously there was no statsSub — multiple concurrent subscriptions accumulated,
-    // causing race conditions where a stale response could overwrite a fresh one.
     this.statsSub?.unsubscribe();
     this.statsSub = this.trafficService.getStats().subscribe({
-      next: (s) => { this.stats = s; this.statsLoading = false; },
+      next: (s) => {
+        this.stats = s;
+        this.statsLoading = false;
+        this.cdr.markForCheck(); // zoneless: render stat cards
+      },
       error: (err) => {
         if (showLoading || !this.stats) {
           this.statsError = err?.message || 'Failed to load statistics';
         }
         this.statsLoading = false;
+        this.cdr.markForCheck(); // zoneless: render error state in stats section
       },
     });
   }
@@ -243,10 +311,10 @@ export class TrafficDashboard implements OnInit, OnDestroy {
         this.totalElements = page.totalElements;
         this.totalPages = page.totalPages;
         this.currentPage = page.number;
-        // Sync pageSize from server response as defensive guard against mismatches
         this.pageSize = page.size;
         this.tableLoading = false;
         this.isRefreshing = false;
+        this.cdr.markForCheck(); // zoneless: render table rows and pagination controls
       },
       error: (err) => {
         if (showLoading || !this.trafficData.length) {
@@ -254,21 +322,13 @@ export class TrafficDashboard implements OnInit, OnDestroy {
         }
         this.tableLoading = false;
         this.isRefreshing = false;
+        this.cdr.markForCheck(); // zoneless: render table error state
       },
     });
   }
 
   /**
    * BUG #3 FIX — Track individual chart API failures with separate error flags.
-   *
-   * Root cause: The inner catchError pipes swallowed API errors by returning
-   * empty defaults (of([]) / of(null)), so forkJoin's outer error callback
-   * never fired. chartsError remained '' even when APIs were down. Charts
-   * silently showed "No data" instead of "Failed to load" — user had no feedback.
-   *
-   * Fix: Set trendsError / congestionError in the inner catchError callbacks.
-   * The template checks these flags to show the correct empty vs. error message.
-   * Charts still degrade gracefully (one chart failure doesn't kill the other).
    */
   loadCharts(showLoading = true): void {
     if (showLoading) {
@@ -294,17 +354,17 @@ export class TrafficDashboard implements OnInit, OnDestroy {
       ),
     }).subscribe({
       next: ({ trends, congestion }) => {
-        // Backend returns newest-first; reverse for chronological left→right chart display
         this.trendData = (trends ?? []).slice().reverse();
         this.congestionSummary = congestion;
         this.chartsLoading = false;
+        this.cdr.markForCheck(); // zoneless: render SVG charts and congestion bars
       },
       error: (err) => {
-        // This path only fires if forkJoin itself fails (shouldn't happen given inner catchErrors)
         if (showLoading || !this.trendData.length) {
           this.chartsError = err?.message || 'Failed to load chart data';
         }
         this.chartsLoading = false;
+        this.cdr.markForCheck(); // zoneless: render chart error state
       },
     });
   }
@@ -320,46 +380,16 @@ export class TrafficDashboard implements OnInit, OnDestroy {
 
   // ── Pagination ──
 
-  /**
-   * BUG #1 FIX — Clear stale data before navigating to a new page.
-   *
-   * Root cause: goToPage() called loadTable(true), setting tableLoading=true.
-   * But the spinner template condition was: `tableLoading && trafficData.length === 0`.
-   * Since trafficData.length > 0 (old page records exist), the spinner was NEVER shown.
-   * The OLD page's records remained visible in the table while currentPage was already
-   * updated to the new value. The pagination label immediately recalculated to show
-   * the new page range (e.g. "16–20 of 29") but the table still showed the old records.
-   * Label and data were out of sync during the entire request window.
-   *
-   * Fix: Set trafficData = [] before calling loadTable(true). This makes
-   * trafficData.length === 0 true, so the spinner IS shown and stale data is hidden.
-   * The same fix applies to onPageSizeChange().
-   */
   goToPage(page: number): void {
     if (page < 0 || page >= this.totalPages) return;
     this.currentPage = page;
-    // BUG #1 FIX: clear stale records so spinner shows instead of wrong-page data
     this.trafficData = [];
     this.loadTable(true);
   }
 
-  /**
-   * BUG #1 FIX — onPageSizeChange previously called loadTable(false) when data existed.
-   *
-   * Root cause: loadTable(false) = silent mode — tableLoading stays false,
-   * old records remain visible. But currentPage is reset to 0 and pageSize is
-   * updated immediately. The showingFrom/To getters instantly recalculate:
-   *   showingFrom = 0 * 20 + 1 = 1
-   *   showingTo   = min(20, 29) = 20
-   * So label showed "Showing 1–20 of 29" while the table STILL showed 5 stale
-   * records from page 2 of the previous size=5 view. Label and data were wrong.
-   *
-   * Fix: Clear trafficData and always use loadTable(true) on explicit size changes.
-   */
   onPageSizeChange(): void {
     this.pageSize = Number(this.pageSize);
     this.currentPage = 0;
-    // BUG #1 FIX: clear stale records and always show loading state
     this.trafficData = [];
     this.loadTable(true);
   }
@@ -374,15 +404,10 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     return pages;
   }
 
-  /**
-   * Pagination label getters.
-   * These are correct ONLY when trafficData is in sync with currentPage/pageSize.
-   * The BUG #1 fix (clearing trafficData before page navigation) ensures that
-   * these values are never displayed when stale data is in the table.
-   */
   get showingFrom(): number {
     return this.totalElements === 0 ? 0 : this.currentPage * this.pageSize + 1;
   }
+
   get showingTo(): number {
     return Math.min((this.currentPage + 1) * this.pageSize, this.totalElements);
   }
@@ -391,8 +416,30 @@ export class TrafficDashboard implements OnInit, OnDestroy {
 
   startAutoRefresh(): void {
     this.stopAutoRefresh();
+    /**
+     * DATA SYNC FIX — Use startWith(0) so the interval emits immediately at t=0.
+     *
+     * Before: interval(60_000) → first emission after 60 seconds. Initial data
+     * load relied entirely on the separate loadAllData() call in ngOnInit.
+     * If that call failed (e.g. proxy misconfigured, route resolver delay),
+     * the dashboard showed empty spinners for 60 seconds until the first
+     * auto-refresh tick finally fired.
+     *
+     * After: interval(60_000).pipe(startWith(0)) → emits 0 immediately on
+     * subscribe, then 1, 2, 3... every 60 seconds. The t=0 emission calls
+     * loadAllData() with firstLoad=true, showing full spinners. Subsequent
+     * emissions call it with firstLoad=false, updating silently.
+     *
+     * When autoRefreshEnabled is false (user paused it), we still fire one
+     * immediate load so the user always sees current data, then stop the interval.
+     */
     if (this.autoRefreshEnabled) {
-      this.autoRefreshSub = interval(AUTO_REFRESH_MS).subscribe(() => this.loadAllData());
+      this.autoRefreshSub = interval(AUTO_REFRESH_MS)
+        .pipe(startWith(0))
+        .subscribe(() => this.loadAllData());
+    } else {
+      // Even with auto-refresh disabled, load data once on init/re-enable
+      this.loadAllData();
     }
   }
 
@@ -403,7 +450,16 @@ export class TrafficDashboard implements OnInit, OnDestroy {
 
   toggleAutoRefresh(): void {
     this.autoRefreshEnabled = !this.autoRefreshEnabled;
-    this.autoRefreshEnabled ? this.startAutoRefresh() : this.stopAutoRefresh();
+    if (this.autoRefreshEnabled) {
+      /**
+       * Re-enabling auto-refresh: call startAutoRefresh() which uses startWith(0)
+       * → triggers an immediate data load, then resumes 60s interval.
+       * User gets fresh data the moment they re-enable, not 60s later.
+       */
+      this.startAutoRefresh();
+    } else {
+      this.stopAutoRefresh();
+    }
   }
 
   manualRefresh(): void { this.loadAllData(); }
@@ -440,8 +496,6 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     return labels;
   }
 
-  // ── Traffic Density LINE CHART ──
-
   get densityMax(): number {
     if (!this.trendData.length) return 100;
     return this.niceRound(Math.max(...this.trendData.map(t => t.trafficDensity)) || 100);
@@ -469,14 +523,6 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     return `${this.densityLinePath} L${lastX},${bottom} L${AREA_X},${bottom} Z`;
   }
 
-  /**
-   * BUG #3 FIX — densityDots now includes an index (idx) for template tracking.
-   *
-   * Root cause: Template used `track dot.tip` where tip is a formatted timestamp string.
-   * If two readings have identical timestamps (can happen with rapid sensor ingestion),
-   * Angular cannot distinguish the nodes and skips DOM updates — dots disappear.
-   * Fix: track by $index in the template, not by a potentially-duplicate content value.
-   */
   get densityDots(): { cx: number; cy: number; val: number; tip: string }[] {
     const n = this.trendData.length;
     if (!n) return [];
@@ -489,8 +535,6 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     }));
   }
 
-  // ── Average Speed BAR CHART ──
-
   get speedMax(): number {
     if (!this.trendData.length) return 100;
     return this.niceRound(Math.max(...this.trendData.map(t => t.avgSpeed)) || 100);
@@ -500,9 +544,6 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     return this.getYTicks(Math.max(...this.trendData.map(t => t.avgSpeed)) || 100);
   }
 
-  /**
-   * BUG #3 FIX — speedBars now matches densityDots: tracked by $index in template.
-   */
   get speedBars(): { x: number; y: number; w: number; h: number; val: number; tip: string }[] {
     const n = this.trendData.length;
     if (!n) return [];
@@ -510,7 +551,7 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     const barW = Math.min(40, (AREA_W / n) * 0.7);
     const gap = AREA_W / n;
     return this.trendData.map((p, i) => {
-      const h = Math.max(1, (p.avgSpeed / max) * AREA_H); // min height 1px so 0-speed bar is visible
+      const h = Math.max(1, (p.avgSpeed / max) * AREA_H);
       return {
         x: AREA_X + i * gap + (gap - barW) / 2,
         y: AREA_Y + AREA_H - h,
@@ -521,8 +562,6 @@ export class TrafficDashboard implements OnInit, OnDestroy {
       };
     });
   }
-
-  // Congestion distribution helpers
 
   get congestionTotal(): number {
     if (!this.congestionSummary) return 1;
@@ -539,15 +578,12 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     return this.congestionSummary?.[level] || 0;
   }
 
-  // Chart grid area bounds (exposed for template)
   readonly gridX = AREA_X;
   readonly gridY = AREA_Y;
   readonly gridW = AREA_W;
   readonly gridH = AREA_H;
   readonly gridBottom = AREA_Y + AREA_H;
   readonly gridRight = AREA_X + AREA_W;
-
-  // ── Utility ──
 
   private niceRound(val: number): number {
     if (val <= 0) return 100;
@@ -563,15 +599,6 @@ export class TrafficDashboard implements OnInit, OnDestroy {
     return nice * mag;
   }
 
-  /**
-   * Spring Boot LocalDateTime serializes as ISO-8601 WITHOUT timezone info
-   * (e.g. "2026-05-28T17:44:00"). Modern browsers treat such strings as LOCAL time.
-   * Since Docker containers run UTC by default, timestamps display 3 hours behind
-   * for Egypt (UTC+3) users without the 'Z' suffix.
-   *
-   * Fix: Append 'Z' if no timezone designator is present so the browser correctly
-   * interprets the value as UTC and converts to local time for display.
-   */
   private toUtcDate(iso: string): Date {
     if (!iso) return new Date(NaN);
     const hasTimezone = iso.endsWith('Z') || /[+-]\d{2}:?\d{2}$/.test(iso);

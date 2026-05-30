@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: internship-mysql
     ports:
-      - "4306:3306"
+      - "3307:3306"
     environment:
       MYSQL_DATABASE: project_db
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
@@ -28,9 +28,14 @@ services:
     build:
       context: ./backend/user
       dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/user-service:${IMAGE_TAG}
     container_name: internship-backend
     ports:
+<<<<<<< HEAD
       - "8082:8080"
+=======
+      - "8088:8080"
+>>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://internship-mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-dbuser}
@@ -49,9 +54,11 @@ services:
     build:
       context: ./backend/sensor_data
       dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/sensor-service:${IMAGE_TAG}
     container_name: internship-sensor
     ports:
       - "8081:8081"
+
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://internship-mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-dbuser}
@@ -70,12 +77,17 @@ services:
     build:
       context: ./simulator
       dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/simulator:${IMAGE_TAG}
     container_name: internship-simulator
     environment:
       SENSOR_SERVICE_URL: http://sensor-service:8081
+<<<<<<< HEAD
       TRAFFIC_INTERVAL_SECONDS: 60
+=======
+      TRAFFIC_INTERVAL_SECONDS: 120
+>>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4
       LIGHT_INTERVAL_SECONDS: 120
-      AIR_INTERVAL_SECONDS: 30
+      AIR_INTERVAL_SECONDS: 120
     depends_on:
       sensor-service:
         condition: service_started
@@ -86,6 +98,7 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/frontend-app:${IMAGE_TAG}
     container_name: internship-frontend
     ports:
       - "4200:80"
@@ -101,3 +114,20 @@ volumes:
 networks:
   project-net:
     driver: bridge
+<<<<<<< HEAD
+=======
+
+secrets:
+  cloudinary_cloud_name:
+    file: ./secrets/cloudinary_cloud_name.txt
+  cloudinary_api_key:
+    file: ./secrets/cloudinary_api_key.txt
+  cloudinary_api_secret:
+    file: ./secrets/cloudinary_api_secret.txt
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
+  mysql_user:
+    file: ./secrets/mysql_user.txt
+  mysql_password:
+    file: ./secrets/mysql_password.txt
+>>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4

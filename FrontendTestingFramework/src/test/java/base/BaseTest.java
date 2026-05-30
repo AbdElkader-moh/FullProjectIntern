@@ -1,5 +1,9 @@
 package base;
 
+<<<<<<< HEAD
+=======
+import data.TestDataProvider;
+>>>>>>> b485ec14d5e88360bd0794f0fa63bdb60e3edea4
 import utils.ConfigReader;
 import utils.DriverFactory;
 import utils.WaitHelper;
@@ -37,7 +41,9 @@ public class BaseTest {
     /** Helper: perform a fresh sign-in before tests that require authentication */
     protected void loginAs(String email, String password) {
         navigateTo("/signin");
+        wait.waitForVisible(org.openqa.selenium.By.id("email"));
         driver.findElement(org.openqa.selenium.By.id("email")).clear();
+
         driver.findElement(org.openqa.selenium.By.id("email")).sendKeys(email);
         driver.findElement(org.openqa.selenium.By.id("password")).clear();
         driver.findElement(org.openqa.selenium.By.id("password")).sendKeys(password);
@@ -58,6 +64,6 @@ public class BaseTest {
     }
 
     protected void loginWithDefaultUser() {
-        loginAs(ConfigReader.getEmail(), ConfigReader.getPassword());
+        loginAs(TestDataProvider.getEmail(), TestDataProvider.getPassword());
     }
 }

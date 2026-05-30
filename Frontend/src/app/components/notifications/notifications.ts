@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { NotificationService } from '../../services/notification.service';
@@ -21,6 +22,8 @@ export class Notifications implements OnInit, OnDestroy {
   alertBanner = '';
 
   private stompClient!: Client;
+  /** Stored so ngOnDestroy can tear it down — was a fire-and-forget leak. */
+  private isLoggedInSub: Subscription | null = null;
 
   constructor(
     private notificationService: NotificationService,
@@ -31,7 +34,7 @@ export class Notifications implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
-    this.authService.isLoggedIn$.subscribe(isLoggedIn => {
+    this.isLoggedInSub = this.authService.isLoggedIn$.subscribe(isLoggedIn => {
       if (isLoggedIn && !this.stompClient?.active) {
         this.connectWebSocket();
       }
@@ -40,6 +43,7 @@ export class Notifications implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stompClient?.deactivate();
+    this.isLoggedInSub?.unsubscribe();
   }
 
   load(): void {
