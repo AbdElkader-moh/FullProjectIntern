@@ -1,0 +1,181 @@
+{
+  "info": {
+    "name": "GET /api/sensors/traffic/stats",
+    "description": "Automated test collection for GET /api/sensors/traffic/stats endpoint",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "sensorBaseUrl",
+      "value": "http://localhost:8081"
+    }
+  ],
+  "item": [
+    {
+      "name": "✅ Happy Path",
+      "item": [
+        {
+          "name": "TC-GET-TST-001 | Status 200 and response is an object",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is an object not an array', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('object');",
+                  "  pm.expect(body).to.not.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic/stats",
+              "host": ["{{sensorBaseUrl}}"],
+              "path": ["api", "sensors", "traffic", "stats"]
+            }
+          }
+        },
+        {
+          "name": "TC-GET-TST-002 | All fields exist with correct types",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('All expected fields exist with correct types', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('totalRecords').that.is.a('number');",
+                  "  pm.expect(body).to.have.property('averageTrafficDensity').that.is.a('number');",
+                  "  pm.expect(body).to.have.property('averageSpeed').that.is.a('number');",
+                  "  pm.expect(body).to.have.property('highCongestionCount').that.is.a('number');",
+                  "  pm.expect(body).to.have.property('severeCongestionCount').that.is.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic/stats",
+              "host": ["{{sensorBaseUrl}}"],
+              "path": ["api", "sensors", "traffic", "stats"]
+            }
+          }
+        },
+        {
+          "name": "TC-GET-TST-003 | All values are non-negative",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('All values are non-negative', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.totalRecords).to.be.at.least(0);",
+                  "  pm.expect(body.averageTrafficDensity).to.be.at.least(0);",
+                  "  pm.expect(body.averageSpeed).to.be.at.least(0);",
+                  "  pm.expect(body.highCongestionCount).to.be.at.least(0);",
+                  "  pm.expect(body.severeCongestionCount).to.be.at.least(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic/stats",
+              "host": ["{{sensorBaseUrl}}"],
+              "path": ["api", "sensors", "traffic", "stats"]
+            }
+          }
+        },
+        {
+          "name": "TC-GET-TST-004 | Congestion counts do not exceed totalRecords",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('highCongestionCount does not exceed totalRecords', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.highCongestionCount).to.be.at.most(body.totalRecords);",
+                  "});",
+                  "pm.test('severeCongestionCount does not exceed totalRecords', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.severeCongestionCount).to.be.at.most(body.totalRecords);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic/stats",
+              "host": ["{{sensorBaseUrl}}"],
+              "path": ["api", "sensors", "traffic", "stats"]
+            }
+          }
+        },
+        {
+          "name": "TC-GET-TST-005 | Averages are non-zero when totalRecords is greater than zero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Averages are non-zero when totalRecords > 0', () => {",
+                  "  const body = pm.response.json();",
+                  "  if (body.totalRecords > 0) {",
+                  "    pm.expect(body.averageTrafficDensity).to.be.above(0);",
+                  "    pm.expect(body.averageSpeed).to.be.above(0);",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic/stats",
+              "host": ["{{sensorBaseUrl}}"],
+              "path": ["api", "sensors", "traffic", "stats"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
