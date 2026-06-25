@@ -1,45 +1,71 @@
 package com.backend.sensor_data.service;
 
-import com.backend.sensor_data.dto.*;
-import com.backend.sensor_data.entity.*;
-import com.backend.sensor_data.repository.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import java.time.LocalDateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import com.backend.sensor_data.dto.AirPollutionDataDto;
+import com.backend.sensor_data.dto.AirStatsDto;
+import com.backend.sensor_data.dto.AirTrendDto;
+import com.backend.sensor_data.dto.LightStatsDto;
+import com.backend.sensor_data.dto.LightTrendDto;
+import com.backend.sensor_data.dto.StreetLightDataDto;
+import com.backend.sensor_data.dto.TrafficDataDto;
+import com.backend.sensor_data.dto.TrafficStatsDto;
+import com.backend.sensor_data.dto.TrafficTrendDto;
+import com.backend.sensor_data.entity.AirPollutionData;
+import com.backend.sensor_data.entity.CongestionLevel;
+import com.backend.sensor_data.entity.Notification;
+import com.backend.sensor_data.entity.PollutionLevel;
+import com.backend.sensor_data.entity.Settings;
+import com.backend.sensor_data.entity.Status;
+import com.backend.sensor_data.entity.StreetLightData;
+import com.backend.sensor_data.entity.TrafficData;
+import com.backend.sensor_data.repository.AirPollutionDataRepository;
+import com.backend.sensor_data.repository.NotificationRepository;
+import com.backend.sensor_data.repository.SettingsRepository;
+import com.backend.sensor_data.repository.StreetLightDataRepository;
+import com.backend.sensor_data.repository.TrafficDataRepository;
+import com.backend.sensor_data.service.factory.SensorProcessorFactory;
+
+import jakarta.transaction.Transactional;
+
 @Service
 public class SensorDataService {
+
     private static final Logger logger = LoggerFactory.getLogger(SensorDataService.class);
+    private final SensorProcessorFactory processorFactory;
 
     private final TrafficDataRepository trafficRepo;
     private final AirPollutionDataRepository airRepo;
-    private final StreetLightDataRepository lightRepo;
+private final StreetLightDataRepository lightRepo;
+
     private final SettingsRepository settingsRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     private final NotificationRepository notificationRepository;
 
     public SensorDataService(TrafficDataRepository trafficRepo, AirPollutionDataRepository airRepo,
-            StreetLightDataRepository lightRepo, SettingsRepository settingsRepository,
-            SimpMessagingTemplate messagingTemplate, NotificationRepository notificationRepository) {
-        this.trafficRepo = trafficRepo;
-        this.airRepo = airRepo;
-        this.lightRepo = lightRepo;
-        this.settingsRepository = settingsRepository;
-        this.messagingTemplate = messagingTemplate;
-        this.notificationRepository = notificationRepository;
-    }
+        StreetLightDataRepository lightRepo ,SettingsRepository settingsRepository,
+        SimpMessagingTemplate messagingTemplate,
+        NotificationRepository notificationRepository,
+        SensorProcessorFactory processorFactory) {
+    this.trafficRepo = trafficRepo;
+    this.airRepo = airRepo;
+    this.lightRepo = lightRepo;
+    this.settingsRepository = settingsRepository;
+    this.messagingTemplate = messagingTemplate;
+    this.notificationRepository = notificationRepository;
+    this.processorFactory = processorFactory;
+}
 
     @Transactional
     public TrafficData saveTrafficData(TrafficDataDto dto) {
@@ -77,77 +103,13 @@ public class SensorDataService {
     }
 
     @Transactional
-    public AirPollutionData saveAirPollutionData(AirPollutionDataDto dto) {
-        if (dto.getLocation() == null || dto.getLocation().trim().isEmpty()) {
-            throw new IllegalArgumentException("Invalid location: cannot be blank");
-        }
-        if (dto.getPollutionLevel() == null) {
-            throw new IllegalArgumentException("Invalid pollution level: cannot be null");
-        }
-        if (dto.getCo() == null) {
-            throw new IllegalArgumentException("co is required");
-        }
-        if (dto.getCo() < 0 || dto.getCo() > 50) {
-            throw new IllegalArgumentException("Invalid CO level: must be between 0 and 50");
-        }
-        if (dto.getOzone() == null) {
-            throw new IllegalArgumentException("ozone is required");
-        }
-        if (dto.getOzone() < 0 || dto.getOzone() > 300) {
-            throw new IllegalArgumentException("Invalid ozone level: must be between 0 and 300");
-        }
-
-        AirPollutionData data = new AirPollutionData();
-        data.setLocation(dto.getLocation());
-        data.setPm2_5(dto.getPm2_5());
-        data.setPm10(dto.getPm10());
-        data.setCo(dto.getCo());
-        data.setNo2(dto.getNo2());
-        data.setSo2(dto.getSo2());
-        data.setOzone(dto.getOzone());
-        data.setPollutionLevel(dto.getPollutionLevel());
-
-        airRepo.save(data);
-
-        checkAlerts("Air", "Carbon Monoxide", data.getCo(), data.getLocation());
-        checkAlerts("Air", "ozone", data.getOzone(), data.getLocation());
-
-        return data;
+    public void saveAirPollutionData(AirPollutionDataDto dto) {
+        processorFactory.<AirPollutionDataDto>getProcessor("AIR").process(dto);
     }
 
     @Transactional
-    public StreetLightData saveStreetLightData(StreetLightDataDto dto) {
-        if (dto.getLocation() == null || dto.getLocation().trim().isEmpty()) {
-            throw new IllegalArgumentException("Invalid location: cannot be blank");
-        }
-        if (dto.getStatus() == null) {
-            throw new IllegalArgumentException("Invalid status: cannot be null");
-        }
-        if (dto.getBrightnessLevel() == null) {
-            throw new IllegalArgumentException("brightnessLevel is required");
-        }
-        if (dto.getBrightnessLevel() < 0 || dto.getBrightnessLevel() > 100) {
-            throw new IllegalArgumentException("Invalid brightness level: must be between 0 and 100");
-        }
-        if (dto.getPowerConsumption() == null) {
-            throw new IllegalArgumentException("powerConsumption is required");
-        }
-        if (dto.getPowerConsumption() < 0 || dto.getPowerConsumption() > 5000) {
-            throw new IllegalArgumentException("Invalid power consumption: must be between 0 and 5000");
-        }
-
-        StreetLightData data = new StreetLightData();
-        data.setLocation(dto.getLocation());
-        data.setBrightnessLevel(dto.getBrightnessLevel());
-        data.setPowerConsumption(dto.getPowerConsumption());
-        data.setStatus(dto.getStatus());
-
-        lightRepo.save(data);
-
-        checkAlerts("Light", "Brightness Level", data.getBrightnessLevel(), data.getLocation());
-        checkAlerts("Light", "Power Consumption", data.getPowerConsumption(), data.getLocation());
-
-        return data;
+    public void saveStreetLightData(StreetLightDataDto dto) {
+        processorFactory.<StreetLightDataDto>getProcessor("LIGHT").process(dto);
     }
 
     public Page<TrafficData> getTrafficData(
@@ -187,11 +149,12 @@ public class SensorDataService {
             Long userId = setting.getUserId();
             float actual = value.floatValue();
 
-            boolean triggered = ("above".equalsIgnoreCase(alertType) && actual > threshold) ||
-                    ("below".equalsIgnoreCase(alertType) && actual < threshold);
+            boolean triggered = ("above".equalsIgnoreCase(alertType) && actual > threshold)
+                    || ("below".equalsIgnoreCase(alertType) && actual < threshold);
 
-            if (!triggered)
+            if (!triggered) {
                 continue;
+            }
 
             logger.warn("[ALERT] {} {} ({}) exceeded threshold ({}) at {}",
                     type, metric, actual, threshold, location);
@@ -244,9 +207,9 @@ public class SensorDataService {
         return trafficRepo.findTop50ByOrderByTimestampDesc()
                 .stream()
                 .map(data -> new TrafficTrendDto(
-                        data.getTimestamp(),
-                        data.getTrafficDensity(),
-                        data.getAvgSpeed()))
+                data.getTimestamp(),
+                data.getTrafficDensity(),
+                data.getAvgSpeed()))
                 .toList();
     }
 
@@ -257,5 +220,122 @@ public class SensorDataService {
                 "High", trafficRepo.countByCongestionLevel(CongestionLevel.High),
                 "Severe", trafficRepo.countByCongestionLevel(CongestionLevel.Severe));
     }
+
+    public Page<AirPollutionData> getAirData(
+        String location,
+        LocalDateTime from,
+        LocalDateTime to,
+        Pageable pageable) {
+    Specification<AirPollutionData> spec = Specification.where(null);
+
+    if (location != null && !location.trim().isEmpty()) {
+        spec = spec.and(
+                (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+    }
+    if (from != null) {
+        spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+    }
+    if (to != null) {
+        spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+    }
+
+    return airRepo.findAll(spec, pageable);
+}
+
+public AirStatsDto getAirStats() {
+    long totalRecords = airRepo.count();
+    long totalAlerts = notificationRepository.countByType("Air");
+
+    Double avgCoRaw = airRepo.findAvgCo();
+    Double avgOzoneRaw = airRepo.findAvgOzone();
+    Double highestCoRaw = airRepo.findMaxCo();
+    Double lowestCoRaw = airRepo.findMinCo();
+    Double highestOzoneRaw = airRepo.findMaxOzone();
+    Double lowestOzoneRaw = airRepo.findMinOzone();
+
+    double avgCo = avgCoRaw != null ? avgCoRaw : 0;
+    double avgOzone = avgOzoneRaw != null ? avgOzoneRaw : 0;
+    double highestCo = highestCoRaw != null ? highestCoRaw : 0;
+    double lowestCo = lowestCoRaw != null ? lowestCoRaw : 0;
+    double highestOzone = highestOzoneRaw != null ? highestOzoneRaw : 0;
+    double lowestOzone = lowestOzoneRaw != null ? lowestOzoneRaw : 0;
+
+    Map<String, Long> breakdown = Map.of(
+        "Good", airRepo.countByPollutionLevel(PollutionLevel.Good),
+        "Moderate", airRepo.countByPollutionLevel(PollutionLevel.Moderate),
+        "Unhealthy", airRepo.countByPollutionLevel(PollutionLevel.Unhealthy),
+        "Very_Unhealthy", airRepo.countByPollutionLevel(PollutionLevel.Very_Unhealthy),
+        "Hazardous", airRepo.countByPollutionLevel(PollutionLevel.Hazardous));
+
+    return new AirStatsDto(totalRecords, avgCo, avgOzone,
+            highestCo, lowestCo, highestOzone, lowestOzone, totalAlerts, breakdown);
+}
+
+public List<AirTrendDto> getAirTrends() {
+    return airRepo.findTop50ByOrderByTimestampDesc()
+            .stream()
+            .map(data -> new AirTrendDto(
+                    data.getTimestamp(),
+                    data.getCo(),
+                    data.getOzone()))
+            .toList();
+}
+
+public Page<StreetLightData> getLightData(
+        String location,
+        Status status,
+        LocalDateTime from,
+        LocalDateTime to,
+        Pageable pageable) {
+    Specification<StreetLightData> spec = Specification.where(null);
+
+    if (location != null && !location.trim().isEmpty()) {
+        spec = spec.and(
+                (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+    }
+    if (status != null) {
+        spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+    }
+    if (from != null) {
+        spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+    }
+    if (to != null) {
+        spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+    }
+
+    return lightRepo.findAll(spec, pageable);
+}
+
+public LightStatsDto getLightStats() {
+    long totalRecords = lightRepo.count();
+    long totalAlerts = notificationRepository.countByType("Light");
+
+    Double avgBrightnessRaw = lightRepo.findAvgBrightnessLevel();
+    Double avgPowerRaw = lightRepo.findAvgPowerConsumption();
+    Double highestPowerRaw = lightRepo.findMaxPowerConsumption();
+    Double lowestBrightnessRaw = lightRepo.findMinBrightnessLevel();
+
+    double avgBrightness = avgBrightnessRaw != null ? avgBrightnessRaw : 0;
+    double avgPower = avgPowerRaw != null ? avgPowerRaw : 0;
+    double highestPower = highestPowerRaw != null ? highestPowerRaw : 0;
+    double lowestBrightness = lowestBrightnessRaw != null ? lowestBrightnessRaw : 0;
+
+    Map<String, Long> statusBreakdown = Map.of(
+            "ON", lightRepo.countByStatus(Status.ON),
+            "OFF", lightRepo.countByStatus(Status.OFF));
+
+    return new LightStatsDto(totalRecords, avgBrightness, avgPower,
+            highestPower, lowestBrightness, totalAlerts, statusBreakdown);
+}
+
+public List<LightTrendDto> getLightTrends() {
+    return lightRepo.findTop50ByOrderByTimestampDesc()
+            .stream()
+            .map(data -> new LightTrendDto(
+                    data.getTimestamp(),
+                    data.getBrightnessLevel(),
+                    data.getPowerConsumption()))
+            .toList();
+}
 
 }
