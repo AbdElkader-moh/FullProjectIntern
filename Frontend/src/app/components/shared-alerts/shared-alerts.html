@@ -1,0 +1,337 @@
+<!-- HEADER BAR -->
+<header class="header-bar">
+  <div class="header-left">
+    <a routerLink="/home" class="brand-link">
+      <span class="brand-icon">🏙️</span>
+      <span class="brand-text">IOT System Tracking</span>
+    </a>
+  </div>
+
+  <nav class="header-right">
+    <a routerLink="/home" class="nav-link" title="Home">
+      <span>Home</span>
+    </a>
+
+    <a [routerLink]="config.dashboardRoute" class="nav-link" title="Dashboard">
+      <span>Dashboard</span>
+    </a>
+
+    <a [routerLink]="config.analyticsRoute" class="nav-link" title="Analytics">
+      <span>Analytics</span>
+    </a>
+
+    <a routerLink="/notifications" class="nav-link notification-link" title="Notifications">
+      <span>Notifications</span>
+      @if (unreadCount > 0) {
+        <span class="badge">{{ unreadCount }}</span>
+      }
+    </a>
+
+    <a routerLink="/profile" class="nav-link" title="Profile">
+      <span>{{ firstName }}</span>
+    </a>
+
+    <button class="nav-link logout-btn" (click)="logout()" title="Logout">
+      <span>Logout</span>
+    </button>
+  </nav>
+</header>
+
+<main class="alerts-container">
+  <!-- TOAST STACK -->
+  <div class="toast-stack" aria-live="polite" aria-atomic="false">
+    @for (toast of toasts; track toast.id) {
+      <div class="toast" [class.toast-leaving]="toast.leaving" role="status">
+        <span class="toast-icon">{{ toastIcon() }}</span>
+
+        <div class="toast-body">
+          <div class="toast-title">
+            {{ config.toastTitle }}
+            <span class="toast-severity" [ngStyle]="getSeverityStyle(toast.severity)">
+              {{ toast.severity }}
+            </span>
+          </div>
+
+          <div class="toast-message">
+            <strong>{{ toast.metric }}</strong> is
+            <span class="toast-direction">{{ toast.alertType }}</span>
+            threshold —
+            <span class="toast-value">{{ toast.value }}</span>
+            vs
+            <span class="toast-threshold">{{ toast.thresholdValue }}</span>
+          </div>
+
+          <div class="toast-location">📍 {{ toast.location }}</div>
+        </div>
+
+        <button class="toast-close" (click)="dismissToast(toast.id)" aria-label="Dismiss alert">
+          ×
+        </button>
+
+        <span class="toast-progress"></span>
+      </div>
+    }
+  </div>
+
+  <!-- PAGE HEADER -->
+  <section class="page-header">
+    <div class="page-header-left">
+      <a [routerLink]="config.dashboardRoute" class="back-link">
+        ←
+      </a>
+
+      <div class="page-title-group">
+        <h1 class="page-title">
+          <span class="title-icon">{{ config.icon }}</span>
+          {{ config.title }}
+        </h1>
+
+        <p class="page-subtitle">
+          {{ filteredAlerts.length }} alert{{ filteredAlerts.length !== 1 ? 's' : '' }}
+          @if (unreadCount > 0) {
+            · <span class="unread-highlight">{{ unreadCount }} unread</span>
+          }
+        </p>
+      </div>
+    </div>
+
+    <div class="page-header-right">
+      @if (unreadCount > 0) {
+        <button class="btn btn-mark-all" (click)="markAllRead()">
+          Mark All Read
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- FILTER PANEL -->
+  <section class="filter-panel">
+    <div class="filter-panel-header">
+      <h2 class="section-title">
+        Filter Alerts
+      </h2>
+
+      @if (activeFilterCount > 0) {
+        <button class="clear-filters-btn" (click)="resetFilters()">
+          Clear all ({{ activeFilterCount }})
+        </button>
+      }
+    </div>
+
+    <div class="filter-grid">
+      <div class="filter-group">
+        <label class="filter-label" for="aFilterFrom">From</label>
+        <input
+          id="aFilterFrom"
+          type="datetime-local"
+          class="filter-input"
+          [(ngModel)]="filterDateFrom"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label" for="aFilterTo">To</label>
+        <input
+          id="aFilterTo"
+          type="datetime-local"
+          class="filter-input"
+          [(ngModel)]="filterDateTo"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label" for="aFilterLocation">Location</label>
+        <select id="aFilterLocation" class="filter-input" [(ngModel)]="filterLocation">
+          <option value="">All Locations</option>
+
+          @for (location of locationOptions; track location) {
+            <option [value]="location">{{ location }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label" for="aFilterMetric">Alert Classification</label>
+        <select id="aFilterMetric" class="filter-input" [(ngModel)]="filterMetric">
+          <option value="">{{ config.allMetricsLabel }}</option>
+
+          @for (metric of config.metricOptions; track metric) {
+            <option [value]="metric">{{ metric }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label" for="aFilterSort">Sort By</label>
+        <select id="aFilterSort" class="filter-input" [(ngModel)]="filterSort">
+          <option value="newest">Most Recent First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="severity">Severity High to Low</option>
+        </select>
+      </div>
+    </div>
+
+    @if (filterDateError) {
+      <div class="filter-date-error">
+        {{ filterDateError }}
+      </div>
+    }
+
+    <div class="filter-actions">
+      <button class="btn btn-primary" (click)="applyFilters()">
+        Apply Filters
+      </button>
+
+      <button class="btn btn-secondary" (click)="resetFilters()">
+        Reset
+      </button>
+    </div>
+  </section>
+
+  <!-- ALERTS TABLE -->
+  <section class="table-section">
+    <div class="table-header-row">
+      <h2 class="section-title">
+        Alerts Table
+      </h2>
+
+      <div class="table-meta">
+        <span class="record-count">
+          {{ filteredAlerts.length }} alert{{ filteredAlerts.length !== 1 ? 's' : '' }}
+        </span>
+
+        <div class="page-size-control">
+          <label for="alertPageSize">Per page</label>
+          <select
+            id="alertPageSize"
+            [(ngModel)]="pageSize"
+            (ngModelChange)="onPageSizeChange()"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [ngValue]="size">{{ size }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    @if (isLoading) {
+      <div class="table-loading">
+        <div class="spinner"></div>
+        <p>Loading alerts...</p>
+      </div>
+    } @else if (errorMessage) {
+      <div class="error-banner">
+        <span class="error-text">{{ errorMessage }}</span>
+        <button class="btn-retry" (click)="loadAlerts()">Retry</button>
+      </div>
+    } @else if (filteredAlerts.length === 0) {
+      <div class="empty-state">
+        <p class="empty-title">No alerts found</p>
+
+        <p class="empty-subtitle">
+          @if (activeFilterCount > 0) {
+            Try adjusting your filters to see more results.
+          } @else {
+            No threshold alerts have been triggered yet.
+          }
+        </p>
+
+        @if (activeFilterCount > 0) {
+          <button class="btn btn-secondary" style="margin-top:12px" (click)="resetFilters()">
+            Clear All Filters
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Classification</th>
+              <th scope="col">Metric</th>
+              <th scope="col">Location</th>
+              <th scope="col">Value / Threshold</th>
+              <th scope="col">Severity</th>
+              <th scope="col">Timestamp</th>
+              <th scope="col">Status</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (alert of pagedAlerts; track alert.id) {
+              <tr [class.unread-row]="!alert.isRead">
+                <td class="col-type">
+                  <span class="type-badge type-traffic">
+                    {{ metricIcon(alert.metric) }}
+                    {{ metricShortLabel(alert.metric) }}
+                  </span>
+                </td>
+
+                <td class="col-metric">{{ alert.metric }}</td>
+                <td class="col-location">{{ alert.location }}</td>
+
+                <td class="col-values">
+                  <span class="alert-value">{{ alert.value }}</span>
+                  <span class="alert-direction">{{ alert.alertType }}</span>
+                  <span class="alert-threshold">{{ alert.thresholdValue }}</span>
+                </td>
+
+                <td>
+                  <span class="severity-badge" [ngStyle]="getSeverityStyle(getSeverityLevel(alert))">
+                    {{ getSeverityLevel(alert) }}
+                  </span>
+                </td>
+
+                <td class="col-timestamp">{{ formatTimestamp(alert.createdAt) }}</td>
+
+                <td>
+                  @if (alert.isRead) {
+                    <span class="status-read">Read</span>
+                  } @else {
+                    <span class="status-unread">Unread</span>
+                  }
+                </td>
+
+                <td class="col-actions">
+                  @if (!alert.isRead) {
+                    <button class="action-btn action-read" (click)="markRead(alert)" title="Mark as read">
+                      ✓
+                    </button>
+                  }
+
+                  <button class="action-btn action-delete" (click)="deleteAlert(alert)" title="Delete alert">
+                    🗑
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <span class="pagination-info">
+            Showing {{ showingFrom }}–{{ showingTo }} of {{ filteredAlerts.length }}
+          </span>
+
+          <div class="pagination-controls">
+            <button class="page-btn" [disabled]="currentPage === 0" (click)="goToPage(0)">«</button>
+            <button class="page-btn" [disabled]="currentPage === 0" (click)="goToPage(currentPage - 1)">‹</button>
+
+            @for (page of pageNumbers; track page) {
+              <button class="page-btn" [class.active]="page === currentPage" (click)="goToPage(page)">
+                {{ page + 1 }}
+              </button>
+            }
+
+            <button class="page-btn" [disabled]="currentPage >= totalPages - 1" (click)="goToPage(currentPage + 1)">›</button>
+            <button class="page-btn" [disabled]="currentPage >= totalPages - 1" (click)="goToPage(totalPages - 1)">»</button>
+          </div>
+        </div>
+      }
+    }
+  </section>
+</main>

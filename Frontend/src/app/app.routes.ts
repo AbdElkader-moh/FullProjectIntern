@@ -57,6 +57,20 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
   },
+  {
+  path: 'air-analytics',
+  loadComponent: () =>
+    import('./components/air-pollution-analytics/air-pollution-analytics')
+      .then((m) => m.AirPollutionAnalytics),
+  canActivate: [authGuard],
+},
+{
+  path: 'lights-analytics',
+  loadComponent: () =>
+    import('./components/street-light-analytics/street-light-analytics')
+      .then((m) => m.StreetLightAnalytics),
+  canActivate: [authGuard],
+},
   // Sprint 3 — F#9: Traffic Alerts
   {
     path: 'traffic-alerts',
@@ -66,6 +80,20 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
   },
+  {
+  path: 'air-alerts',
+  loadComponent: () =>
+    import('./components/air-pollution-alerts/air-pollution-alerts')
+      .then((m) => m.AirPollutionAlerts),
+  canActivate: [authGuard],
+},
+{
+  path: 'lights-alerts',
+  loadComponent: () =>
+    import('./components/street-light-alerts/street-light-alerts')
+      .then((m) => m.StreetLightAlerts),
+  canActivate: [authGuard],
+},
   {
     path: 'air',
     loadComponent: () =>
