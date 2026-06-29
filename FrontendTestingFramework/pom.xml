@@ -17,6 +17,7 @@
         <testng.version>7.9.0</testng.version>
         <extentreports.version>5.1.1</extentreports.version>
         <webdrivermanager.version>5.7.0</webdrivermanager.version>
+        <suiteXmlFile>testng.xml</suiteXmlFile>
     </properties>
 
     <dependencies>
@@ -91,7 +92,7 @@
                 <version>3.2.5</version>
                 <configuration>
                     <suiteXmlFiles>
-                        <suiteXmlFile>testng.xml</suiteXmlFile>
+                        <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
                     </suiteXmlFiles>
                     <!-- After -->
                     <argLine>

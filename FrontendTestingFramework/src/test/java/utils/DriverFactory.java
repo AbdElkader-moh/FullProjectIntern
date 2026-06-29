@@ -19,9 +19,19 @@ public class DriverFactory {
     private DriverFactory() {}
 
     public static WebDriver getDriver() {
-        if (driverThreadLocal.get() == null) {
-            initDriver();
+        WebDriver existing = driverThreadLocal.get();
+        if (existing != null) {
+            try {
+                // Probe the session — throws if browser has been closed/crashed
+                existing.getCurrentUrl();
+                return existing;
+            } catch (Exception e) {
+                // Session is dead; clean up and create a new one
+                try { existing.quit(); } catch (Exception ignored) {}
+                driverThreadLocal.remove();
+            }
         }
+        initDriver();
         return driverThreadLocal.get();
     }
 

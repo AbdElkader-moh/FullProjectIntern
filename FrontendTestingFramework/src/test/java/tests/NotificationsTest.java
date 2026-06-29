@@ -89,20 +89,24 @@ public class NotificationsTest extends BaseTest {
         }
     }
 
+    private static boolean dataSeeded = false;
+
     /**
      * Seeds one reading per sensor type before each test.
      * Each reading crosses the corresponding threshold, generating a notification.
-     * Three readings → at least three notifications guaranteed before any test runs.
+     * Three readings -> at least three notifications guaranteed before any test runs.
      */
     @BeforeMethod(alwaysRun = true)
     public void seedNotificationsAndOpen() {
-        loginWithDefaultUser();
-        try {
-            SensorApiClient.postHighDensityReading();                   // Traffic → notification
-            SensorApiClient.postLightReading(90, 100.0, "ON", "Smouha"); // Light  → notification
-            SensorApiClient.postAirReading(40.0, 100.0, "Cairo");        // Air    → notification
-        } catch (Exception e) {
-            System.out.println("[BeforeMethod] Seeding warning: " + e.getMessage());
+        if (!dataSeeded) {
+            try {
+                SensorApiClient.postHighDensityReading();                   // Traffic -> notification
+                SensorApiClient.postLightReading(90, 100.0, "ON", "Smouha"); // Light  -> notification
+                SensorApiClient.postAirReading(40.0, 100.0, "Cairo");        // Air    -> notification
+                dataSeeded = true;
+            } catch (Exception e) {
+                System.out.println("[BeforeMethod] Seeding warning: " + e.getMessage());
+            }
         }
         notificationsPage = new NotificationsPage(driver);
         notificationsPage.open();

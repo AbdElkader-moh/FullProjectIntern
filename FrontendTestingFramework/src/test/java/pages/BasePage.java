@@ -28,7 +28,12 @@ public abstract class BasePage {
     // ─── Navigation ─────────────────────────────────────────────────────────
 
     public void navigateTo(String path) {
-        driver.get(baseUrl + path);
+        String fullUrl = baseUrl + path;
+        if (!driver.getCurrentUrl().equals(fullUrl)) {
+            driver.get(fullUrl);
+        } else {
+            driver.navigate().refresh();
+        }
     }
 
     public String getCurrentUrl() {

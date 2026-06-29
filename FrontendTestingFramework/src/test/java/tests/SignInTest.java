@@ -22,13 +22,13 @@ public class SignInTest extends BaseTest {
 
     private SignInPage signInPage;
 
-    @BeforeMethod
+    @BeforeMethod(alwaysRun = true)
     public void openSignIn() {
         signInPage = new SignInPage(driver);
         signInPage.open();
     }
 
-    @Test(description = "TC-015: Successful login with valid credentials redirects to /home")
+    @Test(description = "TC-015: Successful login with correct credentials", groups = {"sanity"})
     @Story("Happy path login")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Enters correct email and password. Expects redirect to /home.")

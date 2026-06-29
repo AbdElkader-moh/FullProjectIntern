@@ -53,7 +53,7 @@ public class TrafficApiReader {
      * The first record in content[] is the most recently posted reading.
      */
     public static String getLatestTrafficPageJson() {
-        return get("/api/sensors/traffic?sort=timestamp%2Cdesc&page=0&size=10");
+        return get("/api/sensors/traffic?sort=timestamp,desc&page=0&size=10");
     }
 
     /**

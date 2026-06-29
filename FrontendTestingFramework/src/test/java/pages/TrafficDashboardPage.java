@@ -14,101 +14,111 @@ import java.util.List;
  * This file REPLACES the previous TrafficDashboardPage.java entirely.
  * New additions (marked NEW) support the three data-accuracy tests:
  *
- *   TC-081: Table row values match the API
- *   TC-082: Density line chart dots match the trends API
- *   TC-083: Congestion distribution bars match the congestion-summary API
+ * TC-081: Table row values match the API
+ * TC-082: Density line chart dots match the trends API
+ * TC-083: Congestion distribution bars match the congestion-summary API
  *
  * DOM facts from traffic-dashboard.html:
- *  ── Table ──
- *  First row cells:  td.col-location, td.col-density .density-value,
- *                    td.col-speed .speed-value, td .congestion-badge
- *  ── Charts ──
- *  Density dots:     circle.density-dot  (each has a <title> child = "HH:MM: 450 veh/hr")
- *  Speed bars:       rect.speed-bar      (each has a <title> child = "HH:MM: 15.0 km/h")
- *  Congestion rows:  .congestion-row     (each has .congestion-level-name + .congestion-count)
+ * ── Table ──
+ * First row cells: td.col-location, td.col-density .density-value,
+ * td.col-speed .speed-value, td .congestion-badge
+ * ── Charts ──
+ * Density dots: circle.density-dot (each has a <title> child = "HH:MM: 450
+ * veh/hr")
+ * Speed bars: rect.speed-bar (each has a <title> child = "HH:MM: 15.0 km/h")
+ * Congestion rows: .congestion-row (each has .congestion-level-name +
+ * .congestion-count)
  */
 public class TrafficDashboardPage extends BasePage {
 
     // ── Header nav ────────────────────────────────────────────────────────────
-    private static final By BRAND_LINK         = By.cssSelector("a.brand-link");
-    private static final By NAV_HOME           = By.xpath("//a[@routerLink='/home' and contains(@class,'nav-link')]");
-    private static final By NAV_ANALYTICS      = By.xpath("//a[@routerLink='/traffic-analytics']");
-    private static final By NAV_ALERTS         = By.xpath("//a[@routerLink='/traffic-alerts' and contains(@class,'nav-link')]");
-    private static final By NAV_SETTINGS       = By.xpath("//a[@routerLink='/settings' and contains(@class,'nav-link')]");
-    private static final By NAV_NOTIFICATIONS  = By.xpath("//a[@routerLink='/notifications' and contains(@class,'nav-link')]");
-    private static final By LOGOUT_BTN         = By.cssSelector("button.logout-btn");
-    private static final By NOTIF_BADGE        = By.cssSelector(".notification-link .badge");
+    private static final By BRAND_LINK = By.cssSelector("a.brand-link");
+    private static final By NAV_HOME = By.xpath("//a[@href='/home' and contains(@class,'nav-link')]");
+    private static final By NAV_ANALYTICS = By.xpath("//a[@href='/traffic-analytics']");
+    private static final By NAV_ALERTS = By.xpath("//a[@href='/traffic-alerts' and contains(@class,'nav-link')]");
+    private static final By NAV_SETTINGS = By.xpath("//a[@href='/settings' and contains(@class,'nav-link')]");
+    private static final By NAV_NOTIFICATIONS = By
+            .xpath("//a[@href='/notifications' and contains(@class,'nav-link')]");
+    private static final By LOGOUT_BTN = By.cssSelector("button.logout-btn");
+    private static final By NOTIF_BADGE = By.cssSelector(".notification-link .badge");
 
     // ── Page header ───────────────────────────────────────────────────────────
-    private static final By PAGE_TITLE         = By.cssSelector(".page-title");
-    private static final By BACK_LINK          = By.cssSelector("a.back-link");
+    private static final By PAGE_TITLE = By.cssSelector(".page-title");
+    private static final By BACK_LINK = By.cssSelector("a.back-link");
 
     // ── Refresh controls ──────────────────────────────────────────────────────
     private static final By MANUAL_REFRESH_BTN = By.cssSelector("button.btn-icon");
-    private static final By AUTO_REFRESH_BTN   = By.cssSelector("button.btn-auto-refresh");
-    private static final By LAST_REFRESHED     = By.cssSelector(".last-refreshed:not(.syncing)");
-    private static final By SYNCING_INDICATOR  = By.cssSelector(".last-refreshed.syncing");
+    private static final By AUTO_REFRESH_BTN = By.cssSelector("button.btn-auto-refresh");
+    private static final By LAST_REFRESHED = By.cssSelector(".last-refreshed:not(.syncing)");
+    private static final By SYNCING_INDICATOR = By.cssSelector(".last-refreshed.syncing");
 
     // ── Quick actions ─────────────────────────────────────────────────────────
-    private static final By QUICK_ACTION_ANALYTICS = By.xpath("//a[contains(@class,'quick-action-btn') and @routerLink='/traffic-analytics']");
-    private static final By QUICK_ACTION_ALERTS    = By.xpath("//a[contains(@class,'quick-action-btn') and @routerLink='/traffic-alerts']");
+    private static final By QUICK_ACTION_ANALYTICS = By
+            .xpath("//a[contains(@class,'quick-action-btn') and @href='/traffic-analytics']");
+    private static final By QUICK_ACTION_ALERTS = By
+            .xpath("//a[contains(@class,'quick-action-btn') and @href='/traffic-alerts']");
 
     // ── Stats ─────────────────────────────────────────────────────────────────
-    private static final By STATS_SECTION      = By.cssSelector(".stats-section");
-    private static final By STAT_CARDS         = By.cssSelector(".stat-card:not(.skeleton)");
-    private static final By STAT_VALUES        = By.cssSelector(".stat-card:not(.skeleton) .stat-value");
-    private static final By STATS_ERROR        = By.cssSelector(".error-banner");
-    private static final By STATS_SKELETON     = By.cssSelector(".stat-card.skeleton");
+    private static final By STATS_SECTION = By.cssSelector(".stats-section");
+    private static final By STAT_CARDS = By.cssSelector(".stat-card:not(.skeleton)");
+    private static final By STAT_VALUES = By.cssSelector(".stat-card:not(.skeleton) .stat-value");
+    private static final By STATS_ERROR = By.cssSelector(".error-banner");
+    private static final By STATS_SKELETON = By.cssSelector(".stat-card.skeleton");
 
     // ── Table ─────────────────────────────────────────────────────────────────
-    private static final By TABLE_SECTION      = By.cssSelector(".table-section");
-    private static final By TABLE_ROWS         = By.cssSelector(".data-table tbody tr");
-    private static final By TABLE_LOADING      = By.cssSelector(".table-loading");
-    private static final By TABLE_EMPTY        = By.cssSelector(".empty-state");
-    private static final By TABLE_ERROR        = By.cssSelector(".table-section .error-banner");
-    private static final By PAGINATION         = By.cssSelector(".pagination");
-    private static final By ACTIVE_PAGE_BTN    = By.cssSelector(".pagination-controls .page-btn.active");
-    private static final By NEXT_PAGE_BTN      = By.xpath("//div[contains(@class,'pagination-controls')]//button[@aria-label='Next page']");
+    private static final By TABLE_SECTION = By.cssSelector(".table-section");
+    private static final By TABLE_ROWS = By.cssSelector(".data-table tbody tr");
+    private static final By TABLE_LOADING = By.cssSelector(".table-loading");
+    private static final By TABLE_EMPTY = By.cssSelector(".empty-state");
+    private static final By TABLE_ERROR = By.cssSelector(".table-section .error-banner");
+    private static final By PAGINATION = By.cssSelector(".pagination");
+    private static final By ACTIVE_PAGE_BTN = By.cssSelector(".pagination-controls .page-btn.active");
+    private static final By NEXT_PAGE_BTN = By
+            .xpath("//div[contains(@class,'pagination-controls')]//button[@aria-label='Next page']");
 
     // ── NEW: First table row cell selectors ───────────────────────────────────
     /** Location cell of the first data row */
-    private static final By FIRST_ROW_LOCATION   = By.cssSelector(".data-table tbody tr:first-child td.col-location");
-    /** Density value span of the first row (text = "450", without "veh/hr") */
-    private static final By FIRST_ROW_DENSITY    = By.cssSelector(".data-table tbody tr:first-child td.col-density .density-value");
-    /** Speed value span of the first row (text = "15.0", without "km/h") */
-    private static final By FIRST_ROW_SPEED      = By.cssSelector(".data-table tbody tr:first-child td.col-speed .speed-value");
+    private static final By FIRST_ROW_LOCATION = By.cssSelector(".data-table tbody tr:first-child td:nth-child(2)");
+    /** Density value span of the first row */
+    private static final By FIRST_ROW_DENSITY = By.cssSelector(".data-table tbody tr:first-child td:nth-child(4)");
+    /** Speed value span of the first row */
+    private static final By FIRST_ROW_SPEED = By.cssSelector(".data-table tbody tr:first-child td:nth-child(5)");
     /** Congestion badge of the first row */
-    private static final By FIRST_ROW_CONGESTION = By.cssSelector(".data-table tbody tr:first-child td .congestion-badge");
+    private static final By FIRST_ROW_CONGESTION = By
+            .cssSelector(".data-table tbody tr:first-child td:nth-child(6) .congestion-badge");
 
     // ── Charts ────────────────────────────────────────────────────────────────
-    private static final By CHARTS_SECTION     = By.cssSelector(".charts-section");
-    private static final By CHART_CARDS        = By.cssSelector(".chart-card");
-    private static final By CONGESTION_CHART   = By.cssSelector(".congestion-chart");
-    private static final By CONGESTION_ROWS    = By.cssSelector(".congestion-row");
-    private static final By CHART_ERROR        = By.cssSelector(".chart-empty.chart-error");
+    private static final By CHARTS_SECTION = By.cssSelector(".charts-section");
+    private static final By CHART_CARDS = By.cssSelector(".chart-card");
+    private static final By CONGESTION_CHART = By.cssSelector(".congestion-chart");
+    private static final By CONGESTION_ROWS = By.cssSelector(".congestion-row");
+    private static final By CHART_ERROR = By.cssSelector(".chart-empty.chart-error");
 
     // ── NEW: Chart element selectors ──────────────────────────────────────────
-    /** SVG density dots — each carries a <title> tooltip like "17:44: 450 veh/hr" */
-    private static final By DENSITY_DOTS       = By.cssSelector("circle.density-dot");
+    /**
+     * SVG density dots — each carries a <title> tooltip like "17:44: 450 veh/hr"
+     */
+    private static final By DENSITY_DOTS = By.cssSelector("circle.density-dot");
     /** SVG speed bars — each carries a <title> tooltip like "17:44: 15.0 km/h" */
-    private static final By SPEED_BARS         = By.cssSelector("rect.speed-bar");
+    private static final By SPEED_BARS = By.cssSelector("rect.speed-bar");
     /**
      * Congestion count cells inside each row.
-     * DOM: .congestion-row > .congestion-count  (text = "3")
+     * DOM: .congestion-row > .congestion-count (text = "3")
      */
-    private static final By CONGESTION_COUNTS  = By.cssSelector(".congestion-row .congestion-count");
+    private static final By CONGESTION_COUNTS = By.cssSelector(".congestion-row .congestion-count");
     /**
      * Congestion level name labels.
-     * DOM: .congestion-row > .congestion-label-col > .congestion-level-name  (text = "High")
+     * DOM: .congestion-row > .congestion-label-col > .congestion-level-name (text =
+     * "High")
      */
     private static final By CONGESTION_LEVEL_NAMES = By.cssSelector(".congestion-row .congestion-level-name");
 
     // ── Recent alerts ─────────────────────────────────────────────────────────
-    private static final By ALERTS_SECTION     = By.cssSelector(".alerts-section");
-    private static final By ALERT_ITEMS        = By.cssSelector(".alert-item");
-    private static final By ALERTS_EMPTY       = By.cssSelector(".alerts-empty");
-    private static final By ALERTS_ERROR       = By.cssSelector(".alerts-section .error-banner");
-    private static final By VIEW_ALL_ALERTS    = By.cssSelector("a.view-all-link");
+    private static final By ALERTS_SECTION = By.cssSelector(".alerts-section");
+    private static final By ALERT_ITEMS = By.cssSelector(".alert-item");
+    private static final By ALERTS_EMPTY = By.cssSelector(".alerts-empty");
+    private static final By ALERTS_ERROR = By.cssSelector(".alerts-section .error-banner");
+    private static final By VIEW_ALL_ALERTS = By.cssSelector("a.view-all-link");
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -128,8 +138,14 @@ public class TrafficDashboardPage extends BasePage {
 
     private void waitForInitialLoad() {
         wait.waitForPresence(PAGE_TITLE);
-        try { wait.waitForInvisibility(TABLE_LOADING); } catch (Exception ignored) {}
-        try { wait.waitForInvisibility(By.cssSelector(".spinner")); } catch (Exception ignored) {}
+        try {
+            wait.waitForInvisibility(TABLE_LOADING);
+        } catch (Exception ignored) {
+        }
+        try {
+            wait.waitForInvisibility(By.cssSelector(".spinner"));
+        } catch (Exception ignored) {
+        }
     }
 
     @Step("Click Back link to /home")
@@ -189,14 +205,25 @@ public class TrafficDashboardPage extends BasePage {
 
     @Step("Click auto-refresh toggle")
     public TrafficDashboardPage clickAutoRefreshToggle() {
+        boolean wasActive = isAutoRefreshActive();
         wait.waitForClickable(AUTO_REFRESH_BTN).click();
+        wait.waitForCondition(d -> {
+            try {
+                String cls = d.findElement(AUTO_REFRESH_BTN).getAttribute("class");
+                boolean isActive = cls != null && cls.contains("active");
+                return isActive != wasActive;
+            } catch (Exception e) { return false; }
+        });
         return this;
     }
 
     @Step("Click Next page")
     public TrafficDashboardPage clickNextPage() {
         RetryHelper.retryVoid(() -> wait.waitForClickable(NEXT_PAGE_BTN).click(), "next page");
-        try { wait.waitForInvisibility(TABLE_LOADING); } catch (Exception ignored) {}
+        try {
+            wait.waitForInvisibility(TABLE_LOADING);
+        } catch (Exception ignored) {
+        }
         return this;
     }
 
@@ -208,27 +235,64 @@ public class TrafficDashboardPage extends BasePage {
 
     // ── General state checks ──────────────────────────────────────────────────
 
-    public boolean isOnTrafficDashboard()        { return urlContains("/traffic") && !urlContains("/traffic-"); }
-    public boolean isPageTitleDisplayed()        { return isDisplayed(PAGE_TITLE); }
-    public boolean isStatsSectionDisplayed()     { return isDisplayed(STATS_SECTION); }
-    public boolean isChartsSectionDisplayed()    { return isDisplayed(CHARTS_SECTION); }
-    public boolean isAlertsSectionDisplayed()    { return isDisplayed(ALERTS_SECTION); }
-    public boolean isTableSectionDisplayed()     { return isDisplayed(TABLE_SECTION); }
-    public boolean isLastRefreshedDisplayed()    { return isDisplayed(LAST_REFRESHED); }
-    public boolean isStatsErrorDisplayed()       { return isDisplayed(STATS_ERROR); }
-    public boolean isAlertsErrorDisplayed()      { return isDisplayed(ALERTS_ERROR); }
+    public boolean isOnTrafficDashboard() {
+        return urlContains("/traffic") && !urlContains("/traffic-");
+    }
+
+    public boolean isPageTitleDisplayed() {
+        return isDisplayed(PAGE_TITLE);
+    }
+
+    public boolean isStatsSectionDisplayed() {
+        return isDisplayed(STATS_SECTION);
+    }
+
+    public boolean isChartsSectionDisplayed() {
+        return isDisplayed(CHARTS_SECTION);
+    }
+
+    public boolean isAlertsSectionDisplayed() {
+        return isDisplayed(ALERTS_SECTION);
+    }
+
+    public boolean isTableSectionDisplayed() {
+        return isDisplayed(TABLE_SECTION);
+    }
+
+    public boolean isLastRefreshedDisplayed() {
+        return isDisplayed(LAST_REFRESHED);
+    }
+
+    public boolean isStatsErrorDisplayed() {
+        return isDisplayed(STATS_ERROR);
+    }
+
+    public boolean isAlertsErrorDisplayed() {
+        return isDisplayed(ALERTS_ERROR);
+    }
+
     public boolean isAutoRefreshActive() {
         try {
             String cls = wait.waitForVisible(AUTO_REFRESH_BTN).getAttribute("class");
             return cls != null && cls.contains("active");
-        } catch (Exception e) { return false; }
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // ── Stats ─────────────────────────────────────────────────────────────────
 
-    public List<WebElement> getStatCards()   { return driver.findElements(STAT_CARDS); }
-    public int getStatCardCount()            { return getStatCards().size(); }
-    public boolean areStatsLoaded()          { return !getStatCards().isEmpty() && driver.findElements(STATS_SKELETON).isEmpty(); }
+    public List<WebElement> getStatCards() {
+        return driver.findElements(STAT_CARDS);
+    }
+
+    public int getStatCardCount() {
+        return getStatCards().size();
+    }
+
+    public boolean areStatsLoaded() {
+        return !getStatCards().isEmpty() && driver.findElements(STATS_SKELETON).isEmpty();
+    }
 
     public String getStatValue(int index) {
         List<WebElement> values = driver.findElements(STAT_VALUES);
@@ -237,21 +301,41 @@ public class TrafficDashboardPage extends BasePage {
 
     // ── Table ─────────────────────────────────────────────────────────────────
 
-    public List<WebElement> getTableRows()   { return driver.findElements(TABLE_ROWS); }
-    public int getTableRowCount()            { return getTableRows().size(); }
-    public boolean isTableEmpty()            { return isDisplayed(TABLE_EMPTY); }
-    public boolean isTableErrorDisplayed()   { return isDisplayed(TABLE_ERROR); }
-    public boolean hasPagination()           { return isDisplayed(PAGINATION); }
+    public List<WebElement> getTableRows() {
+        return driver.findElements(TABLE_ROWS);
+    }
+
+    public int getTableRowCount() {
+        return getTableRows().size();
+    }
+
+    public boolean isTableEmpty() {
+        return isDisplayed(TABLE_EMPTY);
+    }
+
+    public boolean isTableErrorDisplayed() {
+        return isDisplayed(TABLE_ERROR);
+    }
+
+    public boolean hasPagination() {
+        return isDisplayed(PAGINATION);
+    }
+
     public boolean isNextPageEnabled() {
         try {
             WebElement btn = driver.findElement(NEXT_PAGE_BTN);
             return btn.isEnabled() && btn.getAttribute("disabled") == null;
-        } catch (Exception e) { return false; }
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public String getActivePageNumber() {
-        try { return wait.waitForVisible(ACTIVE_PAGE_BTN).getText().trim(); }
-        catch (Exception e) { return ""; }
+        try {
+            return wait.waitForVisible(ACTIVE_PAGE_BTN).getText().trim();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     // ── NEW: First table row cell readers ─────────────────────────────────────
@@ -273,7 +357,7 @@ public class TrafficDashboardPage extends BasePage {
     @Step("Read first table row density value")
     public String getFirstRowDensity() {
         wait.waitForPresenceOfAll(TABLE_ROWS);
-        return wait.waitForVisible(FIRST_ROW_DENSITY).getText().trim();
+        return wait.waitForVisible(FIRST_ROW_DENSITY).getText().trim().replaceAll("[^0-9.]", "");
     }
 
     /**
@@ -283,7 +367,7 @@ public class TrafficDashboardPage extends BasePage {
     @Step("Read first table row speed value")
     public String getFirstRowSpeed() {
         wait.waitForPresenceOfAll(TABLE_ROWS);
-        return wait.waitForVisible(FIRST_ROW_SPEED).getText().trim();
+        return wait.waitForVisible(FIRST_ROW_SPEED).getText().trim().replaceAll("[^0-9.]", "");
     }
 
     /**
@@ -298,10 +382,21 @@ public class TrafficDashboardPage extends BasePage {
 
     // ── Charts ────────────────────────────────────────────────────────────────
 
-    public List<WebElement> getChartCards()       { return driver.findElements(CHART_CARDS); }
-    public int getChartCardCount()                { return getChartCards().size(); }
-    public boolean isCongestionChartDisplayed()   { return isDisplayed(CONGESTION_CHART); }
-    public boolean isChartErrorDisplayed()        { return isDisplayed(CHART_ERROR); }
+    public List<WebElement> getChartCards() {
+        return driver.findElements(CHART_CARDS);
+    }
+
+    public int getChartCardCount() {
+        return getChartCards().size();
+    }
+
+    public boolean isCongestionChartDisplayed() {
+        return isDisplayed(CONGESTION_CHART);
+    }
+
+    public boolean isChartErrorDisplayed() {
+        return isDisplayed(CHART_ERROR);
+    }
 
     // ── NEW: Density line chart readers ───────────────────────────────────────
 
@@ -313,7 +408,9 @@ public class TrafficDashboardPage extends BasePage {
         return driver.findElements(DENSITY_DOTS);
     }
 
-    public int getDensityDotCount() { return getDensityDots().size(); }
+    public int getDensityDotCount() {
+        return getDensityDots().size();
+    }
 
     /**
      * Returns the tooltip text of the last density dot (rightmost on the chart).
@@ -323,7 +420,8 @@ public class TrafficDashboardPage extends BasePage {
     @Step("Read last density dot tooltip")
     public String getLastDensityDotTooltip() {
         List<WebElement> dots = getDensityDots();
-        if (dots.isEmpty()) return "";
+        if (dots.isEmpty())
+            return "";
         WebElement lastDot = dots.get(dots.size() - 1);
         try {
             // Read the <title> child's textContent directly via JS
@@ -331,8 +429,7 @@ public class TrafficDashboardPage extends BasePage {
                     .executeScript(
                             "var t = arguments[0].querySelector('title');" +
                                     "return t ? t.textContent : '';",
-                            lastDot
-                    );
+                            lastDot);
             return result != null ? result.toString().trim() : "";
         } catch (Exception e) {
             System.out.println("[TrafficDashboardPage] Could not read density dot tooltip: "
@@ -347,10 +444,12 @@ public class TrafficDashboardPage extends BasePage {
      */
     public String getLastDensityDotValue() {
         String tooltip = getLastDensityDotTooltip();
-        if (tooltip.isEmpty()) return "";
+        if (tooltip.isEmpty())
+            return "";
         // Format: "17:44: 450 veh/hr" — split on ": " and take second part
         String[] parts = tooltip.split(": ");
-        if (parts.length < 2) return "";
+        if (parts.length < 2)
+            return "";
         // Second part: "450 veh/hr" — take the number before the space
         return parts[1].split(" ")[0].trim();
     }
@@ -364,7 +463,9 @@ public class TrafficDashboardPage extends BasePage {
         return driver.findElements(SPEED_BARS);
     }
 
-    public int getSpeedBarCount() { return getSpeedBars().size(); }
+    public int getSpeedBarCount() {
+        return getSpeedBars().size();
+    }
 
     /**
      * Returns the tooltip text of the last speed bar (rightmost = latest reading).
@@ -373,15 +474,15 @@ public class TrafficDashboardPage extends BasePage {
     @Step("Read last speed bar tooltip")
     public String getLastSpeedBarTooltip() {
         List<WebElement> bars = getSpeedBars();
-        if (bars.isEmpty()) return "";
+        if (bars.isEmpty())
+            return "";
         WebElement lastBar = bars.get(bars.size() - 1);
         try {
             Object result = ((org.openqa.selenium.JavascriptExecutor) driver)
                     .executeScript(
                             "var t = arguments[0].querySelector('title');" +
                                     "return t ? t.textContent : '';",
-                            lastBar
-                    );
+                            lastBar);
             return result != null ? result.toString().trim() : "";
         } catch (Exception e) {
             System.out.println("[TrafficDashboardPage] Could not read speed bar tooltip: "
@@ -396,25 +497,33 @@ public class TrafficDashboardPage extends BasePage {
      */
     public String getLastSpeedBarValue() {
         String tooltip = getLastSpeedBarTooltip();
-        if (tooltip.isEmpty()) return "";
+        if (tooltip.isEmpty())
+            return "";
         String[] parts = tooltip.split(": ");
-        if (parts.length < 2) return "";
+        if (parts.length < 2)
+            return "";
         return parts[1].split(" ")[0].trim();
     }
 
     // ── NEW: Congestion distribution chart readers ────────────────────────────
 
-    public List<WebElement> getCongestionRows()     { return driver.findElements(CONGESTION_ROWS); }
-    public int getCongestionRowCount()              { return getCongestionRows().size(); }
+    public List<WebElement> getCongestionRows() {
+        return driver.findElements(CONGESTION_ROWS);
+    }
+
+    public int getCongestionRowCount() {
+        return getCongestionRows().size();
+    }
 
     /**
      * Returns the count text for a specific congestion level row.
+     * 
      * @param level "Low" | "Moderate" | "High" | "Severe"
      * @return the count string (e.g. "3"), or "" if the level row is not found
      */
     @Step("Read congestion count for level: {level}")
     public String getCongestionCountForLevel(String level) {
-        List<WebElement> names  = driver.findElements(CONGESTION_LEVEL_NAMES);
+        List<WebElement> names = driver.findElements(CONGESTION_LEVEL_NAMES);
         List<WebElement> counts = driver.findElements(CONGESTION_COUNTS);
         for (int i = 0; i < names.size(); i++) {
             if (names.get(i).getText().trim().equalsIgnoreCase(level)) {
@@ -423,25 +532,28 @@ public class TrafficDashboardPage extends BasePage {
         }
         return "";
     }
+
     public String getFirstDensityDotValue() {
         String tooltip = getFirstDensityDotTooltip();
-        if (tooltip.isEmpty()) return "";
+        if (tooltip.isEmpty())
+            return "";
         String[] parts = tooltip.split(": ");
-        if (parts.length < 2) return "";
+        if (parts.length < 2)
+            return "";
         return parts[1].split(" ")[0].trim();
     }
 
     public String getFirstDensityDotTooltip() {
         List<WebElement> dots = getDensityDots();
-        if (dots.isEmpty()) return "";
-        WebElement firstDot = dots.get(0);   // index 0 = leftmost = newest
+        if (dots.isEmpty())
+            return "";
+        WebElement firstDot = dots.get(0); // index 0 = leftmost = newest
         try {
             Object result = ((org.openqa.selenium.JavascriptExecutor) driver)
                     .executeScript(
                             "var t = arguments[0].querySelector('title');" +
                                     "return t ? t.textContent : '';",
-                            firstDot
-                    );
+                            firstDot);
             return result != null ? result.toString().trim() : "";
         } catch (Exception e) {
             return "";
@@ -454,23 +566,25 @@ public class TrafficDashboardPage extends BasePage {
      */
     public String getFirstSpeedBarValue() {
         String tooltip = getFirstSpeedBarTooltip();
-        if (tooltip.isEmpty()) return "";
+        if (tooltip.isEmpty())
+            return "";
         String[] parts = tooltip.split(": ");
-        if (parts.length < 2) return "";
+        if (parts.length < 2)
+            return "";
         return parts[1].split(" ")[0].trim();
     }
 
     public String getFirstSpeedBarTooltip() {
         List<WebElement> bars = getSpeedBars();
-        if (bars.isEmpty()) return "";
-        WebElement firstBar = bars.get(0);   // index 0 = leftmost = newest
+        if (bars.isEmpty())
+            return "";
+        WebElement firstBar = bars.get(0); // index 0 = leftmost = newest
         try {
             Object result = ((org.openqa.selenium.JavascriptExecutor) driver)
                     .executeScript(
                             "var t = arguments[0].querySelector('title');" +
                                     "return t ? t.textContent : '';",
-                            firstBar
-                    );
+                            firstBar);
             return result != null ? result.toString().trim() : "";
         } catch (Exception e) {
             return "";
@@ -478,8 +592,19 @@ public class TrafficDashboardPage extends BasePage {
     }
     // ── Recent alerts ─────────────────────────────────────────────────────────
 
-    public List<WebElement> getAlertItems()            { return driver.findElements(ALERT_ITEMS); }
-    public int getAlertItemCount()                     { return getAlertItems().size(); }
-    public boolean hasAlerts()                         { return getAlertItemCount() > 0; }
-    public boolean isAlertsEmptyStateDisplayed()       { return isDisplayed(ALERTS_EMPTY); }
+    public List<WebElement> getAlertItems() {
+        return driver.findElements(ALERT_ITEMS);
+    }
+
+    public int getAlertItemCount() {
+        return getAlertItems().size();
+    }
+
+    public boolean hasAlerts() {
+        return getAlertItemCount() > 0;
+    }
+
+    public boolean isAlertsEmptyStateDisplayed() {
+        return isDisplayed(ALERTS_EMPTY);
+    }
 }

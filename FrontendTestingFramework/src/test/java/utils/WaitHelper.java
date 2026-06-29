@@ -80,6 +80,10 @@ public class WaitHelper {
         return wait.until(ExpectedConditions.urlContains(urlFragment));
     }
 
+    public boolean waitForUrlMatches(String regex) {
+        return wait.until(ExpectedConditions.urlMatches(regex));
+    }
+
     public boolean waitForInvisibility(By locator) {
         return wait.until(ExpectedConditions.invisibilityOfElementLocated(locator));
     }

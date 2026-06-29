@@ -53,7 +53,7 @@ public class HomeTest extends BaseTest {
         System.out.println("TC-031 PASSED");
     }
 
-    @Test(description = "TC-032: Home page is accessible and URL is /home")
+    @Test(description = "TC-032: Home page is displayed after login", groups = {"sanity"})
     @Story("Page load")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Verifies that after login the URL contains /home.")

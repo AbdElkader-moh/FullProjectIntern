@@ -93,8 +93,8 @@ public class TrafficAnalyticsPage extends BasePage {
 
     // ── Navigation ────────────────────────────────────────────────────────────
     private static final By BACK_LINK             = By.cssSelector("a.back-link");
-    private static final By NAV_DASHBOARD         = By.xpath("//a[@routerLink='/traffic' and contains(@class,'nav-link')]");
-    private static final By NAV_ALERTS            = By.xpath("//a[@routerLink='/traffic-alerts' and contains(@class,'nav-link')]");
+    private static final By NAV_DASHBOARD         = By.xpath("//a[@href='/traffic' and contains(@class,'nav-link')]");
+    private static final By NAV_ALERTS            = By.xpath("//a[@href='/traffic-alerts' and contains(@class,'nav-link')]");
     private static final By LOGOUT_BTN            = By.cssSelector("button.logout-btn");
 
     // ── Constructor ───────────────────────────────────────────────────────────
@@ -120,8 +120,8 @@ public class TrafficAnalyticsPage extends BasePage {
 
     @Step("Click Back link to traffic dashboard")
     public TrafficDashboardPage clickBack() {
-        wait.waitForClickable(BACK_LINK).click();
-        wait.waitForUrlToContain("/traffic");
+        utils.RetryHelper.retryVoid(() -> wait.waitForClickable(BACK_LINK).click(), "click Back link");
+        wait.waitForCondition(d -> d.getCurrentUrl().endsWith("/traffic"));
         return new TrafficDashboardPage(driver);
     }
 
@@ -305,13 +305,13 @@ public class TrafficAnalyticsPage extends BasePage {
     @Step("Read first row density")
     public String getFirstRowDensity() {
         wait.waitForPresenceOfAll(TABLE_ROWS);
-        return wait.waitForVisible(FIRST_ROW_DENSITY).getText().trim();
+        return wait.waitForVisible(FIRST_ROW_DENSITY).getText().trim().replaceAll("[^0-9.]", "");
     }
 
     @Step("Read first row speed")
     public String getFirstRowSpeed() {
         wait.waitForPresenceOfAll(TABLE_ROWS);
-        return wait.waitForVisible(FIRST_ROW_SPEED).getText().trim();
+        return wait.waitForVisible(FIRST_ROW_SPEED).getText().trim().replaceAll("[^0-9.]", "");
     }
 
     @Step("Read first row congestion level")

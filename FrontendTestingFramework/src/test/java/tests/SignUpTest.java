@@ -18,7 +18,7 @@ public class SignUpTest extends BaseTest {
 
     private SignUpPage signUpPage;
 
-    @BeforeMethod
+    @BeforeMethod(alwaysRun = true)
     public void openSignUp() {
         signUpPage = new SignUpPage(driver);
         signUpPage.open();
@@ -40,7 +40,7 @@ public class SignUpTest extends BaseTest {
         System.out.println("TC-001 PASSED");
     }
 
-    @Test(description = "TC-002: Successful signup with all valid fields and a photo")
+    @Test(description = "TC-002: Successful signup with all valid fields and a photo", groups = {"sanity"})
     @Story("Happy path registration")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Submits the signup form with all valid inputs including a photo. Expects redirect to /signin.")
