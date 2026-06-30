@@ -1,5 +1,0 @@
-$kind: http-request
-name: Get Notifications
-method: GET
-url: 'http://localhost:8080/api/users/notifications'
-order: 1000

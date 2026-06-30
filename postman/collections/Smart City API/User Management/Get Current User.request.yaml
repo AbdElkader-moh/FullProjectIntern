@@ -1,5 +1,0 @@
-$kind: http-request
-name: Get Current User
-method: GET
-url: 'http://localhost:8080/api/users/me'
-order: 3000

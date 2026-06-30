@@ -59,7 +59,7 @@ public class ConfigReader {
         try { return get(key); } catch (RuntimeException e) { return defaultValue; }
     }
 
-    private static int getInt(String key, int defaultValue) {
+    public static int getInt(String key, int defaultValue) {
         try { return Integer.parseInt(get(key, String.valueOf(defaultValue))); }
         catch (NumberFormatException e) { return defaultValue; }
     }
@@ -103,4 +103,5 @@ public class ConfigReader {
     public static int getRetryAttempts()      { return getInt("retry.attempts", 3); }
     public static int getRetryIntervalMs()    { return getInt("retry.interval.ms", 1000); }
     public static int getPollingIntervalMs()  { return getInt("polling.interval.ms", 500); }
+
 }

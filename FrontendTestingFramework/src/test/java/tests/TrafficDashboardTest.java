@@ -7,6 +7,7 @@ import pages.SettingsPage;
 import pages.TrafficAlertsPage;
 import pages.TrafficAnalyticsPage;
 import pages.TrafficDashboardPage;
+import utils.ConfigReader;
 import utils.SensorApiClient;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -530,7 +531,164 @@ public class TrafficDashboardTest extends BaseTest {
         System.out.println("TC-083 PASSED — congestion distribution matches API");
     }
     // ── Helper ────────────────────────────────────────────────────────────────
+    @Test(description = "TC-084: Global alert banner appears after threshold crossing then auto-dismisses within 15 seconds")
+    @Story("Global alert banner")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description(
+            "Posts density=450 which exceeds the saved Traffic Density > 100 threshold. " +
+                    "The backend pushes a WebSocket alert to the AppComponent which renders " +
+                    ".global-alert-banner with a message and an OK button. " +
+                    "The banner must then disappear on its own within 15 seconds (AppComponent setTimeout ~5s). " +
+                    "If still visible after 15s the OK button is clicked to clean up before failing."
+    )
+    public void TC084_globalAlertBannerAppearsAndAutoDismisses() {
+        org.openqa.selenium.By BANNER     = org.openqa.selenium.By.cssSelector(".global-alert-banner");
+        org.openqa.selenium.By BANNER_MSG = org.openqa.selenium.By.cssSelector(".global-alert-banner span");
+        org.openqa.selenium.By BANNER_OK  = org.openqa.selenium.By.cssSelector(".global-alert-ok");
 
+        // Step 1 — seed a threshold-crossing reading
+        try {
+            SensorApiClient.postHighDensityReading(); // density=450 > threshold 100
+        } catch (Exception e) {
+            Assert.fail("TC-084 FAILED: Could not post reading — " + e.getMessage());
+        }
+
+        // Step 2 — wait for the banner to appear (WebSocket propagation)
+        int appearTimeout = ConfigReader.getNotificationBellTimeout(); // default 20s
+        System.out.println("[TC084] Waiting up to " + appearTimeout + "s for banner...");
+        try {
+            wait.waitForCondition(d ->
+                    !d.findElements(BANNER).isEmpty()
+                            && d.findElements(BANNER).get(0).isDisplayed()
+            );
+        } catch (Exception e) {
+            Assert.fail(
+                    "TC-084 FAILED: .global-alert-banner did not appear within " + appearTimeout + "s. " +
+                            "Check WebSocket connection, threshold setup in @BeforeClass, " +
+                            "and that sensor-service is running on localhost:8081."
+            );
+        }
+        System.out.println("[TC084] Banner appeared ✔");
+
+        // Step 3 — verify message text and OK button while banner is visible
+        String bannerText = "";
+        try { bannerText = driver.findElement(BANNER_MSG).getText().trim(); }
+        catch (Exception ignored) {}
+        Assert.assertFalse(bannerText.isEmpty(),
+                "TC-084 FAILED: Banner appeared but message text is empty.");
+        Assert.assertFalse(driver.findElements(BANNER_OK).isEmpty(),
+                "TC-084 FAILED: OK dismiss button not found inside the banner.");
+        System.out.println("[TC084] Message: '" + bannerText + "', OK button present ✔");
+
+        // Step 4 — wait for auto-dismiss (AppComponent setTimeout ~5s, allow up to 15s)
+        int dismissTimeout = 15;
+        System.out.println("[TC084] Waiting up to " + dismissTimeout + "s for auto-dismiss...");
+        try {
+            long deadline = System.currentTimeMillis() + dismissTimeout * 1000L;
+            while (System.currentTimeMillis() < deadline) {
+                java.util.List<org.openqa.selenium.WebElement> b = driver.findElements(BANNER);
+                if (b.isEmpty() || !b.get(0).isDisplayed()) break;
+                Thread.sleep(500);
+            }
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Step 5 — assert banner is gone; click OK to clean up if still visible
+        java.util.List<org.openqa.selenium.WebElement> remaining = driver.findElements(BANNER);
+        boolean stillVisible = !remaining.isEmpty() && remaining.get(0).isDisplayed();
+        if (stillVisible) {
+            try { driver.findElements(BANNER_OK).get(0).click(); } catch (Exception ignored) {}
+            Assert.fail(
+                    "TC-084 FAILED: Banner still visible after " + dismissTimeout + "s. " +
+                            "Auto-dismiss did not fire — check AppComponent setTimeout for alertBanner."
+            );
+        }
+
+        System.out.println("TC-084 PASSED — banner appeared, content verified, auto-dismissed ✔");
+    }
+    @Test(description = "TC-085: Dashboard auto-refreshes every 60 seconds when auto-refresh is enabled")
+    @Story("Auto-refresh")
+    @Severity(SeverityLevel.NORMAL)
+    @Description(
+            "Verifies the 60-second auto-refresh cycle defined by AUTO_REFRESH_MS = 60_000 " +
+                    "in traffic-dashboard.ts. The component uses interval(60_000).pipe(startWith(0)) " +
+                    "which triggers loadAllData() every 60 seconds. The visible proof of a refresh " +
+                    "is the 'Updated HH:MM:SS' timestamp (.last-refreshed) updating to a new value. " +
+                    "Strategy: (1) ensure auto-refresh is active, (2) read the current timestamp, " +
+                    "(3) wait 65 seconds (60s interval + 5s buffer for API calls), " +
+                    "(4) assert the timestamp changed, meaning a new refresh cycle completed."
+    )
+    public void TC085_dashboardAutoRefreshesEvery60Seconds() {
+        org.openqa.selenium.By SYNCING        = org.openqa.selenium.By.cssSelector(".last-refreshed.syncing");
+        org.openqa.selenium.By LAST_REFRESHED = org.openqa.selenium.By.cssSelector(".last-refreshed:not(.syncing)");
+        org.openqa.selenium.By AUTO_BTN       = org.openqa.selenium.By.cssSelector("button.btn-auto-refresh");
+
+        // Step 1 — ensure auto-refresh is active (btn-auto-refresh must have class 'active')
+        // If it was disabled by a previous test (TC-079), re-enable it now.
+        try {
+            org.openqa.selenium.WebElement btn = driver.findElement(AUTO_BTN);
+            boolean isActive = btn.getAttribute("class") != null
+                    && btn.getAttribute("class").contains("active");
+            if (!isActive) {
+                btn.click();
+                System.out.println("[TC085] Auto-refresh was paused — re-enabled.");
+                // Wait for the immediate t=0 emission that fires on re-enable
+                try { wait.waitForInvisibility(SYNCING); } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            System.out.println("[TC085] Could not check auto-refresh state: " + e.getMessage());
+        }
+
+        // Step 2 — wait for any ongoing syncing to settle, then read current timestamp
+        try { wait.waitForInvisibility(SYNCING); } catch (Exception ignored) {}
+
+        String timestampBefore = "";
+        try {
+            org.openqa.selenium.WebElement el = wait.waitForVisible(LAST_REFRESHED);
+            timestampBefore = el.getText().trim();
+        } catch (Exception e) {
+            Assert.fail("TC-085 FAILED: 'Updated HH:MM:SS' element not visible before waiting. " +
+                    "Dashboard must show a timestamp before we can detect it changing.");
+        }
+        System.out.println("[TC085] Timestamp before wait: '" + timestampBefore + "'");
+
+        // Step 3 — wait 65 seconds
+        // 60s = the AUTO_REFRESH_MS interval
+        //  5s = buffer for the four parallel API calls (stats, table, charts, alerts) to complete
+        System.out.println("[TC085] Waiting 65 seconds for the auto-refresh cycle to fire...");
+        try {
+            Thread.sleep(65_000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            Assert.fail("TC-085 FAILED: Test thread was interrupted during the 65s wait.");
+        }
+
+        // Step 4 — wait for any syncing indicator to finish (the refresh is in progress)
+        try { wait.waitForInvisibility(SYNCING); } catch (Exception ignored) {}
+
+        // Step 5 — read the new timestamp
+        String timestampAfter = "";
+        try {
+            org.openqa.selenium.WebElement el = wait.waitForVisible(LAST_REFRESHED);
+            timestampAfter = el.getText().trim();
+        } catch (Exception e) {
+            Assert.fail("TC-085 FAILED: 'Updated HH:MM:SS' element not visible after waiting.");
+        }
+        System.out.println("[TC085] Timestamp after wait:  '" + timestampAfter + "'");
+
+        // Step 6 — assert the timestamp changed
+        Assert.assertFalse(timestampAfter.isEmpty(),
+                "TC-085 FAILED: Timestamp is empty after 65s wait.");
+        Assert.assertNotEquals(timestampAfter, timestampBefore,
+                "TC-085 FAILED: Timestamp did not change after 65 seconds. " +
+                        "Expected auto-refresh to have fired at least once (AUTO_REFRESH_MS = 60_000). " +
+                        "Check that the interval subscription is active and that " +
+                        "loadRecentAlerts() completes successfully (it sets lastRefreshed).");
+
+        System.out.println("TC-085 PASSED — timestamp changed: '"
+                + timestampBefore + "' → '" + timestampAfter + "' ✔");
+    }
     /**
      * Normalises a decimal string to a fixed number of decimal places.
      * Harmonises API raw doubles with Angular's number:'1.1-1' pipe output.

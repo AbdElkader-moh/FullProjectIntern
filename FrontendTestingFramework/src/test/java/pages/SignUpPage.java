@@ -6,7 +6,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
+import utils.WaitHelper;
+import utils.ConfigReader;
 import java.io.File;
 
 public class SignUpPage extends BasePage {
@@ -111,8 +112,13 @@ public class SignUpPage extends BasePage {
     public boolean isUploadAreaDisplayed()           { return isDisplayed(UPLOAD_AREA); }
     public boolean isRemoveButtonDisplayed()         { return isDisplayed(REMOVE_PHOTO_BTN); }
     public boolean staysOnSignUp()                   { return urlContains("/signup"); }
-    public boolean redirectedToSignIn()              { return wait.waitForUrlToContain("/signin"); }
-
+    // After
+    public boolean redirectedToSignIn() {
+        // Signup involves a backend call (user creation + possible image upload to Cloudinary).
+        // Use a longer dedicated wait so slow backends don't cause false failures.
+        int signupRedirectTimeout = ConfigReader.getInt("signup.redirect.timeout", 30);
+        return new WaitHelper(driver, signupRedirectTimeout).waitForUrlToContain("/signin");
+    }
     public boolean isDuplicateEmailErrorDisplayed() {
         try {
             WebDriverWait longWait = new WebDriverWait(driver, java.time.Duration.ofSeconds(20));

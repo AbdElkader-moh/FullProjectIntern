@@ -1,5 +1,0 @@
-$kind: http-request
-name: Get Settings
-method: GET
-url: 'http://localhost:8080/api/users/settings'
-order: 1000

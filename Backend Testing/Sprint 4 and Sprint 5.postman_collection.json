@@ -1,0 +1,3045 @@
+{
+  "info": {
+    "_postman_id": "adafc7aa-b27d-4445-8709-3d40a0b975b1",
+    "name": "Sprint 4 and Sprint 5",
+    "description": "Automated test collection for GET /api/sensors/air, /air/stats, and /air/trends endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46756296",
+    "_collection_link": "https://go.postman.co/collection/46756296-adafc7aa-b27d-4445-8709-3d40a0b975b1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Sensors-Air",
+      "item": [
+        {
+          "name": "✅ Happy Path",
+          "item": [
+            {
+              "name": "TC-GET-AIR-001 | No params — Default pagination",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Response has content array', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('content');",
+                      "  pm.expect(body.content).to.be.an('array');",
+                      "});",
+                      "pm.test('Default page size is 20', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.pageable.pageSize).to.eql(20);",
+                      "});",
+                      "pm.test('Response has pagination fields', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('totalElements');",
+                      "  pm.expect(body).to.have.property('totalPages');",
+                      "  pm.expect(body).to.have.property('first');",
+                      "  pm.expect(body).to.have.property('last');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-002 | Custom page and size",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Page size matches requested size', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.pageable.pageSize).to.eql(10);",
+                      "  pm.expect(body.pageable.pageNumber).to.eql(0);",
+                      "});",
+                      "pm.test('Content has max 10 records', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.content.length).to.be.at.most(10);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-003 | Each record has correct field types",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Each record has correct field types', () => {",
+                      "  const body = pm.response.json();",
+                      "  body.content.forEach(record => {",
+                      "    pm.expect(record).to.have.property('location').that.is.a('string');",
+                      "    pm.expect(record).to.have.property('co').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('ozone').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('pm2_5').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('pm10').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('no2').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('so2').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('pollutionLevel').that.is.a('string');",
+                      "    pm.expect(record).to.have.property('timestamp').that.is.a('string');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-004 | Filter by location",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records match location filter (case-insensitive)', () => {",
+                      "  const body = pm.response.json();",
+                      "  body.content.forEach(record => {",
+                      "    pm.expect(record.location.toLowerCase()).to.include('downtown');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?location=downtown&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "location",
+                      "value": "downtown"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-005 | Filter by from date only",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records are on or after from date', () => {",
+                      "  const body = pm.response.json();",
+                      "  const from = new Date('2026-01-01T00:00:00');",
+                      "  body.content.forEach(record => {",
+                      "    pm.expect(new Date(record.timestamp)).to.be.at.least(from);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?from=2026-01-01T00:00:00&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "2026-01-01T00:00:00"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-006 | Filter by to date only",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records are on or before to date', () => {",
+                      "  const body = pm.response.json();",
+                      "  const to = new Date('2026-06-01T00:00:00');",
+                      "  body.content.forEach(record => {",
+                      "    pm.expect(new Date(record.timestamp)).to.be.at.most(to);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?to=2026-06-01T00:00:00&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "to",
+                      "value": "2026-06-01T00:00:00"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-007 | Filter by from and to date range",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records are within the date range', () => {",
+                      "  const body = pm.response.json();",
+                      "  const from = new Date('2026-01-01T00:00:00');",
+                      "  const to   = new Date('2026-06-01T00:00:00');",
+                      "  body.content.forEach(record => {",
+                      "    const ts = new Date(record.timestamp);",
+                      "    pm.expect(ts).to.be.at.least(from);",
+                      "    pm.expect(ts).to.be.at.most(to);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?from=2026-01-01T00:00:00&to=2026-06-01T00:00:00&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "2026-01-01T00:00:00"
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-06-01T00:00:00"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-008 | Sort by co ascending",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Records are sorted by co ascending', () => {",
+                      "  const body = pm.response.json();",
+                      "  const values = body.content.map(r => r.co);",
+                      "  for (let i = 0; i < values.length - 1; i++) {",
+                      "    pm.expect(values[i]).to.be.at.most(values[i+1]);",
+                      "  }",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?page=0&size=20&sort=co,asc",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "co,asc"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-009 | Location filter is case-insensitive",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Records returned regardless of location casing', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.content).to.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?location=DOWNTOWN&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "location",
+                      "value": "DOWNTOWN"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-010 | pollutionLevel values are valid enum values",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('pollutionLevel values are valid', () => {",
+                      "  const valid = ['Good','Moderate','Unhealthy','Very_Unhealthy','Hazardous'];",
+                      "  const body = pm.response.json();",
+                      "  body.content.forEach(record => {",
+                      "    pm.expect(valid).to.include(record.pollutionLevel);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?page=0&size=20",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-011 | Location filter with no matches returns empty content",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Content array is empty for non-existent location', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.content).to.be.an('array').that.is.empty;",
+                      "  pm.expect(body.totalElements).to.eql(0);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?location=NONEXISTENTLOCATION_XYZ&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "location",
+                      "value": "NONEXISTENTLOCATION_XYZ"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "❌ Edge Cases",
+          "item": [
+            {
+              "name": "TC-GET-AIR-012 | Zero size returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?page=0&size=0",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "0"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-013 | Negative size returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?page=0&size=-1",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "-1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-014 | from date after to date returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?from=2026-05-31T00:00:00&to=2026-05-01T00:00:00&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "2026-05-31T00:00:00"
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-05-01T00:00:00"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-015 | Invalid date format returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?from=not-a-date&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "not-a-date"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-016 | Invalid sort field returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?page=0&size=10&sort=banana,asc",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "banana,asc"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AIR-017 | Page beyond last returns empty content (not 404)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Content array is empty for out-of-range page', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.content).to.be.an('array').that.is.empty;",
+                      "  pm.expect(body.last).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air?page=999999&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "999999"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sensors-Air-Stats",
+      "item": [
+        {
+          "name": "✅ Happy Path",
+          "item": [
+            {
+              "name": "TC-GET-AST-001 | Status 200 and response is an object",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Response is an object not an array', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.be.an('object');",
+                      "  pm.expect(body).to.not.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AST-002 | All top-level fields exist with correct types",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All expected top-level fields exist with correct types', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('totalRecords').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('averageCo').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('averageOzone').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('highestCo').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('lowestCo').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('highestOzone').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('lowestOzone').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('totalAlerts').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('pollutionLevelBreakdown').that.is.an('object');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AST-003 | pollutionLevelBreakdown has all 5 keys with correct types",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('pollutionLevelBreakdown has all 5 pollution level keys', () => {",
+                      "  const breakdown = pm.response.json().pollutionLevelBreakdown;",
+                      "  pm.expect(breakdown).to.have.property('Good').that.is.a('number');",
+                      "  pm.expect(breakdown).to.have.property('Moderate').that.is.a('number');",
+                      "  pm.expect(breakdown).to.have.property('Unhealthy').that.is.a('number');",
+                      "  pm.expect(breakdown).to.have.property('Very_Unhealthy').that.is.a('number');",
+                      "  pm.expect(breakdown).to.have.property('Hazardous').that.is.a('number');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AST-004 | All numeric values are non-negative",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All numeric values are non-negative', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.totalRecords).to.be.at.least(0);",
+                      "  pm.expect(body.averageCo).to.be.at.least(0);",
+                      "  pm.expect(body.averageOzone).to.be.at.least(0);",
+                      "  pm.expect(body.highestCo).to.be.at.least(0);",
+                      "  pm.expect(body.lowestCo).to.be.at.least(0);",
+                      "  pm.expect(body.highestOzone).to.be.at.least(0);",
+                      "  pm.expect(body.lowestOzone).to.be.at.least(0);",
+                      "  pm.expect(body.totalAlerts).to.be.at.least(0);",
+                      "});",
+                      "pm.test('All breakdown counts are non-negative', () => {",
+                      "  const b = pm.response.json().pollutionLevelBreakdown;",
+                      "  Object.values(b).forEach(v => pm.expect(v).to.be.at.least(0));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AST-005 | highestCo >= averageCo >= lowestCo when totalRecords > 0",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('CO value ordering is consistent', () => {",
+                      "  const body = pm.response.json();",
+                      "  if (body.totalRecords > 0) {",
+                      "    pm.expect(body.highestCo).to.be.at.least(body.averageCo);",
+                      "    pm.expect(body.averageCo).to.be.at.least(body.lowestCo);",
+                      "  }",
+                      "});",
+                      "pm.test('Ozone value ordering is consistent', () => {",
+                      "  const body = pm.response.json();",
+                      "  if (body.totalRecords > 0) {",
+                      "    pm.expect(body.highestOzone).to.be.at.least(body.averageOzone);",
+                      "    pm.expect(body.averageOzone).to.be.at.least(body.lowestOzone);",
+                      "  }",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AST-006 | Breakdown counts sum equals totalRecords",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Sum of pollutionLevelBreakdown equals totalRecords', () => {",
+                      "  const body = pm.response.json();",
+                      "  const sum = Object.values(body.pollutionLevelBreakdown).reduce((a,b) => a+b, 0);",
+                      "  pm.expect(sum).to.eql(body.totalRecords);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-AST-007 | averages are non-zero when totalRecords > 0",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('averageCo and averageOzone are non-zero when totalRecords > 0', () => {",
+                      "  const body = pm.response.json();",
+                      "  if (body.totalRecords > 0) {",
+                      "    pm.expect(body.averageCo).to.be.above(0);",
+                      "    pm.expect(body.averageOzone).to.be.above(0);",
+                      "  }",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sensors-Air-Trends",
+      "item": [
+        {
+          "name": "✅ Happy Path",
+          "item": [
+            {
+              "name": "TC-GET-ATR-001 | Status 200 and returns array",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Response is an array', () => {",
+                      "  pm.expect(pm.response.json()).to.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-ATR-002 | Array is not empty",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Array is not empty', () => {",
+                      "  pm.expect(pm.response.json().length).to.be.above(0);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-ATR-003 | Each record has correct field types",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Each record has correct field types', () => {",
+                      "  pm.response.json().forEach(record => {",
+                      "    pm.expect(record).to.have.property('timestamp').that.is.a('string');",
+                      "    pm.expect(record).to.have.property('co').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('ozone').that.is.a('number');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-ATR-004 | Timestamp is valid ISO 8601",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Each timestamp is a valid ISO 8601 date', () => {",
+                      "  pm.response.json().forEach(record => {",
+                      "    pm.expect(isNaN(new Date(record.timestamp).getTime())).to.be.false;",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-ATR-005 | Records ordered by timestamp descending",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Records are ordered by timestamp descending', () => {",
+                      "  const timestamps = pm.response.json().map(r => new Date(r.timestamp));",
+                      "  for (let i = 0; i < timestamps.length - 1; i++) {",
+                      "    pm.expect(timestamps[i]).to.be.at.least(timestamps[i+1]);",
+                      "  }",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-ATR-006 | co and ozone are non-negative",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('co and ozone are non-negative in every record', () => {",
+                      "  pm.response.json().forEach(record => {",
+                      "    pm.expect(record.co).to.be.at.least(0);",
+                      "    pm.expect(record.ozone).to.be.at.least(0);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-ATR-007 | At most 50 records returned",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('At most 50 trend records returned', () => {",
+                      "  pm.expect(pm.response.json().length).to.be.at.most(50);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/air/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "air",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sensors-Light",
+      "item": [
+        {
+          "name": "✅ Happy Path",
+          "item": [
+            {
+              "name": "TC-GET-LGT-001 | No params — Default pagination",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Response has content array', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('content');",
+                      "  pm.expect(body.content).to.be.an('array');",
+                      "});",
+                      "pm.test('Default page size is 20', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.pageable.pageSize).to.eql(20);",
+                      "});",
+                      "pm.test('Response has pagination fields', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('totalElements');",
+                      "  pm.expect(body).to.have.property('totalPages');",
+                      "  pm.expect(body).to.have.property('first');",
+                      "  pm.expect(body).to.have.property('last');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-002 | Custom page and size",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Page size matches requested size', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.pageable.pageSize).to.eql(10);",
+                      "  pm.expect(body.pageable.pageNumber).to.eql(0);",
+                      "});",
+                      "pm.test('Content has max 10 records', () => {",
+                      "  pm.expect(pm.response.json().content.length).to.be.at.most(10);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-003 | Each record has correct field types",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Each record has correct field types', () => {",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    pm.expect(record).to.have.property('location').that.is.a('string');",
+                      "    pm.expect(record).to.have.property('brightnessLevel').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('powerConsumption').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('status').that.is.a('string');",
+                      "    pm.expect(record).to.have.property('timestamp').that.is.a('string');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-004 | Filter by status=ON",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records have status ON', () => {",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    pm.expect(record.status).to.eql('ON');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?status=ON&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "ON"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-005 | Filter by status=OFF",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records have status OFF', () => {",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    pm.expect(record.status).to.eql('OFF');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?status=OFF&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "OFF"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-006 | Filter by location",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records match location filter (case-insensitive)', () => {",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    pm.expect(record.location.toLowerCase()).to.include('downtown');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?location=downtown&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "location",
+                      "value": "downtown"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-007 | Filter by from date only",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records are on or after from date', () => {",
+                      "  const from = new Date('2026-01-01T00:00:00');",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    pm.expect(new Date(record.timestamp)).to.be.at.least(from);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?from=2026-01-01T00:00:00&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "2026-01-01T00:00:00"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-008 | Filter by to date only",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records are on or before to date', () => {",
+                      "  const to = new Date('2026-06-01T00:00:00');",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    pm.expect(new Date(record.timestamp)).to.be.at.most(to);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?to=2026-06-01T00:00:00&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "to",
+                      "value": "2026-06-01T00:00:00"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-009 | Filter by from and to date range",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records are within the date range', () => {",
+                      "  const from = new Date('2026-01-01T00:00:00');",
+                      "  const to   = new Date('2026-06-01T00:00:00');",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    const ts = new Date(record.timestamp);",
+                      "    pm.expect(ts).to.be.at.least(from);",
+                      "    pm.expect(ts).to.be.at.most(to);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?from=2026-01-01T00:00:00&to=2026-06-01T00:00:00&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "2026-01-01T00:00:00"
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-06-01T00:00:00"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-010 | Sort by brightnessLevel ascending",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Records are sorted by brightnessLevel ascending', () => {",
+                      "  const values = pm.response.json().content.map(r => r.brightnessLevel);",
+                      "  for (let i = 0; i < values.length - 1; i++) {",
+                      "    pm.expect(values[i]).to.be.at.most(values[i+1]);",
+                      "  }",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?page=0&size=20&sort=brightnessLevel,asc",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "brightnessLevel,asc"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-011 | Combine status + location filters",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All records match both status and location filters', () => {",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    pm.expect(record.status).to.eql('ON');",
+                      "    pm.expect(record.location.toLowerCase()).to.include('downtown');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?status=ON&location=downtown&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "ON"
+                    },
+                    {
+                      "key": "location",
+                      "value": "downtown"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-012 | status values are valid enum values",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('status values are ON or OFF only', () => {",
+                      "  pm.response.json().content.forEach(record => {",
+                      "    pm.expect(['ON','OFF']).to.include(record.status);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?page=0&size=20",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-013 | Location filter with no matches returns empty content",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Content is empty for non-existent location', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.content).to.be.an('array').that.is.empty;",
+                      "  pm.expect(body.totalElements).to.eql(0);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?location=NONEXISTENTLOCATION_XYZ&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "location",
+                      "value": "NONEXISTENTLOCATION_XYZ"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "❌ Edge Cases",
+          "item": [
+            {
+              "name": "TC-GET-LGT-014 | Zero size returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  pm.expect(pm.response.json()).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?page=0&size=0",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "0"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-015 | Negative size returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  pm.expect(pm.response.json()).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?page=0&size=-1",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "-1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-016 | from date after to date returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  pm.expect(pm.response.json()).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?from=2026-05-31T00:00:00&to=2026-05-01T00:00:00&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "2026-05-31T00:00:00"
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-05-01T00:00:00"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-017 | Invalid date format returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  pm.expect(pm.response.json()).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?from=not-a-date&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "not-a-date"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-018 | Invalid status value returns 400 — no internal class names exposed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request (currently may return 500 — potential BUG)', () => {",
+                      "  pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test('Error message present', () => {",
+                      "  pm.expect(pm.response.json()).to.have.property('error');",
+                      "});",
+                      "pm.test('No internal class names exposed in response', () => {",
+                      "  const bodyText = pm.response.text();",
+                      "  pm.expect(bodyText).to.not.include('com.backend');",
+                      "  pm.expect(bodyText).to.not.include('java.lang');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?status=BLINKING&page=0&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "BLINKING"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-019 | Invalid sort field returns 400",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 400 Bad Request', () => { pm.response.to.have.status(400); });",
+                      "pm.test('Error message present', () => {",
+                      "  pm.expect(pm.response.json()).to.have.property('error');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?page=0&size=10&sort=banana,asc",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "banana,asc"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LGT-020 | Page beyond last returns empty content (not 404)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Content array is empty for out-of-range page', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.content).to.be.an('array').that.is.empty;",
+                      "  pm.expect(body.last).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?page=999999&size=10",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "999999"
+                    },
+                    {
+                      "key": "size",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sensors-Light-Stats",
+      "item": [
+        {
+          "name": "✅ Happy Path",
+          "item": [
+            {
+              "name": "TC-GET-LST-001 | Status 200 and response is an object",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Response is an object not an array', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.be.an('object');",
+                      "  pm.expect(body).to.not.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LST-002 | All top-level fields exist with correct types",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All expected fields exist with correct types', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('totalRecords').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('averageBrightness').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('averagePowerConsumption').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('highestPowerConsumption').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('lowestBrightness').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('totalAlerts').that.is.a('number');",
+                      "  pm.expect(body).to.have.property('statusBreakdown').that.is.an('object');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LST-003 | statusBreakdown has ON and OFF keys with correct types",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('statusBreakdown has ON and OFF keys', () => {",
+                      "  const breakdown = pm.response.json().statusBreakdown;",
+                      "  pm.expect(breakdown).to.have.property('ON').that.is.a('number');",
+                      "  pm.expect(breakdown).to.have.property('OFF').that.is.a('number');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LST-004 | All numeric values are non-negative",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('All numeric values are non-negative', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.totalRecords).to.be.at.least(0);",
+                      "  pm.expect(body.averageBrightness).to.be.at.least(0);",
+                      "  pm.expect(body.averagePowerConsumption).to.be.at.least(0);",
+                      "  pm.expect(body.highestPowerConsumption).to.be.at.least(0);",
+                      "  pm.expect(body.lowestBrightness).to.be.at.least(0);",
+                      "  pm.expect(body.totalAlerts).to.be.at.least(0);",
+                      "});",
+                      "pm.test('statusBreakdown counts are non-negative', () => {",
+                      "  const b = pm.response.json().statusBreakdown;",
+                      "  pm.expect(b.ON).to.be.at.least(0);",
+                      "  pm.expect(b.OFF).to.be.at.least(0);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LST-005 | highestPowerConsumption >= averagePowerConsumption when totalRecords > 0",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('highestPowerConsumption >= averagePowerConsumption', () => {",
+                      "  const body = pm.response.json();",
+                      "  if (body.totalRecords > 0) {",
+                      "    pm.expect(body.highestPowerConsumption).to.be.at.least(body.averagePowerConsumption);",
+                      "  }",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LST-006 | averageBrightness >= lowestBrightness when totalRecords > 0",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('averageBrightness >= lowestBrightness', () => {",
+                      "  const body = pm.response.json();",
+                      "  if (body.totalRecords > 0) {",
+                      "    pm.expect(body.averageBrightness).to.be.at.least(body.lowestBrightness);",
+                      "  }",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LST-007 | statusBreakdown sum equals totalRecords",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Sum of statusBreakdown equals totalRecords', () => {",
+                      "  const body = pm.response.json();",
+                      "  const sum = body.statusBreakdown.ON + body.statusBreakdown.OFF;",
+                      "  pm.expect(sum).to.eql(body.totalRecords);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PRE | Fetch stats and save collection variables",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "const body = pm.response.json();",
+                      "pm.collectionVariables.set('lightTotalRecords', body.totalRecords);",
+                      "pm.collectionVariables.set('lightOnCount', body.statusBreakdown.ON);",
+                      "pm.collectionVariables.set('lightOffCount', body.statusBreakdown.OFF);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LST-008 | Cross-check stats ON count against GET /light?status=ON totalElements",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('totalElements for status=ON matches stats statusBreakdown.ON', () => {",
+                      "  const body = pm.response.json();",
+                      "  const onFromStats = Number(pm.collectionVariables.get('lightOnCount'));",
+                      "  pm.expect(body.totalElements).to.eql(onFromStats);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light?status=ON&page=0&size=1",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "ON"
+                    },
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sensors-Light-Trends",
+      "item": [
+        {
+          "name": "✅ Happy Path",
+          "item": [
+            {
+              "name": "TC-GET-LTR-001 | Status 200 and returns array",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Response is an array', () => {",
+                      "  pm.expect(pm.response.json()).to.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LTR-002 | Array is not empty",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Array is not empty', () => {",
+                      "  pm.expect(pm.response.json().length).to.be.above(0);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LTR-003 | Each record has correct field types",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Each record has correct field types', () => {",
+                      "  pm.response.json().forEach(record => {",
+                      "    pm.expect(record).to.have.property('timestamp').that.is.a('string');",
+                      "    pm.expect(record).to.have.property('brightnessLevel').that.is.a('number');",
+                      "    pm.expect(record).to.have.property('powerConsumption').that.is.a('number');",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LTR-004 | Timestamp is valid ISO 8601",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Each timestamp is a valid ISO 8601 date', () => {",
+                      "  pm.response.json().forEach(record => {",
+                      "    pm.expect(isNaN(new Date(record.timestamp).getTime())).to.be.false;",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LTR-005 | Records ordered by timestamp descending",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('Records are ordered by timestamp descending', () => {",
+                      "  const timestamps = pm.response.json().map(r => new Date(r.timestamp));",
+                      "  for (let i = 0; i < timestamps.length - 1; i++) {",
+                      "    pm.expect(timestamps[i]).to.be.at.least(timestamps[i+1]);",
+                      "  }",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LTR-006 | brightnessLevel and powerConsumption are non-negative",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('brightnessLevel and powerConsumption are non-negative', () => {",
+                      "  pm.response.json().forEach(record => {",
+                      "    pm.expect(record.brightnessLevel).to.be.at.least(0);",
+                      "    pm.expect(record.powerConsumption).to.be.at.least(0);",
+                      "  });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "TC-GET-LTR-007 | At most 50 records returned",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                      "pm.test('At most 50 trend records returned', () => {",
+                      "  pm.expect(pm.response.json().length).to.be.at.most(50);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{sensorBaseUrl}}/api/sensors/light/trends",
+                  "host": [
+                    "{{sensorBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "sensors",
+                    "light",
+                    "trends"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "sensorBaseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "lightTotalRecords",
+      "value": ""
+    },
+    {
+      "key": "lightOnCount",
+      "value": ""
+    },
+    {
+      "key": "lightOffCount",
+      "value": ""
+    }
+  ]
+}

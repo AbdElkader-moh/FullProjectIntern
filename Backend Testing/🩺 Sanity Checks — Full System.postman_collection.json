@@ -1,0 +1,1233 @@
+{
+  "info": {
+    "_postman_id": "c76dbdf7-d0f5-44a6-b77c-20847d8898d9",
+    "name": "🩺 Sanity Checks — Full System",
+    "description": "Lightweight smoke pass covering every endpoint across both services (port 4200 — User/Auth and port 8081 — Sensor). Run this first on every deployment or server restart. Each request has 1–3 assertions max. If anything here fails, stop and fix before running the full suites.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46756296",
+    "_collection_link": "https://go.postman.co/collection/46756296-c76dbdf7-d0f5-44a6-b77c-20847d8898d9?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "1️⃣  Auth Service",
+      "item": [
+        {
+          "name": "SAN-AUTH-001 | POST /signup — Happy Path (all valid fields) Copy 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// // TC-044: POST /signup — all valid fields (happy path)",
+                  "// pm.test('Status is 200', () => {",
+                  "//   pm.response.to.have.status(200);",
+                  "// });",
+                  "",
+                  "// pm.test('Response has user fields', () => {",
+                  "//   const body = pm.response.json();",
+                  "//   pm.expect(body).to.have.property('id');",
+                  "//   pm.expect(body).to.have.property('email');",
+                  "//   pm.expect(body).to.have.property('firstName');",
+                  "//   pm.expect(body).to.have.property('lastName');",
+                  "// });",
+                  "",
+                  "// pm.test('Email matches what was sent', () => {",
+                  "//   const body = pm.response.json();",
+                  "//   pm.expect(body.email).to.eql(pm.collectionVariables.get('testEmail'));",
+                  "// });",
+                  "",
+                  "// pm.test('Response does NOT contain plain-text password', () => {",
+                  "//   const body = pm.response.json();",
+                  "//   if (body.password) {",
+                  "//     pm.expect(body.password).to.not.eql(pm.collectionVariables.get('testPassword'));",
+                  "//   }",
+                  "// });",
+                  "pm.test(\"Status is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"Response has user fields\", function () {",
+                  "    pm.expect(body).to.have.property(\"id\");",
+                  "    pm.expect(body).to.have.property(\"email\");",
+                  "});",
+                  "",
+                  "pm.test(\"Email matches what was sent\", function () {",
+                  "    pm.expect(body.email).to.eql(pm.environment.get(\"testEmail\"));",
+                  "});",
+                  "",
+                  "pm.environment.set(\"loginEmail\", pm.environment.get(\"testEmail\"));",
+                  "pm.environment.set(\"loginPassword\", pm.environment.get(\"testPassword\"));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// // Generate a unique email each run to avoid duplicate conflicts",
+                  "// const ts = Date.now();",
+                  "// const email = `be_test_${ts}@test.com`;",
+                  "// pm.collectionVariables.set('testEmail', email);",
+                  "",
+                  "const uniqueEmail = `be_test_${Date.now()}@test.com`;",
+                  "pm.environment.set(\"testEmail\", uniqueEmail);",
+                  "",
+                  "if (!pm.environment.get(\"testPassword\")) {",
+                  "    pm.environment.set(\"testPassword\", \"Test@12345\");",
+                  "}",
+                  "pm.collectionVariables.set(\"testPassword\", \"Test@12345\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "value": "{{testEmail}}",
+                  "type": "text"
+                },
+                {
+                  "key": "firstName",
+                  "value": "Test",
+                  "type": "text"
+                },
+                {
+                  "key": "lastName",
+                  "value": "User",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{testPassword}}",
+                  "type": "text"
+                },
+                {
+                  "key": "profilePicture",
+                  "type": "file",
+                  "uuid": "b895d647-ef4f-4a3b-984b-3e53dbd4905d",
+                  "src": "/C:/Users/bidoo/Downloads/ProjectRoot/.postman/sprint3/Screenshot 2026-05-19 162448.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-002 | POST /login — Happy Path (200 + cookie) Copy",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Register a fresh user so login is guaranteed to succeed",
+                  "const email = `login_ok_${Date.now()}@test.com`;",
+                  "const password = 'abc123';",
+                  "pm.collectionVariables.set('loginEmail', email);",
+                  "pm.collectionVariables.set('loginPassword', password);",
+                  "",
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                  "  method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({ email, firstName: 'Login', lastName: 'Test', password, profilePicture: '' })",
+                  "  }",
+                  "}, (err, res) => console.log('Signup for login test:', res.code));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// TC-048",
+                  "pm.test('Status is 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success message', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('message');",
+                  "  pm.expect(body.message.toLowerCase()).to.include('success');",
+                  "});",
+                  "",
+                  "pm.test('Session cookie is set (JSESSIONID)', () => {",
+                  "  pm.expect(pm.cookies.has('JSESSIONID')).to.be.true;",
+                  "});",
+                  "",
+                  "// Save current session",
+                  "const jsessionid = pm.cookies.get('JSESSIONID');",
+                  "pm.collectionVariables.set('savedSession', jsessionid);",
+                  "console.log('Session saved:', jsessionid);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-003 | GET /me — authenticated profile returned",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Response has id, email, firstName, lastName', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('id');",
+                  "  pm.expect(body).to.have.property('email');",
+                  "  pm.expect(body).to.have.property('firstName');",
+                  "  pm.expect(body).to.have.property('lastName');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-004 | PUT /me — profile update accepted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"SanityUpdated\",\n  \"lastName\": \"Check\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-005 | POST /settings — Happy Path Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has setting fields\", function () {\r",
+                  "    const body = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(body).to.have.property(\"id\");\r",
+                  "    pm.expect(body).to.have.property(\"type\");\r",
+                  "    pm.expect(body).to.have.property(\"metric\");\r",
+                  "    pm.expect(body).to.have.property(\"thresholdValue\");\r",
+                  "    pm.expect(body).to.have.property(\"alertType\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"type\": \"Air\",\r\n  \"metric\": \"Carbon Monoxide\",\r\n  \"thresholdValue\": 5,\r\n  \"alertType\": \"above\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "settings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-006 | GET /settings — returns array",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Response is an array', () => {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "if (body.length > 0) pm.collectionVariables.set('settingId', body[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "settings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-007 | PUT /settings/{id} — setting updated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Air\",\n  \"metric\": \"CO\",\n  \"thresholdValue\": 10,\n  \"alertType\": \"above\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/settings/{{settingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "settings",
+                "{{settingId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-008 | DELETE /settings/{id} — setting removed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 or 204', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/settings/{{settingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "settings",
+                "{{settingId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-009 | GET /notifications — returns array",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Response is an array', () => {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "if (body.length > 0) pm.collectionVariables.set('notificationId', body[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "notifications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-010 | PUT /notifications/{id}/read — mark as read",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('notificationId')) {",
+                  "  console.warn('SKIP: No notificationId available — skipping mark-as-read sanity check.');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const id = pm.collectionVariables.get('notificationId');",
+                  "if (id) {",
+                  "  pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "} else {",
+                  "  pm.test('SKIPPED — no notification to mark as read', () => { pm.expect(true).to.be.true; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/notifications/{{notificationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "notifications",
+                "{{notificationId}}",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-011 | PUT /me/password — password change accepted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"{{testPassword}}\",\n  \"newPassword\": \"Sanity@New1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-012 | POST /logout — session invalidated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Message present', () => {",
+                  "  pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AUTH-013 | GET /me after logout — returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 after logout', () => { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "",
+                "description": "Intentionally empty — no session"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2️⃣  Sensor Service — POST Ingest (port 8081)",
+      "item": [
+        {
+          "name": "SAN-SEN-001 | POST /traffic — 201 created",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => { pm.response.to.have.status(201); });",
+                  "pm.test('Response time < 3000ms', () => { pm.expect(pm.response.responseTime).to.be.below(3000); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Sanity Road\",\n  \"trafficDensity\": 100,\n  \"avgSpeed\": 60,\n  \"congestionLevel\": \"Moderate\"\n}"
+            },
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "traffic"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-SEN-002 | POST /air — 201 created",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => { pm.response.to.have.status(201); });",
+                  "pm.test('Response time < 3000ms', () => { pm.expect(pm.response.responseTime).to.be.below(3000); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Sanity Street\",\n  \"pm2_5\": 20,\n  \"pm10\": 30,\n  \"co\": 1.0,\n  \"no2\": 0.5,\n  \"so2\": 0.3,\n  \"ozone\": 0.4,\n  \"pollutionLevel\": \"Good\"\n}"
+            },
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/air",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "air"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-SEN-003 | POST /light — 201 created",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => { pm.response.to.have.status(201); });",
+                  "pm.test('Response time < 3000ms', () => { pm.expect(pm.response.responseTime).to.be.below(3000); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Sanity Avenue\",\n  \"brightnessLevel\": 75,\n  \"powerConsumption\": 40.0,\n  \"status\": \"ON\"\n}"
+            },
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/light",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "light"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3️⃣  Sensor Service — GET Traffic (port 8081)",
+      "item": [
+        {
+          "name": "SAN-TRF-001 | GET /traffic — paginated response",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Has content array and pagination fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('content').that.is.an('array');",
+                  "  pm.expect(body).to.have.property('totalElements');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic?page=0&size=5",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "traffic"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-TRF-002 | GET /traffic/stats — object with expected fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Has totalRecords, averageTrafficDensity, averageSpeed', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('totalRecords');",
+                  "  pm.expect(body).to.have.property('averageTrafficDensity');",
+                  "  pm.expect(body).to.have.property('averageSpeed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic/stats",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "traffic",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-TRF-003 | GET /traffic/trends — non-empty array",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Response is a non-empty array', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array').with.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic/trends",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "traffic",
+                "trends"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-TRF-004 | GET /traffic/congestion-summary — has all 4 levels",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Has Low, Moderate, High, Severe keys', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.all.keys('Low','Moderate','High','Severe');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/traffic/congestion-summary",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "traffic",
+                "congestion-summary"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4️⃣  Sensor Service — GET Air (port 8081)",
+      "item": [
+        {
+          "name": "SAN-AIR-001 | GET /air — paginated response",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Has content array and totalElements', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('content').that.is.an('array');",
+                  "  pm.expect(body).to.have.property('totalElements');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/air?page=0&size=5",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "air"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AIR-002 | GET /air/stats — object with expected fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Has totalRecords, averageCo, averageOzone, pollutionLevelBreakdown', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('totalRecords');",
+                  "  pm.expect(body).to.have.property('averageCo');",
+                  "  pm.expect(body).to.have.property('averageOzone');",
+                  "  pm.expect(body).to.have.property('pollutionLevelBreakdown').that.is.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/air/stats",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "air",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-AIR-003 | GET /air/trends — non-empty array with co and ozone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Non-empty array with co and ozone fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array').with.length.above(0);",
+                  "  pm.expect(body[0]).to.have.property('co');",
+                  "  pm.expect(body[0]).to.have.property('ozone');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/air/trends",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "air",
+                "trends"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5️⃣  Sensor Service — GET Light (port 8081)",
+      "item": [
+        {
+          "name": "SAN-LGT-001 | GET /light — paginated response",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Has content array and totalElements', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('content').that.is.an('array');",
+                  "  pm.expect(body).to.have.property('totalElements');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/light?page=0&size=5",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "light"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-LGT-002 | GET /light/stats — object with expected fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Has totalRecords, averageBrightness, statusBreakdown', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('totalRecords');",
+                  "  pm.expect(body).to.have.property('averageBrightness');",
+                  "  pm.expect(body).to.have.property('statusBreakdown').that.is.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/light/stats",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "light",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SAN-LGT-003 | GET /light/trends — non-empty array with brightnessLevel and powerConsumption",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
+                  "pm.test('Non-empty array with brightnessLevel and powerConsumption fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array').with.length.above(0);",
+                  "  pm.expect(body[0]).to.have.property('brightnessLevel');",
+                  "  pm.expect(body[0]).to.have.property('powerConsumption');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{sensorBaseUrl}}/api/sensors/light/trends",
+              "host": [
+                "{{sensorBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensors",
+                "light",
+                "trends"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4200"
+    },
+    {
+      "key": "sensorBaseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "sanityEmail",
+      "value": ""
+    },
+    {
+      "key": "sanityPassword",
+      "value": "Sanity@12345"
+    },
+    {
+      "key": "settingId",
+      "value": ""
+    },
+    {
+      "key": "notificationId",
+      "value": ""
+    },
+    {
+      "key": "testPassword",
+      "value": ""
+    },
+    {
+      "key": "loginEmail",
+      "value": ""
+    },
+    {
+      "key": "loginPassword",
+      "value": ""
+    },
+    {
+      "key": "savedSession",
+      "value": ""
+    }
+  ]
+}
