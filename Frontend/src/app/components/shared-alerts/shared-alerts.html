@@ -263,7 +263,7 @@
             @for (alert of pagedAlerts; track alert.id) {
               <tr [class.unread-row]="!alert.isRead">
                 <td class="col-type">
-                  <span class="type-badge type-traffic">
+                  <span class="type-badge type-{{ config.notificationType.toLowerCase() }}">
                     {{ metricIcon(alert.metric) }}
                     {{ metricShortLabel(alert.metric) }}
                   </span>

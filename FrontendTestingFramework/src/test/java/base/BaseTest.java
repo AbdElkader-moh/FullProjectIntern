@@ -17,14 +17,14 @@ public class BaseTest {
     protected WaitHelper wait;
     protected String baseUrl;
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     public void setUp() {
         driver  = DriverFactory.getDriver();
         wait    = new WaitHelper(driver);
         baseUrl = ConfigReader.getAppUrl();
     }
 
-    @AfterClass
+    @AfterClass(alwaysRun = true)
     public void tearDown() {
         DriverFactory.quitDriver();
     }

@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 import utils.TrafficApiReader;
 
 /**
- * TrafficDashboardTest — TC-061 … TC-080
+ * TrafficDashboardTest — TC-090 … TC-109
  *
  * DATA SEEDING STRATEGY
  * ─────────────────────
@@ -79,19 +79,23 @@ public class TrafficDashboardTest extends BaseTest {
 
     // ── Per-test data seeding + navigation ────────────────────────────────────
 
+    private static boolean dataSeeded = false;
+
     @BeforeMethod(alwaysRun = true)
     public void seedDataAndOpenDashboard() {
-        loginWithDefaultUser();
+        if (!dataSeeded) {
 
-        // Seed traffic readings directly — bypasses the 120-second simulator interval.
-        // Normal reading populates the table; high-density + low-speed trigger alerts.
-        try {
-            SensorApiClient.postNormalTrafficReading();
-            SensorApiClient.postHighDensityReading();
-            SensorApiClient.postLowSpeedReading();
-        } catch (Exception e) {
-            System.out.println("[BeforeMethod] Seeding warning: " + e.getMessage()
-                    + " — tests will run against existing backend data.");
+            // Seed traffic readings directly — bypasses the 120-second simulator interval.
+            // Normal reading populates the table; high-density + low-speed trigger alerts.
+            try {
+                SensorApiClient.postNormalTrafficReading();
+                SensorApiClient.postHighDensityReading();
+                SensorApiClient.postLowSpeedReading();
+            } catch (Exception e) {
+                System.out.println("[BeforeMethod] Seeding warning: " + e.getMessage()
+                        + " — tests will run against existing backend data.");
+            }
+            dataSeeded = true;
         }
 
         dashboardPage = new TrafficDashboardPage(driver);
@@ -102,275 +106,275 @@ public class TrafficDashboardTest extends BaseTest {
     // Tests
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-061: Traffic dashboard loads and URL is /traffic")
+    @Test(description = "TC-090: Traffic dashboard loads and URL is /traffic")
     @Story("Page load")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Navigates to /traffic and verifies the URL contains /traffic but not a sub-route.")
-    public void TC061_trafficDashboardLoads() {
+    public void TC090_trafficDashboardLoads() {
         Assert.assertTrue(dashboardPage.isOnTrafficDashboard(),
-                "TC-061 FAILED: URL is not /traffic or landed on a sub-route.");
-        System.out.println("TC-061 PASSED");
+                "TC-090 FAILED: URL is not /traffic or landed on a sub-route.");
+        System.out.println("TC-090 PASSED");
     }
 
-    @Test(description = "TC-062: 'Traffic Monitoring Dashboard' page title is displayed")
+    @Test(description = "TC-091: 'Traffic Monitoring Dashboard' page title is displayed")
     @Story("Page load")
     @Severity(SeverityLevel.NORMAL)
     @Description("Verifies the .page-title element is visible.")
-    public void TC062_pageTitleDisplayed() {
+    public void TC091_pageTitleDisplayed() {
         Assert.assertTrue(dashboardPage.isPageTitleDisplayed(),
-                "TC-062 FAILED: Page title not visible.");
-        System.out.println("TC-062 PASSED");
+                "TC-091 FAILED: Page title not visible.");
+        System.out.println("TC-091 PASSED");
     }
 
-    @Test(description = "TC-063: Back link navigates to /home")
+    @Test(description = "TC-092: Back link navigates to /home")
     @Story("Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks .back-link and verifies navigation to /home.")
-    public void TC063_backLinkNavigatesToHome() {
+    public void TC092_backLinkNavigatesToHome() {
         HomePage homePage = dashboardPage.clickBackLink();
         Assert.assertTrue(homePage.isOnHomePage(),
-                "TC-063 FAILED: Back link did not reach /home.");
-        System.out.println("TC-063 PASSED");
+                "TC-092 FAILED: Back link did not reach /home.");
+        System.out.println("TC-092 PASSED");
     }
 
-    @Test(description = "TC-064: Analytics nav link navigates to /traffic-analytics")
+    @Test(description = "TC-093: Analytics nav link navigates to /traffic-analytics")
     @Story("Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Analytics header nav link.")
-    public void TC064_analyticsNavLink() {
+    public void TC093_analyticsNavLink() {
         TrafficAnalyticsPage ap = dashboardPage.clickAnalyticsNav();
         Assert.assertTrue(ap.isOnAnalyticsPage(),
-                "TC-064 FAILED: Did not reach /traffic-analytics.");
-        System.out.println("TC-064 PASSED");
+                "TC-093 FAILED: Did not reach /traffic-analytics.");
+        System.out.println("TC-093 PASSED");
     }
 
-    @Test(description = "TC-065: Alerts nav link navigates to /traffic-alerts")
+    @Test(description = "TC-094: Alerts nav link navigates to /traffic-alerts")
     @Story("Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Alerts header nav link.")
-    public void TC065_alertsNavLink() {
+    public void TC094_alertsNavLink() {
         TrafficAlertsPage ap = dashboardPage.clickAlertsNav();
         Assert.assertTrue(ap.isOnAlertsPage(),
-                "TC-065 FAILED: Did not reach /traffic-alerts.");
-        System.out.println("TC-065 PASSED");
+                "TC-094 FAILED: Did not reach /traffic-alerts.");
+        System.out.println("TC-094 PASSED");
     }
 
-    @Test(description = "TC-066: 'Analytics & Search' quick action navigates to /traffic-analytics")
+    @Test(description = "TC-095: 'Analytics & Search' quick action navigates to /traffic-analytics")
     @Story("Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Analytics & Search quick-action-btn.")
-    public void TC066_quickActionAnalytics() {
+    public void TC095_quickActionAnalytics() {
         TrafficAnalyticsPage ap = dashboardPage.clickQuickActionAnalytics();
         Assert.assertTrue(ap.isOnAnalyticsPage(),
-                "TC-066 FAILED: Quick action did not reach /traffic-analytics.");
-        System.out.println("TC-066 PASSED");
+                "TC-095 FAILED: Quick action did not reach /traffic-analytics.");
+        System.out.println("TC-095 PASSED");
     }
 
-    @Test(description = "TC-067: 'Traffic Alerts' quick action navigates to /traffic-alerts")
+    @Test(description = "TC-096: 'Traffic Alerts' quick action navigates to /traffic-alerts")
     @Story("Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Traffic Alerts quick-action-btn.")
-    public void TC067_quickActionAlerts() {
+    public void TC096_quickActionAlerts() {
         TrafficAlertsPage ap = dashboardPage.clickQuickActionAlerts();
         Assert.assertTrue(ap.isOnAlertsPage(),
-                "TC-067 FAILED: Quick action did not reach /traffic-alerts.");
-        System.out.println("TC-067 PASSED");
+                "TC-096 FAILED: Quick action did not reach /traffic-alerts.");
+        System.out.println("TC-096 PASSED");
     }
 
-    @Test(description = "TC-068: Stats section shows exactly 5 stat cards")
+    @Test(description = "TC-097: Stats section shows exactly 5 stat cards")
     @Story("Stats cards")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Stats section must be visible with exactly 5 non-skeleton stat cards.")
-    public void TC068_statsCardsDisplayed() {
+    public void TC097_statsCardsDisplayed() {
         Assert.assertTrue(dashboardPage.isStatsSectionDisplayed(),
-                "TC-068 FAILED: Stats section not visible.");
+                "TC-097 FAILED: Stats section not visible.");
         int count = dashboardPage.getStatCardCount();
         Assert.assertEquals(count, 5,
-                "TC-068 FAILED: Expected 5 stat cards, found " + count);
-        System.out.println("TC-068 PASSED — " + count + " cards");
+                "TC-097 FAILED: Expected 5 stat cards, found " + count);
+        System.out.println("TC-097 PASSED — " + count + " cards");
     }
 
-    @Test(description = "TC-069: All 5 stat card values are loaded and non-empty")
+    @Test(description = "TC-098: All 5 stat card values are loaded and non-empty")
     @Story("Stats cards")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Three readings were seeded in @BeforeMethod. All stat values must be non-empty.")
-    public void TC069_statValuesNonEmpty() {
+    public void TC098_statValuesNonEmpty() {
         Assert.assertTrue(dashboardPage.areStatsLoaded(),
-                "TC-069 FAILED: Stats still loading or skeleton cards present.");
+                "TC-098 FAILED: Stats still loading or skeleton cards present.");
         for (int i = 0; i < 5; i++) {
             String val = dashboardPage.getStatValue(i);
             Assert.assertFalse(val.isEmpty(),
-                    "TC-069 FAILED: Stat card " + i + " has an empty value.");
+                    "TC-098 FAILED: Stat card " + i + " has an empty value.");
         }
-        System.out.println("TC-069 PASSED");
+        System.out.println("TC-098 PASSED");
     }
 
-    @Test(description = "TC-070: Data table is visible with at least 1 row after seeding")
+    @Test(description = "TC-099: Data table is visible with at least 1 row after seeding")
     @Story("Data table")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Three readings posted in @BeforeMethod — table must have at least 1 row.")
-    public void TC070_dataTableHasRows() {
+    public void TC099_dataTableHasRows() {
         Assert.assertTrue(dashboardPage.isTableSectionDisplayed(),
-                "TC-070 FAILED: Table section not visible.");
+                "TC-099 FAILED: Table section not visible.");
         int rows = dashboardPage.getTableRowCount();
         Assert.assertTrue(rows >= 1,
-                "TC-070 FAILED: Expected >=1 row after seeding, found " + rows);
-        System.out.println("TC-070 PASSED — " + rows + " rows");
+                "TC-099 FAILED: Expected >=1 row after seeding, found " + rows);
+        System.out.println("TC-099 PASSED — " + rows + " rows");
     }
 
-    @Test(description = "TC-071: Pagination controls appear when data exceeds page size")
+    @Test(description = "TC-100: Pagination controls appear when data exceeds page size")
     @Story("Data table")
     @Severity(SeverityLevel.NORMAL)
     @Description("Checks that when more than 10 records exist pagination controls are shown.")
-    public void TC071_paginationDisplayed() {
+    public void TC100_paginationDisplayed() {
         if (dashboardPage.hasPagination()) {
             Assert.assertFalse(dashboardPage.getActivePageNumber().isEmpty(),
-                    "TC-071 FAILED: Pagination shown but active page is empty.");
-            System.out.println("TC-071 PASSED — page: " + dashboardPage.getActivePageNumber());
+                    "TC-100 FAILED: Pagination shown but active page is empty.");
+            System.out.println("TC-100 PASSED — page: " + dashboardPage.getActivePageNumber());
         } else {
-            System.out.println("TC-071 INFO: Not enough records for pagination yet.");
+            System.out.println("TC-100 INFO: Not enough records for pagination yet.");
         }
     }
 
-    @Test(description = "TC-072: Clicking Next page changes the active page indicator")
+    @Test(description = "TC-101: Clicking Next page changes the active page indicator")
     @Story("Data table")
     @Severity(SeverityLevel.NORMAL)
     @Description("Only runs when pagination is available. Verifies active page number increases.")
-    public void TC072_nextPageChangesContent() {
+    public void TC101_nextPageChangesContent() {
         if (!dashboardPage.hasPagination() || !dashboardPage.isNextPageEnabled()) {
-            System.out.println("TC-072 INFO: Single page — skip.");
+            System.out.println("TC-101 INFO: Single page — skip.");
             return;
         }
         String before = dashboardPage.getActivePageNumber();
         dashboardPage.clickNextPage();
         String after = dashboardPage.getActivePageNumber();
         Assert.assertNotEquals(after, before,
-                "TC-072 FAILED: Page number did not change after Next.");
-        System.out.println("TC-072 PASSED: " + before + " → " + after);
+                "TC-101 FAILED: Page number did not change after Next.");
+        System.out.println("TC-101 PASSED: " + before + " → " + after);
     }
 
-    @Test(description = "TC-073: Charts section is visible with at least 3 chart cards")
+    @Test(description = "TC-102: Charts section renders 3 cards", groups = {"sanity"})
     @Story("Charts")
     @Severity(SeverityLevel.NORMAL)
     @Description("Density line, speed bar, and congestion distribution charts must all be present.")
-    public void TC073_chartsSectionHasThreeCards() {
+    public void TC102_chartsSectionHasThreeCards() {
         Assert.assertTrue(dashboardPage.isChartsSectionDisplayed(),
-                "TC-073 FAILED: Charts section not visible.");
+                "TC-102 FAILED: Charts section not visible.");
         Assert.assertTrue(dashboardPage.getChartCardCount() >= 3,
-                "TC-073 FAILED: Expected >=3 chart cards, found "
+                "TC-102 FAILED: Expected >=3 chart cards, found "
                 + dashboardPage.getChartCardCount());
-        System.out.println("TC-073 PASSED — " + dashboardPage.getChartCardCount() + " cards");
+        System.out.println("TC-102 PASSED — " + dashboardPage.getChartCardCount() + " cards");
     }
 
-    @Test(description = "TC-074: Congestion distribution shows exactly 4 level rows")
+    @Test(description = "TC-103: Congestion distribution shows exactly 4 level rows")
     @Story("Charts")
     @Severity(SeverityLevel.NORMAL)
     @Description("Expects 4 .congestion-row elements: Low, Moderate, High, Severe.")
-    public void TC074_congestionChartFourRows() {
+    public void TC103_congestionChartFourRows() {
         Assert.assertTrue(dashboardPage.isCongestionChartDisplayed(),
-                "TC-074 FAILED: Congestion chart not visible.");
+                "TC-103 FAILED: Congestion chart not visible.");
         Assert.assertEquals(dashboardPage.getCongestionRowCount(), 4,
-                "TC-074 FAILED: Expected 4 rows, found "
+                "TC-103 FAILED: Expected 4 rows, found "
                 + dashboardPage.getCongestionRowCount());
-        System.out.println("TC-074 PASSED");
+        System.out.println("TC-103 PASSED");
     }
 
-    @Test(description = "TC-075: Recent alerts section is displayed")
+    @Test(description = "TC-104: Recent alerts section is displayed")
     @Story("Recent alerts")
     @Severity(SeverityLevel.NORMAL)
     @Description("High-density and low-speed readings crossed thresholds, so at least one alert " +
                  "should exist. Section must show alerts or the empty state — not an error.")
-    public void TC075_recentAlertsSectionDisplayed() {
+    public void TC104_recentAlertsSectionDisplayed() {
         Assert.assertTrue(dashboardPage.isAlertsSectionDisplayed(),
-                "TC-075 FAILED: Alerts section not visible.");
+                "TC-104 FAILED: Alerts section not visible.");
         Assert.assertFalse(dashboardPage.isAlertsErrorDisplayed(),
-                "TC-075 FAILED: Error banner shown in alerts section.");
+                "TC-104 FAILED: Error banner shown in alerts section.");
         boolean hasAlerts = dashboardPage.hasAlerts();
         boolean hasEmpty  = dashboardPage.isAlertsEmptyStateDisplayed();
         Assert.assertTrue(hasAlerts || hasEmpty,
-                "TC-075 FAILED: Neither alert items nor empty state shown.");
-        System.out.println("TC-075 PASSED — alerts: " + dashboardPage.getAlertItemCount());
+                "TC-104 FAILED: Neither alert items nor empty state shown.");
+        System.out.println("TC-104 PASSED — alerts: " + dashboardPage.getAlertItemCount());
     }
 
-    @Test(description = "TC-076: Recent alerts section shows at most 5 alerts")
+    @Test(description = "TC-105: Recent alerts section shows at most 5 alerts")
     @Story("Recent alerts")
     @Severity(SeverityLevel.NORMAL)
     @Description("The TS component slices to the latest 5. Count must never exceed 5.")
-    public void TC076_recentAlertsCappedAtFive() {
+    public void TC105_recentAlertsCappedAtFive() {
         int count = dashboardPage.getAlertItemCount();
         Assert.assertTrue(count <= 5,
-                "TC-076 FAILED: Expected <=5 recent alerts, found " + count);
-        System.out.println("TC-076 PASSED — count: " + count);
+                "TC-105 FAILED: Expected <=5 recent alerts, found " + count);
+        System.out.println("TC-105 PASSED — count: " + count);
     }
 
-    @Test(description = "TC-077: 'View All Alerts' link navigates to /traffic-alerts")
+    @Test(description = "TC-106: 'View All Alerts' link navigates to /traffic-alerts")
     @Story("Recent alerts")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the View All Alerts anchor in the recent alerts section.")
-    public void TC077_viewAllAlertsLink() {
+    public void TC106_viewAllAlertsLink() {
         TrafficAlertsPage ap = dashboardPage.clickViewAllAlerts();
         Assert.assertTrue(ap.isOnAlertsPage(),
-                "TC-077 FAILED: View All Alerts did not reach /traffic-alerts.");
-        System.out.println("TC-077 PASSED");
+                "TC-106 FAILED: View All Alerts did not reach /traffic-alerts.");
+        System.out.println("TC-106 PASSED");
     }
 
-    @Test(description = "TC-078: Manual refresh keeps dashboard on /traffic without error")
+    @Test(description = "TC-107: Manual refresh keeps dashboard on /traffic without error")
     @Story("Refresh")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the manual refresh icon. Dashboard must stay on /traffic and show no error.")
-    public void TC078_manualRefresh() {
+    public void TC107_manualRefresh() {
         dashboardPage.clickManualRefresh();
         wait.waitForCondition(d ->
             dashboardPage.isStatsSectionDisplayed() || dashboardPage.isLastRefreshedDisplayed()
         );
         Assert.assertTrue(dashboardPage.isOnTrafficDashboard(),
-                "TC-078 FAILED: Dashboard left /traffic after refresh.");
+                "TC-107 FAILED: Dashboard left /traffic after refresh.");
         Assert.assertFalse(dashboardPage.isStatsErrorDisplayed(),
-                "TC-078 FAILED: Error banner shown after refresh.");
-        System.out.println("TC-078 PASSED");
+                "TC-107 FAILED: Error banner shown after refresh.");
+        System.out.println("TC-107 PASSED");
     }
 
-    @Test(description = "TC-079: Auto-refresh toggle disables then re-enables")
+    @Test(description = "TC-108: Auto-refresh toggle disables then re-enables")
     @Story("Refresh")
     @Severity(SeverityLevel.MINOR)
     @Description("btn-auto-refresh.active by default. Toggling removes then restores the class.")
-    public void TC079_autoRefreshToggle() {
+    public void TC108_autoRefreshToggle() {
         Assert.assertTrue(dashboardPage.isAutoRefreshActive(),
-                "TC-079 FAILED: Auto-refresh not active by default.");
+                "TC-108 FAILED: Auto-refresh not active by default.");
         dashboardPage.clickAutoRefreshToggle();
         Assert.assertFalse(dashboardPage.isAutoRefreshActive(),
-                "TC-079 FAILED: Auto-refresh did not deactivate.");
+                "TC-108 FAILED: Auto-refresh did not deactivate.");
         dashboardPage.clickAutoRefreshToggle();
         Assert.assertTrue(dashboardPage.isAutoRefreshActive(),
-                "TC-079 FAILED: Auto-refresh did not re-activate.");
-        System.out.println("TC-079 PASSED");
+                "TC-108 FAILED: Auto-refresh did not re-activate.");
+        System.out.println("TC-108 PASSED");
     }
 
-    @Test(description = "TC-080: Unauthenticated /traffic access redirects to /signin",
+    @Test(description = "TC-109: Unauthenticated /traffic access redirects to /signin",
           priority = 10)
     @Story("Access control")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Deletes all cookies then navigates to /traffic. Angular auth guard must redirect.")
-    public void TC080_unauthenticatedAccess() {
+    public void TC109_unauthenticatedAccess() {
         driver.manage().deleteAllCookies();
         navigateTo("/traffic");
         wait.waitForCondition(d -> d.getCurrentUrl().contains("/signin"));
         Assert.assertTrue(driver.getCurrentUrl().contains("/signin"),
-                "TC-080 FAILED: Expected /signin, got: " + driver.getCurrentUrl());
-        System.out.println("TC-080 PASSED");
+                "TC-109 FAILED: Expected /signin, got: " + driver.getCurrentUrl());
+        System.out.println("TC-109 PASSED");
     }
-    // ── TC-081: Table row values match the API ────────────────────────────────
+    // ── TC-110: Table row values match the API ────────────────────────────────
 
 
 
-    @Test(description = "TC-081: Real-Time Traffic Data table first row matches the latest API record")
+    @Test(description = "TC-110: Real-Time Traffic Data table first row matches the latest API record")
     @Story("Data accuracy — table")
     @Severity(SeverityLevel.CRITICAL)
     @Description(
             "Seeds a reading, refreshes the dashboard, waits for table to re-render, " +
                     "then reads the API and UI at the same moment and asserts they match."
     )
-    public void TC081_tableFirstRowMatchesApi() {
+    public void TC110_tableFirstRowMatchesApi() {
         // Step 1 — seed
         SensorApiClient.postTrafficReading(333, 77.5, "Moderate", "Alexandria");
 
@@ -392,12 +396,12 @@ public class TrafficDashboardTest extends BaseTest {
         String apiLocation   = TrafficApiReader.getFirstRecordLocation();
         String apiCongestion = TrafficApiReader.getFirstRecordCongestionLevel();
 
-        System.out.println("[TC081] API (post-refresh) — location=" + apiLocation
+        System.out.println("[TC110] API (post-refresh) — location=" + apiLocation
                 + " density=" + apiDensity + " speed=" + apiSpeed
                 + " congestion=" + apiCongestion);
 
         Assert.assertNotNull(apiDensity,
-                "TC-081 FAILED: API returned no density. Check sensor-service.");
+                "TC-110 FAILED: API returned no density. Check sensor-service.");
 
         // Step 5 — read UI
         String uiLocation   = dashboardPage.getFirstRowLocation();
@@ -405,28 +409,28 @@ public class TrafficDashboardTest extends BaseTest {
         String uiSpeed      = dashboardPage.getFirstRowSpeed();
         String uiCongestion = dashboardPage.getFirstRowCongestionLevel();
 
-        System.out.println("[TC081] UI — location=" + uiLocation
+        System.out.println("[TC110] UI — location=" + uiLocation
                 + " density=" + uiDensity + " speed=" + uiSpeed
                 + " congestion=" + uiCongestion);
 
         // Step 6 — assert UI == API
         Assert.assertEquals(uiLocation, apiLocation,
-                "TC-081 FAILED: location UI='" + uiLocation + "' API='" + apiLocation + "'");
+                "TC-110 FAILED: location UI='" + uiLocation + "' API='" + apiLocation + "'");
         Assert.assertEquals(uiDensity, apiDensity,
-                "TC-081 FAILED: density UI='" + uiDensity + "' API='" + apiDensity + "'");
+                "TC-110 FAILED: density UI='" + uiDensity + "' API='" + apiDensity + "'");
         Assert.assertEquals(uiSpeed, normaliseDecimal(apiSpeed, 1),
-                "TC-081 FAILED: speed UI='" + uiSpeed
+                "TC-110 FAILED: speed UI='" + uiSpeed
                         + "' API='" + normaliseDecimal(apiSpeed, 1) + "'");
         Assert.assertEquals(uiCongestion, apiCongestion,
-                "TC-081 FAILED: congestion UI='" + uiCongestion + "' API='" + apiCongestion + "'");
+                "TC-110 FAILED: congestion UI='" + uiCongestion + "' API='" + apiCongestion + "'");
 
-        System.out.println("TC-081 PASSED — table first row matches API");
+        System.out.println("TC-110 PASSED — table first row matches API");
     }
-    // ── TC-082: Density line & speed bar charts match trends API ─────────────
+    // ── TC-111: Density line & speed bar charts match trends API ─────────────
 
-    // ── Fix 3: TC082 — use the renamed methods ────────────────────────────────────
+    // ── Fix 3: TC111 — use the renamed methods ────────────────────────────────────
 
-    @Test(description = "TC-082: Density line and speed bar charts match the trends API")
+    @Test(description = "TC-111: Density line and speed bar charts match the trends API")
     @Story("Data accuracy — charts")
     @Severity(SeverityLevel.CRITICAL)
     @Description(
@@ -434,7 +438,7 @@ public class TrafficDashboardTest extends BaseTest {
                     "trends API newest record and the UI leftmost dot/bar (both = newest reading " +
                     "after Angular reversal) and asserts they match."
     )
-    public void TC082_chartsMatchTrendsApi() {
+    public void TC111_chartsMatchTrendsApi() {
         // Step 1 — seed
         SensorApiClient.postTrafficReading(444, 88.8, "High", "Alexandria");
 
@@ -453,40 +457,40 @@ public class TrafficDashboardTest extends BaseTest {
         String apiSpeed   = TrafficApiReader.getNewestTrendAvgSpeed();
         int    apiCount   = TrafficApiReader.getTrendDataPointCount();
 
-        System.out.println("[TC082] API newest — density=" + apiDensity
+        System.out.println("[TC111] API newest — density=" + apiDensity
                 + " speed=" + apiSpeed + " totalPoints=" + apiCount);
 
         Assert.assertNotNull(apiDensity,
-                "TC-082 FAILED: Trends API returned no data. Check sensor-service.");
+                "TC-111 FAILED: Trends API returned no data. Check sensor-service.");
 
         // Step 5a — read UI leftmost dot (index 0 = newest after Angular reversal)
         String uiDensity = dashboardPage.getFirstDensityDotValue();
-        System.out.println("[TC082] UI first (leftmost) dot value: " + uiDensity);
+        System.out.println("[TC111] UI first (leftmost) dot value: " + uiDensity);
 
         Assert.assertFalse(uiDensity.isEmpty(),
-                "TC-082 FAILED: No density dots rendered after refresh.");
+                "TC-111 FAILED: No density dots rendered after refresh.");
         Assert.assertEquals(uiDensity, apiDensity,
-                "TC-082 FAILED: density dot='" + uiDensity + "' API='" + apiDensity + "'");
+                "TC-111 FAILED: density dot='" + uiDensity + "' API='" + apiDensity + "'");
 
         // Step 5b — read UI leftmost bar (index 0 = newest after Angular reversal)
         String uiSpeed = dashboardPage.getFirstSpeedBarValue();
-        System.out.println("[TC082] UI first (leftmost) bar value: " + uiSpeed);
+        System.out.println("[TC111] UI first (leftmost) bar value: " + uiSpeed);
 
         Assert.assertFalse(uiSpeed.isEmpty(),
-                "TC-082 FAILED: No speed bars rendered after refresh.");
+                "TC-111 FAILED: No speed bars rendered after refresh.");
         String normApiSpeed = normaliseDecimal(apiSpeed, 1);
         Assert.assertEquals(uiSpeed, normApiSpeed,
-                "TC-082 FAILED: speed bar='" + uiSpeed + "' API='" + normApiSpeed + "'");
+                "TC-111 FAILED: speed bar='" + uiSpeed + "' API='" + normApiSpeed + "'");
 
         // Step 5c — dot count matches API point count
         int uiDotCount = dashboardPage.getDensityDotCount();
         Assert.assertEquals(uiDotCount, apiCount,
-                "TC-082 FAILED: UI dots=" + uiDotCount
+                "TC-111 FAILED: UI dots=" + uiDotCount
                         + " but API returned " + apiCount + " points.");
 
-        System.out.println("TC-082 PASSED — chart values match trends API");
+        System.out.println("TC-111 PASSED — chart values match trends API");
     }
-    public void TC083_congestionChartMatchesSummaryApi() {
+    public void TC112_congestionChartMatchesSummaryApi() {
         // Step 1 — seed
         SensorApiClient.postTrafficReading(480, 10.0, "Severe", "Alexandria");
         SensorApiClient.postTrafficReading(30,  100.0, "Low",   "Alexandria");
@@ -501,14 +505,14 @@ public class TrafficDashboardTest extends BaseTest {
 
         // Step 4 — read API after refresh
         Assert.assertTrue(TrafficApiReader.hasCongestionData(),
-                "TC-083 FAILED: Congestion summary API returned no data.");
+                "TC-112 FAILED: Congestion summary API returned no data.");
 
         String apiLow      = TrafficApiReader.getCongestionCount("Low");
         String apiModerate = TrafficApiReader.getCongestionCount("Moderate");
         String apiHigh     = TrafficApiReader.getCongestionCount("High");
         String apiSevere   = TrafficApiReader.getCongestionCount("Severe");
 
-        System.out.println("[TC083] API (post-refresh) — Low=" + apiLow
+        System.out.println("[TC112] API (post-refresh) — Low=" + apiLow
                 + " Moderate=" + apiModerate + " High=" + apiHigh
                 + " Severe=" + apiSevere);
 
@@ -518,17 +522,17 @@ public class TrafficDashboardTest extends BaseTest {
         String uiHigh     = dashboardPage.getCongestionCountForLevel("High");
         String uiSevere   = dashboardPage.getCongestionCountForLevel("Severe");
 
-        System.out.println("[TC083] UI — Low=" + uiLow
+        System.out.println("[TC112] UI — Low=" + uiLow
                 + " Moderate=" + uiModerate + " High=" + uiHigh
                 + " Severe=" + uiSevere);
 
         // Step 6 — assert all four levels match
-        Assert.assertEquals(uiLow,      apiLow,      "TC-083 FAILED: Low");
-        Assert.assertEquals(uiModerate, apiModerate, "TC-083 FAILED: Moderate");
-        Assert.assertEquals(uiHigh,     apiHigh,     "TC-083 FAILED: High");
-        Assert.assertEquals(uiSevere,   apiSevere,   "TC-083 FAILED: Severe");
+        Assert.assertEquals(uiLow,      apiLow,      "TC-112 FAILED: Low");
+        Assert.assertEquals(uiModerate, apiModerate, "TC-112 FAILED: Moderate");
+        Assert.assertEquals(uiHigh,     apiHigh,     "TC-112 FAILED: High");
+        Assert.assertEquals(uiSevere,   apiSevere,   "TC-112 FAILED: Severe");
 
-        System.out.println("TC-083 PASSED — congestion distribution matches API");
+        System.out.println("TC-112 PASSED — congestion distribution matches API");
     }
     // ── Helper ────────────────────────────────────────────────────────────────
     @Test(description = "TC-084: Global alert banner appears after threshold crossing then auto-dismisses within 15 seconds")
