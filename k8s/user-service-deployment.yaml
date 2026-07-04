@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  labels:
+    app: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: nadinahmed/user-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME_FILE
+              value: /run/secrets/mysql_user
+            - name: SPRING_DATASOURCE_PASSWORD_FILE
+              value: /run/secrets/mysql_password
+            - name: CLOUDINARY_CLOUD_NAME_FILE
+              value: /run/secrets/cloudinary_cloud_name
+            - name: CLOUDINARY_API_KEY_FILE
+              value: /run/secrets/cloudinary_api_key
+            - name: CLOUDINARY_API_SECRET_FILE
+              value: /run/secrets/cloudinary_api_secret
+          volumeMounts:
+            - name: mysql-secrets
+              mountPath: /run/secrets/mysql_user
+              subPath: mysql_user
+              readOnly: true
+            - name: mysql-secrets
+              mountPath: /run/secrets/mysql_password
+              subPath: mysql_password
+              readOnly: true
+            - name: cloudinary-secrets
+              mountPath: /run/secrets/cloudinary_cloud_name
+              subPath: cloudinary_cloud_name
+              readOnly: true
+            - name: cloudinary-secrets
+              mountPath: /run/secrets/cloudinary_api_key
+              subPath: cloudinary_api_key
+              readOnly: true
+            - name: cloudinary-secrets
+              mountPath: /run/secrets/cloudinary_api_secret
+              subPath: cloudinary_api_secret
+              readOnly: true
+      volumes:
+        - name: mysql-secrets
+          secret:
+            secretName: mysql-secret
+        - name: cloudinary-secrets
+          secret:
+            secretName: cloudinary-secret
