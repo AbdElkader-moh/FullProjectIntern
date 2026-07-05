@@ -3,9 +3,12 @@ package com.backend.sensor_data.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,18 +28,12 @@ import com.backend.sensor_data.dto.StreetLightDataDto;
 import com.backend.sensor_data.dto.TrafficDataDto;
 import com.backend.sensor_data.dto.TrafficStatsDto;
 import com.backend.sensor_data.dto.TrafficTrendDto;
-import com.backend.sensor_data.entity.AirPollutionData;
 import com.backend.sensor_data.entity.CongestionLevel;
 import com.backend.sensor_data.entity.Status;
-import com.backend.sensor_data.entity.StreetLightData;
 import com.backend.sensor_data.entity.TrafficData;
 import com.backend.sensor_data.service.SensorDataService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,10 +49,6 @@ public class SensorController {
         this.sensorDataService = sensorDataService;
     }
 
-    // -------------------------------------------------------------------------
-    // Traffic — POST
-    // -------------------------------------------------------------------------
-
     @PostMapping("/traffic")
     @Operation(summary = "Submit traffic sensor data", description = "Persists a traffic sensor reading and checks user-configured alert thresholds for trafficDensity and avgSpeed.")
     @ApiResponses({
@@ -66,10 +59,6 @@ public class SensorController {
         sensorDataService.saveTrafficData(data);
         return ResponseEntity.status(HttpStatus.CREATED).body("Traffic data saved successfully.");
     }
-
-    // -------------------------------------------------------------------------
-    // Air — POST
-    // -------------------------------------------------------------------------
 
     @PostMapping("/air")
     @Operation(summary = "Submit air pollution sensor data", description = "Persists an air quality sensor reading and checks user-configured alert thresholds for CO and ozone levels.")
@@ -82,10 +71,6 @@ public class SensorController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Air pollution data saved successfully.");
     }
 
-    // -------------------------------------------------------------------------
-    // Light — POST
-    // -------------------------------------------------------------------------
-
     @PostMapping("/light")
     @Operation(summary = "Submit street light sensor data", description = "Persists a street light sensor reading and checks user-configured alert thresholds for brightnessLevel and powerConsumption.")
     @ApiResponses({
@@ -97,23 +82,49 @@ public class SensorController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Street light data saved successfully.");
     }
 
-    // -------------------------------------------------------------------------
-    // Traffic — GET (existing, unchanged)
-    // -------------------------------------------------------------------------
-
     @GetMapping("/traffic")
     @Operation(summary = "Get traffic sensor data", description = "Retrieves traffic sensor readings with optional filtering by location, congestion level, date range, sorting, and pagination.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Traffic data retrieved successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
     })
-    public ResponseEntity<Page<TrafficData>> getTrafficData(
+    public ResponseEntity<?> getTrafficData(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) CongestionLevel congestionLevel,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-            Pageable pageable) {
-        return ResponseEntity.ok(sensorDataService.getTrafficData(location, congestionLevel, from, to, pageable));
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sort) {
+
+        if (page < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page must be >= 0"));
+        }
+        if (size <= 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        }
+
+        Set<String> allowedSortFields = Set.of(
+                "timestamp", "location", "trafficDensity", "avgSpeed", "congestionLevel");
+        Sort sortObj = Sort.unsorted();
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            String field = parts[0];
+            if (!allowedSortFields.contains(field)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Validation failed", "details", "Invalid sort field: " + field));
+            }
+            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
+                    ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sortObj = Sort.by(dir, field);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
+        Page<TrafficData> trafficData = sensorDataService.getTrafficData(
+                location, congestionLevel, from, to, pageable);
+        return ResponseEntity.ok(trafficData);
     }
 
     @GetMapping("/traffic/stats")
@@ -122,11 +133,14 @@ public class SensorController {
         @ApiResponse(responseCode = "200", description = "Traffic statistics retrieved successfully")
     })
     public ResponseEntity<TrafficStatsDto> getTrafficStats() {
-        return ResponseEntity.ok(sensorDataService.getTrafficStats());
+
+        TrafficStatsDto stats = sensorDataService.getTrafficStats();
+
+        return ResponseEntity.ok(stats);
     }
 
     @GetMapping("/traffic/trends")
-    @Operation(summary = "Get traffic trend data", description = "Returns the 50 most recent traffic density and average speed readings ordered by timestamp descending for dashboard charts.")
+    @Operation(summary = "Get traffic trend data", description = "Returns recent traffic density and average speed readings ordered by timestamp for dashboard charts.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Traffic trend data retrieved successfully")
     })
@@ -143,140 +157,122 @@ public class SensorController {
         return ResponseEntity.ok(sensorDataService.getTrafficCongestionSummary());
     }
 
-    // -------------------------------------------------------------------------
-    // Air — GET (fully annotated)
-    // -------------------------------------------------------------------------
-
     @GetMapping("/air")
-    @Operation(
-        summary = "Get air pollution sensor data",
-        description = "Retrieves paginated air pollution sensor readings. Supports optional filtering by location (case-insensitive, partial match) and date range. Supports sorting via the `sort` query parameter (e.g. `sort=co,desc`)."
-    )
+    @Operation(summary = "Get air pollution sensor data", description = "Retrieves air pollution readings with optional filtering by location, date range, sorting, and pagination.")
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Air pollution data retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AirPollutionDataDto.class))
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Invalid filter or pagination parameters — e.g. size=0, invalid date format, or unknown sort field",
-            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"error\": \"Invalid request\", \"details\": \"...\"}"))
-        )
+        @ApiResponse(responseCode = "200", description = "Air pollution data retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
     })
-    public ResponseEntity<Page<AirPollutionData>> getAirData(
-            @Parameter(description = "Filter by sensor location — case-insensitive partial match", example = "downtown")
+    public ResponseEntity<?> getAirData(
             @RequestParam(required = false) String location,
-
-            @Parameter(description = "Filter records from this datetime (inclusive). Format: `yyyy-MM-dd'T'HH:mm:ss`", example = "2026-01-01T00:00:00")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-
-            @Parameter(description = "Filter records up to this datetime (inclusive). Format: `yyyy-MM-dd'T'HH:mm:ss`", example = "2026-06-30T23:59:59")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sort) {
 
-            @Parameter(description = "Pagination and sorting — page number (0-based), size, and optional sort field+direction. Valid sort fields: `timestamp`, `co`, `ozone`, `pm2_5`, `pm10`, `no2`, `so2`, `location`", example = "page=0&size=20&sort=timestamp,desc")
-            Pageable pageable) {
+        if (page < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page must be >= 0"));
+        }
+        if (size <= 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        }
+
+        Set<String> allowedSortFields = Set.of(
+                "timestamp", "location", "co", "ozone", "pollutionLevel");
+        Sort sortObj = Sort.unsorted();
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            String field = parts[0];
+            if (!allowedSortFields.contains(field)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Validation failed", "details", "Invalid sort field: " + field));
+            }
+            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
+                    ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sortObj = Sort.by(dir, field);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
         return ResponseEntity.ok(sensorDataService.getAirData(location, from, to, pageable));
     }
 
     @GetMapping("/air/stats")
-    @Operation(
-        summary = "Get air pollution dashboard statistics",
-        description = "Returns a single aggregated statistics object for the air pollution dashboard. Includes averages, min/max values for CO and ozone, total alert count, and a breakdown of record counts per pollution level."
-    )
+    @Operation(summary = "Get air pollution dashboard statistics", description = "Returns aggregated air pollution statistics for dashboard charts and summary cards.")
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Air pollution statistics retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AirStatsDto.class))
-        )
+        @ApiResponse(responseCode = "200", description = "Air pollution statistics retrieved successfully")
     })
     public ResponseEntity<AirStatsDto> getAirStats() {
         return ResponseEntity.ok(sensorDataService.getAirStats());
     }
 
     @GetMapping("/air/trends")
-    @Operation(
-        summary = "Get air pollution trend data",
-        description = "Returns the 50 most recent air pollution readings ordered by timestamp descending. Each record contains a timestamp, CO level, and ozone level — intended for time-series dashboard charts."
-    )
+    @Operation(summary = "Get air pollution trend data", description = "Returns recent CO and ozone readings ordered by timestamp for dashboard charts.")
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Air pollution trend data retrieved successfully — array of up to 50 records",
-            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AirTrendDto.class)))
-        )
+        @ApiResponse(responseCode = "200", description = "Air pollution trend data retrieved successfully")
     })
     public ResponseEntity<List<AirTrendDto>> getAirTrends() {
         return ResponseEntity.ok(sensorDataService.getAirTrends());
     }
 
-    // -------------------------------------------------------------------------
-    // Light — GET (fully annotated)
-    // -------------------------------------------------------------------------
-
     @GetMapping("/light")
-    @Operation(
-        summary = "Get street light sensor data",
-        description = "Retrieves paginated street light sensor readings. Supports optional filtering by location (case-insensitive, partial match), operational status, and date range. Supports sorting via the `sort` query parameter (e.g. `sort=brightnessLevel,asc`)."
-    )
+    @Operation(summary = "Get street light sensor data", description = "Retrieves street light readings with optional filtering by location, status, date range, sorting, and pagination.")
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Street light data retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = StreetLightDataDto.class))
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Invalid filter or pagination parameters — e.g. size=0, invalid date format, unknown sort field, or invalid status value",
-            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"error\": \"Invalid request\", \"details\": \"...\"}"))
-        )
+        @ApiResponse(responseCode = "200", description = "Street light data retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
     })
-    public ResponseEntity<Page<StreetLightData>> getLightData(
-            @Parameter(description = "Filter by sensor location — case-insensitive partial match", example = "corniche")
+    public ResponseEntity<?> getLightData(
             @RequestParam(required = false) String location,
-
-            @Parameter(description = "Filter by operational status of the street light", schema = @Schema(allowableValues = {"ON", "OFF"}), example = "ON")
             @RequestParam(required = false) Status status,
-
-            @Parameter(description = "Filter records from this datetime (inclusive). Format: `yyyy-MM-dd'T'HH:mm:ss`", example = "2026-01-01T00:00:00")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-
-            @Parameter(description = "Filter records up to this datetime (inclusive). Format: `yyyy-MM-dd'T'HH:mm:ss`", example = "2026-06-30T23:59:59")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sort) {
 
-            @Parameter(description = "Pagination and sorting — page number (0-based), size, and optional sort field+direction. Valid sort fields: `timestamp`, `brightnessLevel`, `powerConsumption`, `status`, `location`", example = "page=0&size=20&sort=timestamp,desc")
-            Pageable pageable) {
+        if (page < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page must be >= 0"));
+        }
+        if (size <= 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        }
+
+        Set<String> allowedSortFields = Set.of(
+                "timestamp", "location", "brightnessLevel", "powerConsumption", "status");
+        Sort sortObj = Sort.unsorted();
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            String field = parts[0];
+            if (!allowedSortFields.contains(field)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Validation failed", "details", "Invalid sort field: " + field));
+            }
+            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
+                    ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sortObj = Sort.by(dir, field);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
         return ResponseEntity.ok(sensorDataService.getLightData(location, status, from, to, pageable));
     }
 
     @GetMapping("/light/stats")
-    @Operation(
-        summary = "Get street light dashboard statistics",
-        description = "Returns a single aggregated statistics object for the street light dashboard. Includes average brightness and power consumption, peak power consumption, lowest brightness, total alert count, and a breakdown of ON/OFF record counts."
-    )
+    @Operation(summary = "Get street light dashboard statistics", description = "Returns aggregated street light statistics for dashboard charts and summary cards.")
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Street light statistics retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = LightStatsDto.class))
-        )
+        @ApiResponse(responseCode = "200", description = "Street light statistics retrieved successfully")
     })
     public ResponseEntity<LightStatsDto> getLightStats() {
         return ResponseEntity.ok(sensorDataService.getLightStats());
     }
 
     @GetMapping("/light/trends")
-    @Operation(
-        summary = "Get street light trend data",
-        description = "Returns the 50 most recent street light readings ordered by timestamp descending. Each record contains a timestamp, brightness level, and power consumption — intended for time-series dashboard charts."
-    )
+    @Operation(summary = "Get street light trend data", description = "Returns recent brightness and power consumption readings ordered by timestamp for dashboard charts.")
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Street light trend data retrieved successfully — array of up to 50 records",
-            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = LightTrendDto.class)))
-        )
+        @ApiResponse(responseCode = "200", description = "Street light trend data retrieved successfully")
     })
     public ResponseEntity<List<LightTrendDto>> getLightTrends() {
         return ResponseEntity.ok(sensorDataService.getLightTrends());

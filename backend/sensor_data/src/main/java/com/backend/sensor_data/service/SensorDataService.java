@@ -46,7 +46,7 @@ public class SensorDataService {
 
     private final TrafficDataRepository trafficRepo;
     private final AirPollutionDataRepository airRepo;
-private final StreetLightDataRepository lightRepo;
+    private final StreetLightDataRepository lightRepo;
 
     private final SettingsRepository settingsRepository;
     private final SimpMessagingTemplate messagingTemplate;
@@ -54,18 +54,18 @@ private final StreetLightDataRepository lightRepo;
     private final NotificationRepository notificationRepository;
 
     public SensorDataService(TrafficDataRepository trafficRepo, AirPollutionDataRepository airRepo,
-        StreetLightDataRepository lightRepo ,SettingsRepository settingsRepository,
-        SimpMessagingTemplate messagingTemplate,
-        NotificationRepository notificationRepository,
-        SensorProcessorFactory processorFactory) {
-    this.trafficRepo = trafficRepo;
-    this.airRepo = airRepo;
-    this.lightRepo = lightRepo;
-    this.settingsRepository = settingsRepository;
-    this.messagingTemplate = messagingTemplate;
-    this.notificationRepository = notificationRepository;
-    this.processorFactory = processorFactory;
-}
+            StreetLightDataRepository lightRepo, SettingsRepository settingsRepository,
+            SimpMessagingTemplate messagingTemplate,
+            NotificationRepository notificationRepository,
+            SensorProcessorFactory processorFactory) {
+        this.trafficRepo = trafficRepo;
+        this.airRepo = airRepo;
+        this.lightRepo = lightRepo;
+        this.settingsRepository = settingsRepository;
+        this.messagingTemplate = messagingTemplate;
+        this.notificationRepository = notificationRepository;
+        this.processorFactory = processorFactory;
+    }
 
     @Transactional
     public TrafficData saveTrafficData(TrafficDataDto dto) {
@@ -119,6 +119,10 @@ private final StreetLightDataRepository lightRepo;
             LocalDateTime to,
             Pageable pageable) {
         Specification<TrafficData> spec = Specification.where(null);
+
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new IllegalArgumentException("'from' date cannot be after 'to' date");
+        }
 
         if (location != null && !location.trim().isEmpty()) {
             spec = spec.and(
@@ -222,120 +226,137 @@ private final StreetLightDataRepository lightRepo;
     }
 
     public Page<AirPollutionData> getAirData(
-        String location,
-        LocalDateTime from,
-        LocalDateTime to,
-        Pageable pageable) {
-    Specification<AirPollutionData> spec = Specification.where(null);
+            String location,
+            LocalDateTime from,
+            LocalDateTime to,
+            Pageable pageable) {
 
-    if (location != null && !location.trim().isEmpty()) {
-        spec = spec.and(
-                (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
-    }
-    if (from != null) {
-        spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
-    }
-    if (to != null) {
-        spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
-    }
+        Specification<AirPollutionData> spec = Specification.where(null);
 
-    return airRepo.findAll(spec, pageable);
-}
+        if (pageable.getPageSize() <= 0) {
+            throw new IllegalArgumentException("Page size must be greater than 0");
+        }
 
-public AirStatsDto getAirStats() {
-    long totalRecords = airRepo.count();
-    long totalAlerts = notificationRepository.countByType("Air");
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new IllegalArgumentException("'from' date cannot be after 'to' date");
+        }
 
-    Double avgCoRaw = airRepo.findAvgCo();
-    Double avgOzoneRaw = airRepo.findAvgOzone();
-    Double highestCoRaw = airRepo.findMaxCo();
-    Double lowestCoRaw = airRepo.findMinCo();
-    Double highestOzoneRaw = airRepo.findMaxOzone();
-    Double lowestOzoneRaw = airRepo.findMinOzone();
+        if (location != null && !location.trim().isEmpty()) {
+            spec = spec.and(
+                    (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+        }
+        if (from != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+        }
+        if (to != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+        }
 
-    double avgCo = avgCoRaw != null ? avgCoRaw : 0;
-    double avgOzone = avgOzoneRaw != null ? avgOzoneRaw : 0;
-    double highestCo = highestCoRaw != null ? highestCoRaw : 0;
-    double lowestCo = lowestCoRaw != null ? lowestCoRaw : 0;
-    double highestOzone = highestOzoneRaw != null ? highestOzoneRaw : 0;
-    double lowestOzone = lowestOzoneRaw != null ? lowestOzoneRaw : 0;
-
-    Map<String, Long> breakdown = Map.of(
-        "Good", airRepo.countByPollutionLevel(PollutionLevel.Good),
-        "Moderate", airRepo.countByPollutionLevel(PollutionLevel.Moderate),
-        "Unhealthy", airRepo.countByPollutionLevel(PollutionLevel.Unhealthy),
-        "Very_Unhealthy", airRepo.countByPollutionLevel(PollutionLevel.Very_Unhealthy),
-        "Hazardous", airRepo.countByPollutionLevel(PollutionLevel.Hazardous));
-
-    return new AirStatsDto(totalRecords, avgCo, avgOzone,
-            highestCo, lowestCo, highestOzone, lowestOzone, totalAlerts, breakdown);
-}
-
-public List<AirTrendDto> getAirTrends() {
-    return airRepo.findTop50ByOrderByTimestampDesc()
-            .stream()
-            .map(data -> new AirTrendDto(
-                    data.getTimestamp(),
-                    data.getCo(),
-                    data.getOzone()))
-            .toList();
-}
-
-public Page<StreetLightData> getLightData(
-        String location,
-        Status status,
-        LocalDateTime from,
-        LocalDateTime to,
-        Pageable pageable) {
-    Specification<StreetLightData> spec = Specification.where(null);
-
-    if (location != null && !location.trim().isEmpty()) {
-        spec = spec.and(
-                (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
-    }
-    if (status != null) {
-        spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
-    }
-    if (from != null) {
-        spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
-    }
-    if (to != null) {
-        spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+        return airRepo.findAll(spec, pageable);
     }
 
-    return lightRepo.findAll(spec, pageable);
-}
+    public AirStatsDto getAirStats() {
+        long totalRecords = airRepo.count();
+        long totalAlerts = notificationRepository.countByType("Air");
 
-public LightStatsDto getLightStats() {
-    long totalRecords = lightRepo.count();
-    long totalAlerts = notificationRepository.countByType("Light");
+        Double avgCoRaw = airRepo.findAvgCo();
+        Double avgOzoneRaw = airRepo.findAvgOzone();
+        Double highestCoRaw = airRepo.findMaxCo();
+        Double lowestCoRaw = airRepo.findMinCo();
+        Double highestOzoneRaw = airRepo.findMaxOzone();
+        Double lowestOzoneRaw = airRepo.findMinOzone();
 
-    Double avgBrightnessRaw = lightRepo.findAvgBrightnessLevel();
-    Double avgPowerRaw = lightRepo.findAvgPowerConsumption();
-    Double highestPowerRaw = lightRepo.findMaxPowerConsumption();
-    Double lowestBrightnessRaw = lightRepo.findMinBrightnessLevel();
+        double avgCo = avgCoRaw != null ? avgCoRaw : 0;
+        double avgOzone = avgOzoneRaw != null ? avgOzoneRaw : 0;
+        double highestCo = highestCoRaw != null ? highestCoRaw : 0;
+        double lowestCo = lowestCoRaw != null ? lowestCoRaw : 0;
+        double highestOzone = highestOzoneRaw != null ? highestOzoneRaw : 0;
+        double lowestOzone = lowestOzoneRaw != null ? lowestOzoneRaw : 0;
 
-    double avgBrightness = avgBrightnessRaw != null ? avgBrightnessRaw : 0;
-    double avgPower = avgPowerRaw != null ? avgPowerRaw : 0;
-    double highestPower = highestPowerRaw != null ? highestPowerRaw : 0;
-    double lowestBrightness = lowestBrightnessRaw != null ? lowestBrightnessRaw : 0;
+        Map<String, Long> breakdown = Map.of(
+                "Good", airRepo.countByPollutionLevel(PollutionLevel.Good),
+                "Moderate", airRepo.countByPollutionLevel(PollutionLevel.Moderate),
+                "Unhealthy", airRepo.countByPollutionLevel(PollutionLevel.Unhealthy),
+                "Very_Unhealthy", airRepo.countByPollutionLevel(PollutionLevel.Very_Unhealthy),
+                "Hazardous", airRepo.countByPollutionLevel(PollutionLevel.Hazardous));
 
-    Map<String, Long> statusBreakdown = Map.of(
-            "ON", lightRepo.countByStatus(Status.ON),
-            "OFF", lightRepo.countByStatus(Status.OFF));
+        return new AirStatsDto(totalRecords, avgCo, avgOzone,
+                highestCo, lowestCo, highestOzone, lowestOzone, totalAlerts, breakdown);
+    }
 
-    return new LightStatsDto(totalRecords, avgBrightness, avgPower,
-            highestPower, lowestBrightness, totalAlerts, statusBreakdown);
-}
+    public List<AirTrendDto> getAirTrends() {
+        return airRepo.findTop50ByOrderByTimestampDesc()
+                .stream()
+                .map(data -> new AirTrendDto(
+                data.getTimestamp(),
+                data.getCo(),
+                data.getOzone()))
+                .toList();
+    }
 
-public List<LightTrendDto> getLightTrends() {
-    return lightRepo.findTop50ByOrderByTimestampDesc()
-            .stream()
-            .map(data -> new LightTrendDto(
-                    data.getTimestamp(),
-                    data.getBrightnessLevel(),
-                    data.getPowerConsumption()))
-            .toList();
-}
+    public Page<StreetLightData> getLightData(
+            String location,
+            Status status,
+            LocalDateTime from,
+            LocalDateTime to,
+            Pageable pageable) {
+        Specification<StreetLightData> spec = Specification.where(null);
+
+        if (pageable.getPageSize() <= 0) {
+            throw new IllegalArgumentException("Page size must be greater than 0");
+        }
+
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new IllegalArgumentException("'from' date cannot be after 'to' date");
+        }
+
+        if (location != null && !location.trim().isEmpty()) {
+            spec = spec.and(
+                    (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+        }
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        if (from != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+        }
+        if (to != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+        }
+
+        return lightRepo.findAll(spec, pageable);
+    }
+
+    public LightStatsDto getLightStats() {
+        long totalRecords = lightRepo.count();
+        long totalAlerts = notificationRepository.countByType("Light");
+
+        Double avgBrightnessRaw = lightRepo.findAvgBrightnessLevel();
+        Double avgPowerRaw = lightRepo.findAvgPowerConsumption();
+        Double highestPowerRaw = lightRepo.findMaxPowerConsumption();
+        Double lowestBrightnessRaw = lightRepo.findMinBrightnessLevel();
+
+        double avgBrightness = avgBrightnessRaw != null ? avgBrightnessRaw : 0;
+        double avgPower = avgPowerRaw != null ? avgPowerRaw : 0;
+        double highestPower = highestPowerRaw != null ? highestPowerRaw : 0;
+        double lowestBrightness = lowestBrightnessRaw != null ? lowestBrightnessRaw : 0;
+
+        Map<String, Long> statusBreakdown = Map.of(
+                "ON", lightRepo.countByStatus(Status.ON),
+                "OFF", lightRepo.countByStatus(Status.OFF));
+
+        return new LightStatsDto(totalRecords, avgBrightness, avgPower,
+                highestPower, lowestBrightness, totalAlerts, statusBreakdown);
+    }
+
+    public List<LightTrendDto> getLightTrends() {
+        return lightRepo.findTop50ByOrderByTimestampDesc()
+                .stream()
+                .map(data -> new LightTrendDto(
+                data.getTimestamp(),
+                data.getBrightnessLevel(),
+                data.getPowerConsumption()))
+                .toList();
+    }
 
 }

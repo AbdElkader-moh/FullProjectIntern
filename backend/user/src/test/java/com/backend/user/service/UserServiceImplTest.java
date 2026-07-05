@@ -1,24 +1,40 @@
 package com.backend.user.service;
 
-import com.backend.user.dto.*;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import com.backend.user.dto.ChangePasswordRequest;
+import com.backend.user.dto.LoginRequest;
+import com.backend.user.dto.SignupRequest;
+import com.backend.user.dto.UpdateProfilePictureRequest;
+import com.backend.user.dto.UserResponse;
 import com.backend.user.entity.User;
 import com.backend.user.exception.ConflictException;
 import com.backend.user.exception.NotFoundException;
 import com.backend.user.exception.UnauthorizedException;
 import com.backend.user.repository.UserRepository;
+import com.backend.user.util.JwtUtil;
 import com.cloudinary.Cloudinary;
+
 import jakarta.servlet.http.HttpSession;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
@@ -36,6 +52,9 @@ class UserServiceImplTest {
     @Mock
     private HttpSession session;
 
+    @Mock
+    private JwtUtil jwtUtil;
+
     @Captor
     private ArgumentCaptor<User> userCaptor;
 
@@ -44,12 +63,11 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, settingsRepository, notificationRepository,cloudinary);
+        userService = new UserServiceImpl(userRepository, settingsRepository, notificationRepository, cloudinary, jwtUtil);
         passwordEncoder = new BCryptPasswordEncoder();
     }
 
     // ---------- SIGNUP TESTS ----------
-
     @Test
     void signup_validRequest_shouldCreateUser() {
         SignupRequest request = new SignupRequest();
@@ -98,7 +116,6 @@ class UserServiceImplTest {
     }
 
     // ---------- LOGIN TESTS ----------
-
     @Test
     void login_validCredentials_shouldSetSessionAndReturnMessage() {
         LoginRequest request = new LoginRequest();
@@ -150,7 +167,6 @@ class UserServiceImplTest {
     }
 
     // ---------- GET CURRENT USER TESTS ----------
-
     @Test
     void getCurrentUser_loggedIn_shouldReturnUserResponse() {
         when(session.getAttribute("userId")).thenReturn(1L);
@@ -191,7 +207,6 @@ class UserServiceImplTest {
     }
 
     // ---------- UPDATE PROFILE PICTURE TESTS ----------
-
     @Test
     void updateProfilePicture_loggedIn_shouldUpdatePicture() {
         UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
@@ -244,7 +259,6 @@ class UserServiceImplTest {
     }
 
     // ---------- CHANGE PASSWORD TESTS ----------
-
     @Test
     void changePassword_validOldPassword_shouldUpdatePassword() {
         ChangePasswordRequest request = new ChangePasswordRequest();
@@ -293,6 +307,28 @@ class UserServiceImplTest {
     }
 
     @Test
+    void generateTokenForUser_validEmail_shouldReturnToken() {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("test@test.com");
+
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(jwtUtil.generateToken("1", "test@test.com")).thenReturn("mocked-jwt-token");
+
+        String token = userService.generateTokenForUser("test@test.com");
+
+        assertEquals("mocked-jwt-token", token);
+    }
+
+    @Test
+    void generateTokenForUser_emailNotFound_shouldThrowUnauthorizedException() {
+        when(userRepository.findByEmail("missing@test.com")).thenReturn(Optional.empty());
+
+        assertThrows(UnauthorizedException.class,
+                () -> userService.generateTokenForUser("missing@test.com"));
+    }
+
+    @Test
     void changePassword_wrongOldPassword_shouldThrowUnauthorizedException() {
         ChangePasswordRequest request = new ChangePasswordRequest();
         request.setOldPassword("wrong-old");
@@ -313,7 +349,6 @@ class UserServiceImplTest {
     }
 
     // ---------- LOGOUT TEST ----------
-
     @Test
     void logout_shouldInvalidateSession() {
         userService.logout(session);

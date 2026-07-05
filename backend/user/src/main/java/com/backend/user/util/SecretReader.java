@@ -1,7 +1,7 @@
 package com.backend.user.util;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SecretReader {
 
@@ -10,12 +10,12 @@ public class SecretReader {
             String filePath = System.getenv(fileEnvName);
 
             if (filePath != null && !filePath.isBlank()) {
-                return Files.readString(Path.of(filePath)).trim();
+                return Files.readString(Paths.get(filePath)).trim();
             }
 
             return System.getenv(fallbackEnvName);
 
-        } catch (Exception e) {
+        } catch (java.io.IOException | SecurityException e) {
             throw new RuntimeException("Failed to read secret: " + fileEnvName, e);
         }
     }

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulator
+  labels:
+    app: simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simulator
+  template:
+    metadata:
+      labels:
+        app: simulator
+    spec:
+      containers:
+        - name: simulator
+          image: nadinahmed/simulator:latest
+          env:
+            - name: SENSOR_SERVICE_URL
+              value: "http://sensor-service:8081"
+            - name: TRAFFIC_INTERVAL_SECONDS
+              value: "120"
+            - name: LIGHT_INTERVAL_SECONDS
+              value: "120"
+            - name: AIR_INTERVAL_SECONDS
+              value: "120"
