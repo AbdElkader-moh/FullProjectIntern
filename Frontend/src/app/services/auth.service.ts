@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError, map } from 'rxjs';
 
 export interface UserResponse {
   id: number;
@@ -50,7 +50,7 @@ export class AuthService {
     return this._currentUser;
   }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   get isLoggedIn(): boolean {
     return this.loggedIn.value;
@@ -72,18 +72,18 @@ export class AuthService {
     return err.message || 'An unexpected error occurred. Please try again.';
   }
 
-private handleError(err: HttpErrorResponse): Observable<never> {
-  const message =
-    err.error?.message ||
-    (typeof err.error === 'string' ? err.error : null) ||
-    err.message ||
-    'An unexpected error occurred. Please try again.';
+  private handleError(err: HttpErrorResponse): Observable<never> {
+    const message =
+      err.error?.message ||
+      (typeof err.error === 'string' ? err.error : null) ||
+      err.message ||
+      'An unexpected error occurred. Please try again.';
 
-  return throwError(() => ({
-    error: { message },
-    status: err.status,
-  }));
-}
+    return throwError(() => ({
+      error: { message },
+      status: err.status,
+    }));
+  }
 
   signup(request: SignupRequest): Observable<UserResponse> {
     const formData = new FormData();
@@ -100,13 +100,25 @@ private handleError(err: HttpErrorResponse): Observable<never> {
       .pipe(catchError((err) => this.handleError(err)));
   }
 
-login(request: LoginRequest): Observable<ApiResponse> {
-  return this.http
-    .post<ApiResponse>(`${this.apiUrl}/login`, request, this.httpOptions)
-    .pipe(
-      catchError((err) => this.handleError(err))
-    );
-}
+  // auth.service.ts
+  login(request: LoginRequest): Observable<ApiResponse> {
+    return this.http
+      .post<ApiResponse>(`${this.apiUrl}/login`, request, {
+        ...this.httpOptions,
+        observe: 'response'
+      })
+      .pipe(
+        tap((response) => {
+          const authHeader = response.headers.get('Authorization');
+          if (authHeader) {
+            const token = authHeader.replace('Bearer ', '');
+            localStorage.setItem('jwt_token', token);
+          }
+        }),
+        map((response) => response.body as ApiResponse),
+        catchError((err) => this.handleError(err))
+      );
+  }
 
   getProfile(): Observable<UserResponse> {
     return this.http
@@ -143,6 +155,7 @@ login(request: LoginRequest): Observable<ApiResponse> {
   }
 
   logout(): Observable<ApiResponse> {
+    localStorage.removeItem('jwt_token'); // clear immediately, regardless of server response
     return this.http
       .post<ApiResponse>(`${this.apiUrl}/logout`, {}, this.httpOptions)
       .pipe(
@@ -153,13 +166,14 @@ login(request: LoginRequest): Observable<ApiResponse> {
         catchError((err) => this.handleError(err))
       );
   }
-changePassword(request: ChangePasswordRequest): Observable<ApiResponse> {
-  return this.http
-    .put<ApiResponse>(
-      `${this.apiUrl}/me/password`,
-      request,
-      this.httpOptions
-    )
-    .pipe(catchError((err) => this.handleError(err)));
-}
+
+  changePassword(request: ChangePasswordRequest): Observable<ApiResponse> {
+    return this.http
+      .put<ApiResponse>(
+        `${this.apiUrl}/me/password`,
+        request,
+        this.httpOptions
+      )
+      .pipe(catchError((err) => this.handleError(err)));
+  }
 }
