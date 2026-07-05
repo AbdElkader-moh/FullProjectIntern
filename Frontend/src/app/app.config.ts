@@ -1,15 +1,24 @@
 import { ApplicationConfig, ErrorHandler } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { 
+  provideHttpClient, 
+  withInterceptors, 
+  withInterceptorsFromDi, 
+  HTTP_INTERCEPTORS 
+} from '@angular/common/http';
 import { HttpErrorInterceptor } from './services/http-error.interceptor';
 import { GlobalErrorHandler } from './services/global-error.handler';
 import { routes } from './app.routes';
+import { jwtInterceptor } from './interceptors/jwt.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideRouter(routes),
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(
+      withInterceptors([jwtInterceptor]),
+      withInterceptorsFromDi()
+    ),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: HTTP_INTERCEPTORS, useClass: HttpErrorInterceptor, multi: true },
   ],
 };

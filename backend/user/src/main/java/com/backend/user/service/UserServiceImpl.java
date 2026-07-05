@@ -1,32 +1,37 @@
 package com.backend.user.service;
 
-import com.backend.user.dto.*;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.backend.user.dto.ChangePasswordRequest;
+import com.backend.user.dto.LoginRequest;
+import com.backend.user.dto.NotificationDTO;
+import com.backend.user.dto.SettingsDTO;
+import com.backend.user.dto.SignupRequest;
+import com.backend.user.dto.UpdateProfilePictureRequest;
+import com.backend.user.dto.UserResponse;
 import com.backend.user.entity.Notification;
+import com.backend.user.entity.Settings;
 import com.backend.user.entity.User;
 import com.backend.user.exception.ConflictException;
 import com.backend.user.exception.NotFoundException;
 import com.backend.user.exception.UnauthorizedException;
 import com.backend.user.repository.NotificationRepository;
-import com.backend.user.repository.UserRepository;
 import com.backend.user.repository.SettingsRepository;
-import com.backend.user.entity.Settings;
-import com.cloudinary.Cloudinary;
-import jakarta.servlet.http.HttpSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
+import com.backend.user.repository.UserRepository;
 import com.backend.user.util.JwtUtil;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.io.IOException;
-import java.util.Map;
+import com.cloudinary.Cloudinary;
+
+import jakarta.servlet.http.HttpSession;
 
 @Service
 public class UserServiceImpl implements UserService {
-
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
