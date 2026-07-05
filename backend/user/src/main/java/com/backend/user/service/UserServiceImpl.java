@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.backend.user.util.JwtUtil;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
+
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
@@ -32,18 +34,21 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final Cloudinary cloudinary;
 
+    private final JwtUtil jwtUtil;
 
     public UserServiceImpl(
             UserRepository userRepository,
             SettingsRepository settingsRepository,
             NotificationRepository notificationRepository,
-            Cloudinary cloudinary
+            Cloudinary cloudinary,
+            JwtUtil jwtUtil
     ) {
         this.userRepository = userRepository;
         this.settingsRepository = settingsRepository;
         this.notificationRepository = notificationRepository;
         this.passwordEncoder = new BCryptPasswordEncoder();
         this.cloudinary = cloudinary;
+        this.jwtUtil = jwtUtil;
     }
     // Allowed metrics per sensor type (BUG-SET-001, BUG-SET-005)
     private static final Map<String, Set<String>> VALID_METRICS = Map.of(
@@ -63,7 +68,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        
+
         try {
             if (request.getProfilePicture() != null && !request.getProfilePicture().isEmpty()) {
                 if (cloudinary == null) {
@@ -89,7 +94,6 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
-
         return mapToResponse(savedUser);
     }
 
@@ -104,6 +108,13 @@ public class UserServiceImpl implements UserService {
 
         session.setAttribute("userId", user.getId());
         return "Login successful";
+    }
+
+    @Override
+    public String generateTokenForUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password."));
+        return jwtUtil.generateToken(user.getId().toString(), user.getEmail());
     }
 
     @Override
@@ -165,6 +176,7 @@ public class UserServiceImpl implements UserService {
                 user.getPassword()
         );
     }
+
     @Override
     public void changePassword(ChangePasswordRequest request, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -201,43 +213,47 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("You are not logged in.");
         }
         return settingsRepository.findByUserId(userId).stream()
-            .map(s -> new SettingsDTO(s.getId(), s.getType(), s.getMetric(), s.getThresholdValue(), s.getAlertType()))
-            .collect(Collectors.toList());
+                .map(s -> new SettingsDTO(s.getId(), s.getType(), s.getMetric(), s.getThresholdValue(), s.getAlertType()))
+                .collect(Collectors.toList());
     }
+
     @Override
-public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
-    Long userId = (Long) session.getAttribute("userId");
-    if (userId == null) throw new UnauthorizedException("You are not logged in.");
-    req.validateThreshold();
-    Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
-    Settings saved = settingsRepository.save(newSettings);
-    return new SettingsDTO(saved.getId(), saved.getType(), saved.getMetric(), saved.getThresholdValue(), saved.getAlertType());
-}
+    public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            throw new UnauthorizedException("You are not logged in.");
+        }
+        req.validateThreshold();
+        Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
+        Settings saved = settingsRepository.save(newSettings);
+        return new SettingsDTO(saved.getId(), saved.getType(), saved.getMetric(), saved.getThresholdValue(), saved.getAlertType());
+    }
+
     @Override
     public List<SettingsDTO> updateSettings(List<SettingsDTO> requests, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
-        
+
         for (SettingsDTO req : requests) {
-            
+
             Settings settings = null;
-            
+
             // 1. Try to find by ID
             if (req.getId() != null) {
                 settings = settingsRepository.findById(req.getId()).orElse(null);
             }
-            
+
             // 2. Try to find by Type and Metric if ID search failed or wasn't provided
             if (settings == null) {
                 settings = settingsRepository.findByUserIdAndTypeAndMetric(userId, req.getType(), req.getMetric()).orElse(null);
             }
-            
-                // Create new
-                Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
-                settingsRepository.save(newSettings);
-           
+
+            // Create new
+            Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
+            settingsRepository.save(newSettings);
+
         }
         return getSettings(session);
     }
@@ -281,11 +297,11 @@ public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
             throw new UnauthorizedException("You are not logged in.");
         }
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-            .map(n -> new NotificationDTO(
+                .map(n -> new NotificationDTO(
                 n.getId(), n.getType(), n.getMetric(), n.getValue(),
                 n.getThresholdValue(), n.getAlertType(), n.getLocation(),
                 n.getIsRead(), n.getCreatedAt()))
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -329,6 +345,7 @@ public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
         }
         notificationRepository.deleteById(id);
     }
+
     @Override
     public String validateSettingsRequest(SettingsDTO request) {
         // BUG-SET-005 / BUG-SET-008: type must not be null or empty

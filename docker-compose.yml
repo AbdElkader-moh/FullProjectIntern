@@ -44,12 +44,15 @@ services:
       CLOUDINARY_CLOUD_NAME_FILE: /run/secrets/cloudinary_cloud_name
       CLOUDINARY_API_KEY_FILE: /run/secrets/cloudinary_api_key
       CLOUDINARY_API_SECRET_FILE: /run/secrets/cloudinary_api_secret
+
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
     secrets:
       - mysql_user
       - mysql_password
       - cloudinary_cloud_name
       - cloudinary_api_key
       - cloudinary_api_secret
+      - jwt_secret
     depends_on:
       mysql:
         condition: service_healthy
@@ -69,16 +72,15 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://internship-mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME_FILE: /run/secrets/mysql_user
       SPRING_DATASOURCE_PASSWORD_FILE: /run/secrets/mysql_password
-      USER_SERVICE_URL: http://user-service:8080
+
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
     secrets:
       - mysql_user
       - mysql_password
+      - jwt_secret
     depends_on:
       mysql:
         condition: service_healthy
-
-      user-service:
-        condition: service_started
     networks:
       - project-net
 
@@ -131,3 +133,5 @@ secrets:
     file: ./secrets/mysql_user.txt
   mysql_password:
     file: ./secrets/mysql_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt

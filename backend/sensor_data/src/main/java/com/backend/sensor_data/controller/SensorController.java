@@ -3,9 +3,12 @@ package com.backend.sensor_data.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +28,8 @@ import com.backend.sensor_data.dto.StreetLightDataDto;
 import com.backend.sensor_data.dto.TrafficDataDto;
 import com.backend.sensor_data.dto.TrafficStatsDto;
 import com.backend.sensor_data.dto.TrafficTrendDto;
-import com.backend.sensor_data.entity.AirPollutionData;
 import com.backend.sensor_data.entity.CongestionLevel;
 import com.backend.sensor_data.entity.Status;
-import com.backend.sensor_data.entity.StreetLightData;
 import com.backend.sensor_data.entity.TrafficData;
 import com.backend.sensor_data.service.SensorDataService;
 
@@ -81,44 +82,48 @@ public class SensorController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Street light data saved successfully.");
     }
 
-    // @GetMapping("/traffic")
-    // @Operation(summary = "Get traffic sensor data", description = "Retrieves
-    // traffic sensor readings with optional filtering by location, congestion
-    // level, date range, sorting, and pagination.")
-    // public ResponseEntity<Page<TrafficData>> getTrafficData(
-    // @RequestParam(required = false) String location,
-    // @RequestParam(required = false) CongestionLevel congestionLevel,
-    // @RequestParam(required = false) @DateTimeFormat(iso =
-    // DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-    // @RequestParam(required = false) @DateTimeFormat(iso =
-    // DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-    // Pageable pageable) {
-    // Page<TrafficData> trafficData = sensorDataService.getTrafficData(
-    // location,
-    // congestionLevel,
-    // from,
-    // to,
-    // pageable);
-    // return ResponseEntity.ok(trafficData);
-    // }
     @GetMapping("/traffic")
     @Operation(summary = "Get traffic sensor data", description = "Retrieves traffic sensor readings with optional filtering by location, congestion level, date range, sorting, and pagination.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Traffic data retrieved successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
     })
-    public ResponseEntity<Page<TrafficData>> getTrafficData(
+    public ResponseEntity<?> getTrafficData(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) CongestionLevel congestionLevel,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-            Pageable pageable) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sort) {
+
+        if (page < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page must be >= 0"));
+        }
+        if (size <= 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        }
+
+        Set<String> allowedSortFields = Set.of(
+                "timestamp", "location", "trafficDensity", "avgSpeed", "congestionLevel");
+        Sort sortObj = Sort.unsorted();
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            String field = parts[0];
+            if (!allowedSortFields.contains(field)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Validation failed", "details", "Invalid sort field: " + field));
+            }
+            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
+                    ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sortObj = Sort.by(dir, field);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
         Page<TrafficData> trafficData = sensorDataService.getTrafficData(
-                location,
-                congestionLevel,
-                from,
-                to,
-                pageable);
+                location, congestionLevel, from, to, pageable);
         return ResponseEntity.ok(trafficData);
     }
 
@@ -158,11 +163,39 @@ public class SensorController {
         @ApiResponse(responseCode = "200", description = "Air pollution data retrieved successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
     })
-    public ResponseEntity<Page<AirPollutionData>> getAirData(
+    public ResponseEntity<?> getAirData(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-            Pageable pageable) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sort) {
+
+        if (page < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page must be >= 0"));
+        }
+        if (size <= 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        }
+
+        Set<String> allowedSortFields = Set.of(
+                "timestamp", "location", "co", "ozone", "pollutionLevel");
+        Sort sortObj = Sort.unsorted();
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            String field = parts[0];
+            if (!allowedSortFields.contains(field)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Validation failed", "details", "Invalid sort field: " + field));
+            }
+            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
+                    ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sortObj = Sort.by(dir, field);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
         return ResponseEntity.ok(sensorDataService.getAirData(location, from, to, pageable));
     }
 
@@ -190,12 +223,40 @@ public class SensorController {
         @ApiResponse(responseCode = "200", description = "Street light data retrieved successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
     })
-    public ResponseEntity<Page<StreetLightData>> getLightData(
+    public ResponseEntity<?> getLightData(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) Status status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-            Pageable pageable) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sort) {
+
+        if (page < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page must be >= 0"));
+        }
+        if (size <= 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        }
+
+        Set<String> allowedSortFields = Set.of(
+                "timestamp", "location", "brightnessLevel", "powerConsumption", "status");
+        Sort sortObj = Sort.unsorted();
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            String field = parts[0];
+            if (!allowedSortFields.contains(field)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Validation failed", "details", "Invalid sort field: " + field));
+            }
+            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
+                    ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sortObj = Sort.by(dir, field);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
         return ResponseEntity.ok(sensorDataService.getLightData(location, status, from, to, pageable));
     }
 
