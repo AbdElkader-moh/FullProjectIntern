@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "c76dbdf7-d0f5-44a6-b77c-20847d8898d9",
+    "_postman_id": "50cc2c01-38b6-4a55-8604-d338d4a14e5c",
     "name": "🩺 Sanity Checks — Full System",
     "description": "Lightweight smoke pass covering every endpoint across both services (port 4200 — User/Auth and port 8081 — Sensor). Run this first on every deployment or server restart. Each request has 1–3 assertions max. If anything here fails, stop and fix before running the full suites.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "46756296",
-    "_collection_link": "https://go.postman.co/collection/46756296-c76dbdf7-d0f5-44a6-b77c-20847d8898d9?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/46756296-50cc2c01-38b6-4a55-8604-d338d4a14e5c?source=collection_link"
   },
   "item": [
     {
@@ -89,6 +89,9 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
@@ -118,7 +121,7 @@
                   "key": "profilePicture",
                   "type": "file",
                   "uuid": "b895d647-ef4f-4a3b-984b-3e53dbd4905d",
-                  "src": "/C:/Users/bidoo/Downloads/ProjectRoot/.postman/sprint3/Screenshot 2026-05-19 162448.png"
+                  "src": "Screenshot 2026-07-02 215000.png"
                 }
               ]
             },
@@ -179,14 +182,17 @@
                   "  pm.expect(body.message.toLowerCase()).to.include('success');",
                   "});",
                   "",
-                  "pm.test('Session cookie is set (JSESSIONID)', () => {",
-                  "  pm.expect(pm.cookies.has('JSESSIONID')).to.be.true;",
+                  "pm.test('Authorization header with JWT is returned', () => {",
+                  "  const authHeader = pm.response.headers.get('Authorization');",
+                  "  pm.expect(authHeader).to.exist;",
+                  "  pm.expect(authHeader).to.match(/^Bearer\\s.+/);",
                   "});",
                   "",
-                  "// Save current session",
-                  "const jsessionid = pm.cookies.get('JSESSIONID');",
-                  "pm.collectionVariables.set('savedSession', jsessionid);",
-                  "console.log('Session saved:', jsessionid);"
+                  "// Save the JWT so it can be sent as a Bearer token on subsequent requests",
+                  "const authHeader = pm.response.headers.get('Authorization');",
+                  "const token = authHeader ? authHeader.replace(/^Bearer\\s/, '') : '';",
+                  "pm.collectionVariables.set('authToken', token);",
+                  "console.log('JWT saved:', token ? token.substring(0, 20) + '...' : '(none)');"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -195,6 +201,9 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -654,7 +663,17 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "2️⃣  Sensor Service — POST Ingest (port 8081)",
@@ -1188,6 +1207,63 @@
       ]
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          "// Make sure every request in this collection carries a valid JWT,",
+          "// even if it's run on its own instead of after a Sign In request.",
+          "// If we don't have one cached yet, silently register + log in a",
+          "// throwaway user and capture the token from the login response.",
+          "if (!pm.collectionVariables.get('authToken')) {",
+          "    const email = `auto_auth_${Date.now()}@test.com`;",
+          "    const password = 'Auto@12345';",
+          "",
+          "    pm.sendRequest({",
+          "        url: pm.variables.get('baseUrl') + '/api/users/signup',",
+          "        method: 'POST',",
+          "        header: { 'Content-Type': 'application/json' },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({ email, firstName: 'Auto', lastName: 'Auth', password, profilePicture: '' })",
+          "        }",
+          "    }, (err, res) => {",
+          "        pm.sendRequest({",
+          "            url: pm.variables.get('baseUrl') + '/api/users/login',",
+          "            method: 'POST',",
+          "            header: { 'Content-Type': 'application/json' },",
+          "            body: {",
+          "                mode: 'raw',",
+          "                raw: JSON.stringify({ email, password })",
+          "            }",
+          "        }, (err2, res2) => {",
+          "            const authHeader = res2 && res2.headers ? res2.headers.get('Authorization') : null;",
+          "            if (authHeader) {",
+          "                pm.collectionVariables.set('authToken', authHeader.replace(/^Bearer\\s/, ''));",
+          "                console.log('Auto-provisioned a JWT for this run.');",
+          "            } else {",
+          "                console.warn('Auto auth failed - no Authorization header returned from login. Sensor/user requests may 401.');",
+          "            }",
+          "        });",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "baseUrl",
@@ -1227,6 +1303,10 @@
     },
     {
       "key": "savedSession",
+      "value": ""
+    },
+    {
+      "key": "authToken",
       "value": ""
     }
   ]

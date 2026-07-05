@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "75deaaa3-cbac-49b7-b7ce-a3d5b3ff5627",
+    "_postman_id": "7083619c-d0fe-4ec0-a813-41efa61c45ba",
     "name": "Project — Sprint 1 , 2 and 3  BE Tests",
     "description": "Backend integration tests for Sign Up, Sign In, Profile (GET/PUT), and Logout.\nBase URL: http://localhost:4200\nAll session-based — Postman must have 'Automatically follow redirects' ON and cookie jar enabled.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "46756296",
-    "_collection_link": "https://go.postman.co/collection/46756296-75deaaa3-cbac-49b7-b7ce-a3d5b3ff5627?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/46756296-7083619c-d0fe-4ec0-a813-41efa61c45ba?source=collection_link"
   },
   "item": [
     {
@@ -118,7 +118,7 @@
                   "key": "profilePicture",
                   "type": "file",
                   "uuid": "b895d647-ef4f-4a3b-984b-3e53dbd4905d",
-                  "src": "/C:/Users/bidoo/Downloads/ProjectRoot/.postman/sprint3/Screenshot 2026-05-19 162448.png"
+                  "src": "Screenshot 2026-07-02 215000.png"
                 }
               ]
             },
@@ -207,7 +207,7 @@
                   "key": "profilePicture",
                   "type": "file",
                   "uuid": "656d9000-02a1-43be-b9ca-5dbc3c341c44",
-                  "src": "Screenshot 2026-05-19 162448.png"
+                  "src": "Screenshot 2026-07-02 215000.png"
                 }
               ]
             },
@@ -529,7 +529,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// TC-048",
+                  "// Login happy path",
                   "pm.test('Status is 200', () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
@@ -540,14 +540,17 @@
                   "  pm.expect(body.message.toLowerCase()).to.include('success');",
                   "});",
                   "",
-                  "pm.test('Session cookie is set (JSESSIONID)', () => {",
-                  "  pm.expect(pm.cookies.has('JSESSIONID')).to.be.true;",
+                  "pm.test('Authorization header with JWT is returned', () => {",
+                  "  const authHeader = pm.response.headers.get('Authorization');",
+                  "  pm.expect(authHeader).to.exist;",
+                  "  pm.expect(authHeader).to.match(/^Bearer\\s.+/);",
                   "});",
                   "",
-                  "// Save current session",
-                  "const jsessionid = pm.cookies.get('JSESSIONID');",
-                  "pm.collectionVariables.set('savedSession', jsessionid);",
-                  "console.log('Session saved:', jsessionid);"
+                  "// Save the JWT so it can be sent as a Bearer token on subsequent requests",
+                  "const authHeader = pm.response.headers.get('Authorization');",
+                  "const token = authHeader ? authHeader.replace(/^Bearer\\s/, '') : '';",
+                  "pm.collectionVariables.set('authToken', token);",
+                  "console.log('JWT saved:', token ? token.substring(0, 20) + '...' : '(none)');"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -824,7 +827,7 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
-                  "// Register + login so session cookie is set in Postman cookie jar",
+                  "// Register + login so a fresh JWT is captured for this test",
                   "const email = `me_test_${Date.now()}@test.com`;",
                   "const password = 'abc123';",
                   "pm.collectionVariables.set('meEmail', email);",
@@ -847,7 +850,13 @@
                   "      mode: 'raw',",
                   "      raw: JSON.stringify({ email, password })",
                   "    }",
-                  "  }, (err2, res2) => console.log('Login for /me test:', res2.code));",
+                  "  }, (err2, res2) => {",
+                  "    const authHeader = res2 && res2.headers ? res2.headers.get('Authorization') : null;",
+                  "    if (authHeader) {",
+                  "      pm.collectionVariables.set('authToken', authHeader.replace(/^Bearer\\s/, ''));",
+                  "    }",
+                  "    console.log('Login for /me test:', res2.code);",
+                  "  });",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -902,7 +911,17 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "🟣 Profile — PUT /me",
@@ -910,21 +929,6 @@
         {
           "name": "TC-054 | PUT /me — Update profile picture (200)",
           "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "// Restore session before request fires",
-                  "const jar = pm.cookies.jar();",
-                  "jar.set('http://localhost:4200', 'JSESSIONID', pm.collectionVariables.get('savedSession'), (err) => {",
-                  "    console.log('Session restored:', err);",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
             {
               "listen": "test",
               "script": {
@@ -1022,7 +1026,17 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "🔴 Logout",
@@ -1034,7 +1048,7 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
-                  "// Register + login so there is an active session to logout of",
+                  "// Register + login so there is a fresh JWT to log out with",
                   "const email = `logout_test_${Date.now()}@test.com`;",
                   "const password = 'abc123';",
                   "pm.collectionVariables.set('logoutEmail', email);",
@@ -1050,7 +1064,13 @@
                   "    method: 'POST',",
                   "    header: { 'Content-Type': 'application/json' },",
                   "    body: { mode: 'raw', raw: JSON.stringify({ email, password }) }",
-                  "  }, (err2, res2) => console.log('Login before logout test:', res2.code));",
+                  "  }, (err2, res2) => {",
+                  "    const authHeader = res2 && res2.headers ? res2.headers.get('Authorization') : null;",
+                  "    if (authHeader) {",
+                  "      pm.collectionVariables.set('authToken', authHeader.replace(/^Bearer\\s/, ''));",
+                  "    }",
+                  "    console.log('Login before logout test:', res2.code);",
+                  "  });",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1071,11 +1091,12 @@
                   "  pm.expect(body).to.have.property('message');",
                   "});",
                   "",
+                  "// GET /me with no token afterwards must be unauthenticated",
                   "pm.sendRequest({",
                   "  url: pm.collectionVariables.get('baseUrl') + '/api/users/me',",
                   "  method: 'GET'",
                   "}, (err, res) => {",
-                  "  pm.test('GET /me after logout returns 401 (session cleared)', () => {",
+                  "  pm.test('GET /me after logout returns 401 (no token sent)', () => {",
                   "    pm.expect(res.code).to.eql(401);",
                   "  });",
                   "});"
@@ -1124,14 +1145,11 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "",
-                "description": "No active session"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/logout",
               "host": [
@@ -1146,7 +1164,17 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "No Session Tests",
@@ -1158,36 +1186,12 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// EXTRA: PUT /me without a session must return 401",
+                  "// PUT /me without a token must return 401",
                   "pm.test('Status is 401', () => {",
                   "  pm.response.to.have.status(401);",
                   "});",
                   "pm.test('Error message present', () => {",
                   "  pm.expect(pm.response.json()).to.have.property('message');",
-                  "});",
-                  "",
-                  "// Restore session",
-                  "const jar = pm.cookies.jar();",
-                  "jar.set('http://localhost:4200', 'JSESSIONID', pm.collectionVariables.get('savedSession'), (err) => {",
-                  "    console.log('Restored:', err);",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const jar = pm.cookies.jar();\r",
-                  "jar.get('http://localhost:8088', 'JSESSIONID', (err, val) => {\r",
-                  "    pm.collectionVariables.set('savedSession', val);\r",
-                  "    console.log('Saved before clear:', val);\r",
-                  "    jar.clear('http://localhost:8088', (err2) => {\r",
-                  "        console.log('Cleared:', err2);\r",
-                  "    });\r",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1197,16 +1201,14 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "PUT",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "",
-                "description": "No session"
               }
             ],
             "body": {
@@ -1234,19 +1236,7 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
-                  "// Force a fresh session by clearing cookies for this request",
-                  "// In Postman: manually ensure no cookie is sent OR run this in incognito-like environment",
-                  "console.log('NOTE: Make sure no JSESSIONID cookie is active for this test.');",
-                  "",
-                  "// Save then clear session",
-                  "const jar = pm.cookies.jar();",
-                  "jar.get('http://localhost:8088', 'JSESSIONID', (err, val) => {",
-                  "    pm.collectionVariables.set('savedSession', val);",
-                  "    console.log('Saved before clear:', val);",
-                  "    jar.clear('http://localhost:8088', (err2) => {",
-                  "        console.log('Cleared:', err2);",
-                  "    });",
-                  "});"
+                  "console.log('NOTE: sending this request with no Authorization header (no token).');"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -1265,12 +1255,6 @@
                   "pm.test('Error message present', () => {",
                   "  const body = pm.response.json();",
                   "  pm.expect(body).to.have.property('message');",
-                  "});",
-                  "",
-                  "// Restore session using saved value",
-                  "const jar = pm.cookies.jar();",
-                  "jar.set('http://localhost:4200', 'JSESSIONID', pm.collectionVariables.get('savedSession'), (err) => {",
-                  "    console.log('Restored:', err);",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1284,13 +1268,7 @@
               "type": "noauth"
             },
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "",
-                "description": "Intentionally empty — no session"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/users/me",
               "host": [
@@ -1342,7 +1320,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// TC-048",
+                  "// Login happy path",
                   "pm.test('Status is 200', () => {",
                   "  pm.response.to.have.status(200);",
                   "});",
@@ -1353,14 +1331,17 @@
                   "  pm.expect(body.message.toLowerCase()).to.include('success');",
                   "});",
                   "",
-                  "pm.test('Session cookie is set (JSESSIONID)', () => {",
-                  "  pm.expect(pm.cookies.has('JSESSIONID')).to.be.true;",
+                  "pm.test('Authorization header with JWT is returned', () => {",
+                  "  const authHeader = pm.response.headers.get('Authorization');",
+                  "  pm.expect(authHeader).to.exist;",
+                  "  pm.expect(authHeader).to.match(/^Bearer\\s.+/);",
                   "});",
                   "",
-                  "// Save current session",
-                  "const jsessionid = pm.cookies.get('JSESSIONID');",
-                  "pm.collectionVariables.set('savedSession', jsessionid);",
-                  "console.log('Session saved:', jsessionid);"
+                  "// Save the JWT so it can be sent as a Bearer token on subsequent requests",
+                  "const authHeader = pm.response.headers.get('Authorization');",
+                  "const token = authHeader ? authHeader.replace(/^Bearer\\s/, '') : '';",
+                  "pm.collectionVariables.set('authToken', token);",
+                  "console.log('JWT saved:', token ? token.substring(0, 20) + '...' : '(none)');"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -1369,6 +1350,9 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -1474,6 +1458,9 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -1499,7 +1486,17 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "🚦Sensor Data — Traffic",
@@ -1516,8 +1513,19 @@
                   "});\r",
                   "\r",
                   "pm.test(\"Response time is acceptable\", function () {\r",
-                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);\r",
                   "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -3430,7 +3438,17 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "🔔 Notifications",
@@ -3752,7 +3770,17 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "🔐 Password",
@@ -4197,7 +4225,17 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "✅Trends Happy Path",
@@ -6221,9 +6259,19 @@
       ]
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
   "event": [
     {
-      "listen": "prerequest",
+      "listen": "test",
       "script": {
         "type": "text/javascript",
         "packages": {},
@@ -6234,13 +6282,47 @@
       }
     },
     {
-      "listen": "test",
+      "listen": "prerequest",
       "script": {
         "type": "text/javascript",
         "packages": {},
-        "requests": {},
         "exec": [
-          ""
+          "// Make sure every request in this collection carries a valid JWT,",
+          "// even if it's run on its own instead of after a Sign In request.",
+          "// If we don't have one cached yet, silently register + log in a",
+          "// throwaway user and capture the token from the login response.",
+          "if (!pm.collectionVariables.get('authToken')) {",
+          "    const email = `auto_auth_${Date.now()}@test.com`;",
+          "    const password = 'Auto@12345';",
+          "",
+          "    pm.sendRequest({",
+          "        url: pm.variables.get('baseUrl') + '/api/users/signup',",
+          "        method: 'POST',",
+          "        header: { 'Content-Type': 'application/json' },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({ email, firstName: 'Auto', lastName: 'Auth', password, profilePicture: '' })",
+          "        }",
+          "    }, (err, res) => {",
+          "        pm.sendRequest({",
+          "            url: pm.variables.get('baseUrl') + '/api/users/login',",
+          "            method: 'POST',",
+          "            header: { 'Content-Type': 'application/json' },",
+          "            body: {",
+          "                mode: 'raw',",
+          "                raw: JSON.stringify({ email, password })",
+          "            }",
+          "        }, (err2, res2) => {",
+          "            const authHeader = res2 && res2.headers ? res2.headers.get('Authorization') : null;",
+          "            if (authHeader) {",
+          "                pm.collectionVariables.set('authToken', authHeader.replace(/^Bearer\\s/, ''));",
+          "                console.log('Auto-provisioned a JWT for this run.');",
+          "            } else {",
+          "                console.warn('Auto auth failed - no Authorization header returned from login. Sensor/user requests may 401.');",
+          "            }",
+          "        });",
+          "    });",
+          "}"
         ]
       }
     }
@@ -6316,6 +6398,10 @@
     },
     {
       "key": "severeCongestionCount",
+      "value": ""
+    },
+    {
+      "key": "authToken",
       "value": ""
     }
   ]

@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "adafc7aa-b27d-4445-8709-3d40a0b975b1",
+    "_postman_id": "153504e4-53fe-4c65-a671-ff12411f4107",
     "name": "Sprint 4 and Sprint 5",
     "description": "Automated test collection for GET /api/sensors/air, /air/stats, and /air/trends endpoints",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "46756296",
-    "_collection_link": "https://go.postman.co/collection/46756296-adafc7aa-b27d-4445-8709-3d40a0b975b1?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/46756296-153504e4-53fe-4c65-a671-ff12411f4107?source=collection_link"
   },
   "item": [
     {
@@ -14,6 +14,93 @@
         {
           "name": "✅ Happy Path",
           "item": [
+            {
+              "name": "TC-048 | POST /login — Happy Path (200 + cookie) Copy",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// Register a fresh user so login is guaranteed to succeed",
+                      "const email = `login_ok_${Date.now()}@test.com`;",
+                      "const password = 'abc123';",
+                      "pm.collectionVariables.set('loginEmail', email);",
+                      "pm.collectionVariables.set('loginPassword', password);",
+                      "",
+                      "pm.sendRequest({",
+                      "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                      "  method: 'POST',",
+                      "  header: { 'Content-Type': 'application/json' },",
+                      "  body: {",
+                      "    mode: 'raw',",
+                      "    raw: JSON.stringify({ email, firstName: 'Login', lastName: 'Test', password, profilePicture: '' })",
+                      "  }",
+                      "}, (err, res) => console.log('Signup for login test:', res.code));"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// Login happy path",
+                      "pm.test('Status is 200', () => {",
+                      "  pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has success message', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body).to.have.property('message');",
+                      "  pm.expect(body.message.toLowerCase()).to.include('success');",
+                      "});",
+                      "",
+                      "pm.test('Authorization header with JWT is returned', () => {",
+                      "  const authHeader = pm.response.headers.get('Authorization');",
+                      "  pm.expect(authHeader).to.exist;",
+                      "  pm.expect(authHeader).to.match(/^Bearer\\s.+/);",
+                      "});",
+                      "",
+                      "// Save the JWT so it can be sent as a Bearer token on subsequent requests",
+                      "const authHeader = pm.response.headers.get('Authorization');",
+                      "const token = authHeader ? authHeader.replace(/^Bearer\\s/, '') : '';",
+                      "pm.collectionVariables.set('authToken', token);",
+                      "console.log('JWT saved:', token ? token.substring(0, 20) + '...' : '(none)');"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "login"
+                  ]
+                }
+              },
+              "response": []
+            },
             {
               "name": "TC-GET-AIR-001 | No params — Default pagination",
               "event": [
@@ -3024,6 +3111,63 @@
       ]
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          "// Make sure every request in this collection carries a valid JWT,",
+          "// even if it's run on its own instead of after a Sign In request.",
+          "// If we don't have one cached yet, silently register + log in a",
+          "// throwaway user and capture the token from the login response.",
+          "if (!pm.collectionVariables.get('authToken')) {",
+          "    const email = `auto_auth_${Date.now()}@test.com`;",
+          "    const password = 'Auto@12345';",
+          "",
+          "    pm.sendRequest({",
+          "        url: pm.variables.get('baseUrl') + '/api/users/signup',",
+          "        method: 'POST',",
+          "        header: { 'Content-Type': 'application/json' },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({ email, firstName: 'Auto', lastName: 'Auth', password, profilePicture: '' })",
+          "        }",
+          "    }, (err, res) => {",
+          "        pm.sendRequest({",
+          "            url: pm.variables.get('baseUrl') + '/api/users/login',",
+          "            method: 'POST',",
+          "            header: { 'Content-Type': 'application/json' },",
+          "            body: {",
+          "                mode: 'raw',",
+          "                raw: JSON.stringify({ email, password })",
+          "            }",
+          "        }, (err2, res2) => {",
+          "            const authHeader = res2 && res2.headers ? res2.headers.get('Authorization') : null;",
+          "            if (authHeader) {",
+          "                pm.collectionVariables.set('authToken', authHeader.replace(/^Bearer\\s/, ''));",
+          "                console.log('Auto-provisioned a JWT for this run.');",
+          "            } else {",
+          "                console.warn('Auto auth failed - no Authorization header returned from login. Sensor/user requests may 401.');",
+          "            }",
+          "        });",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "sensorBaseUrl",
@@ -3039,6 +3183,22 @@
     },
     {
       "key": "lightOffCount",
+      "value": ""
+    },
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8088"
+    },
+    {
+      "key": "authToken",
+      "value": ""
+    },
+    {
+      "key": "loginEmail",
+      "value": ""
+    },
+    {
+      "key": "loginPassword",
       "value": ""
     }
   ]
