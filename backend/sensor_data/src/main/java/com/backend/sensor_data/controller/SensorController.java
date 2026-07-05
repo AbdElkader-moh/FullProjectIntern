@@ -49,6 +49,48 @@ public class SensorController {
         this.sensorDataService = sensorDataService;
     }
 
+    // ---------------------------------------------------------------
+    // Shared helpers — pagination + sort validation used by all three
+    // "list" endpoints below (getTrafficData, getAirData, getLightData).
+    // Extracted here instead of a formal pattern since all three call
+    // sites live in this one class; see report notes on Template Method.
+    // ---------------------------------------------------------------
+
+    /**
+     * Validates page/size params. Returns an error ResponseEntity if invalid,
+     * or null if the params are valid and processing should continue.
+     */
+    private ResponseEntity<?> validatePagination(int page, int size) {
+        if (page < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page must be >= 0"));
+        }
+        if (size <= 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        }
+        return null;
+    }
+
+    /**
+     * Parses a "field,dir" sort param against an allowed field set.
+     * Throws IllegalArgumentException on an unrecognized field, which
+     * callers catch and turn into a 400 response.
+     */
+    private Sort buildSort(String sort, Set<String> allowedSortFields) {
+        if (sort == null || sort.isBlank()) {
+            return Sort.unsorted();
+        }
+        String[] parts = sort.split(",");
+        String field = parts[0];
+        if (!allowedSortFields.contains(field)) {
+            throw new IllegalArgumentException("Invalid sort field: " + field);
+        }
+        Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
+        return Sort.by(dir, field);
+    }
+
     @PostMapping("/traffic")
     @Operation(summary = "Submit traffic sensor data", description = "Persists a traffic sensor reading and checks user-configured alert thresholds for trafficDensity and avgSpeed.")
     @ApiResponses({
@@ -82,6 +124,9 @@ public class SensorController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Street light data saved successfully.");
     }
 
+    private static final Set<String> TRAFFIC_SORT_FIELDS = Set.of(
+            "timestamp", "location", "trafficDensity", "avgSpeed", "congestionLevel");
+
     @GetMapping("/traffic")
     @Operation(summary = "Get traffic sensor data", description = "Retrieves traffic sensor readings with optional filtering by location, congestion level, date range, sorting, and pagination.")
     @ApiResponses({
@@ -97,28 +142,17 @@ public class SensorController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort) {
 
-        if (page < 0) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", "Page must be >= 0"));
-        }
-        if (size <= 0) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        ResponseEntity<?> paginationError = validatePagination(page, size);
+        if (paginationError != null) {
+            return paginationError;
         }
 
-        Set<String> allowedSortFields = Set.of(
-                "timestamp", "location", "trafficDensity", "avgSpeed", "congestionLevel");
-        Sort sortObj = Sort.unsorted();
-        if (sort != null && !sort.isBlank()) {
-            String[] parts = sort.split(",");
-            String field = parts[0];
-            if (!allowedSortFields.contains(field)) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Validation failed", "details", "Invalid sort field: " + field));
-            }
-            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
-                    ? Sort.Direction.DESC : Sort.Direction.ASC;
-            sortObj = Sort.by(dir, field);
+        Sort sortObj;
+        try {
+            sortObj = buildSort(sort, TRAFFIC_SORT_FIELDS);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", ex.getMessage()));
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
@@ -133,10 +167,7 @@ public class SensorController {
         @ApiResponse(responseCode = "200", description = "Traffic statistics retrieved successfully")
     })
     public ResponseEntity<TrafficStatsDto> getTrafficStats() {
-
-        TrafficStatsDto stats = sensorDataService.getTrafficStats();
-
-        return ResponseEntity.ok(stats);
+        return ResponseEntity.ok(sensorDataService.getTrafficStats());
     }
 
     @GetMapping("/traffic/trends")
@@ -157,6 +188,9 @@ public class SensorController {
         return ResponseEntity.ok(sensorDataService.getTrafficCongestionSummary());
     }
 
+    private static final Set<String> AIR_SORT_FIELDS = Set.of(
+            "timestamp", "location", "co", "ozone", "pollutionLevel");
+
     @GetMapping("/air")
     @Operation(summary = "Get air pollution sensor data", description = "Retrieves air pollution readings with optional filtering by location, date range, sorting, and pagination.")
     @ApiResponses({
@@ -171,28 +205,17 @@ public class SensorController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort) {
 
-        if (page < 0) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", "Page must be >= 0"));
-        }
-        if (size <= 0) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        ResponseEntity<?> paginationError = validatePagination(page, size);
+        if (paginationError != null) {
+            return paginationError;
         }
 
-        Set<String> allowedSortFields = Set.of(
-                "timestamp", "location", "co", "ozone", "pollutionLevel");
-        Sort sortObj = Sort.unsorted();
-        if (sort != null && !sort.isBlank()) {
-            String[] parts = sort.split(",");
-            String field = parts[0];
-            if (!allowedSortFields.contains(field)) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Validation failed", "details", "Invalid sort field: " + field));
-            }
-            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
-                    ? Sort.Direction.DESC : Sort.Direction.ASC;
-            sortObj = Sort.by(dir, field);
+        Sort sortObj;
+        try {
+            sortObj = buildSort(sort, AIR_SORT_FIELDS);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", ex.getMessage()));
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
@@ -217,6 +240,9 @@ public class SensorController {
         return ResponseEntity.ok(sensorDataService.getAirTrends());
     }
 
+    private static final Set<String> LIGHT_SORT_FIELDS = Set.of(
+            "timestamp", "location", "brightnessLevel", "powerConsumption", "status");
+
     @GetMapping("/light")
     @Operation(summary = "Get street light sensor data", description = "Retrieves street light readings with optional filtering by location, status, date range, sorting, and pagination.")
     @ApiResponses({
@@ -232,28 +258,17 @@ public class SensorController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort) {
 
-        if (page < 0) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", "Page must be >= 0"));
-        }
-        if (size <= 0) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+        ResponseEntity<?> paginationError = validatePagination(page, size);
+        if (paginationError != null) {
+            return paginationError;
         }
 
-        Set<String> allowedSortFields = Set.of(
-                "timestamp", "location", "brightnessLevel", "powerConsumption", "status");
-        Sort sortObj = Sort.unsorted();
-        if (sort != null && !sort.isBlank()) {
-            String[] parts = sort.split(",");
-            String field = parts[0];
-            if (!allowedSortFields.contains(field)) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Validation failed", "details", "Invalid sort field: " + field));
-            }
-            Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
-                    ? Sort.Direction.DESC : Sort.Direction.ASC;
-            sortObj = Sort.by(dir, field);
+        Sort sortObj;
+        try {
+            sortObj = buildSort(sort, LIGHT_SORT_FIELDS);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed", "details", ex.getMessage()));
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
