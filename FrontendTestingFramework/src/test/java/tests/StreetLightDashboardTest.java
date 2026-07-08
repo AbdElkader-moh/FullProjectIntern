@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 import utils.StreetLightApiReader;
 
 /**
- * StreetLightDashboardTest — TC-205 … TC-224
+ * StreetLightDashboardTest — TC-205 … TC-227
  *
  * DATA SEEDING STRATEGY
  * ─────────────────────
@@ -52,7 +52,7 @@ public class StreetLightDashboardTest extends BaseTest {
     }
 
     /**
-     * Uses SettingsPage to save the two traffic thresholds needed for alert tests.
+     * Uses SettingsPage to save the two street light thresholds needed for alert tests.
      * Called once per class — idempotent enough because the Settings page will
      * simply add another threshold if one already exists (which the dashboard
      * handles gracefully by counting it alongside existing ones).
@@ -81,7 +81,7 @@ public class StreetLightDashboardTest extends BaseTest {
     @BeforeMethod(alwaysRun = true)
     public void seedDataAndOpenDashboard() {
 
-        // Seed traffic readings directly — bypasses the 120-second simulator interval.
+        // Seed street light readings directly — bypasses the 120-second simulator interval.
         // Normal reading populates the table; high-power + low-brightness trigger alerts.
         try {
             SensorApiClient.postNormalLightReading();

@@ -18,7 +18,7 @@ import java.util.List;
  * TC-082: CarbonMonoxide line chart dots match the trends API
  * TC-083: Pollutionlevel distribution bars match the pollution-summary API
  *
- * DOM facts from traffic-dashboard.html:
+ * DOM facts from air-dashboard.html:
  * ── Table ──
  * First row cells: td.col-location, td.col-co .co-value,
  * td.col-ozone .ozone-value, td .pollution-badge
@@ -128,7 +128,7 @@ public class AirPollutionDashboardPage extends BasePage {
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
-    @Step("Open traffic dashboard page")
+    @Step("Open air pollution dashboard page")
     public AirPollutionDashboardPage open() {
         navigateTo("/air");
         wait.waitForUrlToContain("/air");
@@ -183,7 +183,7 @@ public class AirPollutionDashboardPage extends BasePage {
         return new AirPollutionAnalyticsPage(driver);
     }
 
-    @Step("Click Traffic Alerts quick action")
+    @Step("Click Air Pollution Alerts quick action")
     public AirPollutionAlertsPage clickQuickActionAlerts() {
         wait.waitForClickable(QUICK_ACTION_ALERTS).click();
         wait.waitForUrlToContain("/air-alerts");
@@ -349,7 +349,7 @@ public class AirPollutionDashboardPage extends BasePage {
     }
 
     /**
-     * Returns the traffic co value from the first row as displayed.
+     * Returns the air pollution co value from the first row as displayed.
      * The span contains only the number (e.g. "450"), not the "veh/hr" unit.
      */
     @Step("Read first table row CO value")

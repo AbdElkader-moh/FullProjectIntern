@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 import utils.AirPollutionApiReader;
 
 /**
- * AirPollutionDashboardTest — TC-148 … TC-167
+ * AirPollutionDashboardTest — TC-148 … TC-170
  *
  * DATA SEEDING STRATEGY
  * ─────────────────────
@@ -56,7 +56,7 @@ public class AirPollutionDashboardTest extends BaseTest {
         }
 
         /**
-         * Uses SettingsPage to save the two traffic thresholds needed for alert tests.
+         * Uses SettingsPage to save the two air pollution thresholds needed for alert tests.
          * Called once per class — idempotent enough because the Settings page will
          * simply add another threshold if one already exists (which the dashboard
          * handles gracefully by counting it alongside existing ones).
@@ -85,7 +85,7 @@ public class AirPollutionDashboardTest extends BaseTest {
         @BeforeMethod(alwaysRun = true)
         public void seedDataAndOpenDashboard() {
 
-                // Seed traffic readings directly — bypasses the 120-second simulator interval.
+                // Seed air pollution readings directly — bypasses the 120-second simulator interval.
                 // Normal reading populates the table; high-co + low-ozone trigger alerts.
                 try {
                         SensorApiClient.postNormalAirReading();
@@ -114,7 +114,7 @@ public class AirPollutionDashboardTest extends BaseTest {
                 System.out.println("TC-148 PASSED");
         }
 
-        @Test(description = "TC-149: 'Traffic Monitoring Dashboard' page title is displayed")
+        @Test(description = "TC-149: 'Air Pollution Monitoring Dashboard' page title is displayed")
         @Story("Page load")
         @Severity(SeverityLevel.NORMAL)
         @Description("Verifies the .page-title element is visible.")
@@ -168,10 +168,10 @@ public class AirPollutionDashboardTest extends BaseTest {
                 System.out.println("TC-153 PASSED");
         }
 
-        @Test(description = "TC-154: 'Traffic Alerts' quick action navigates to /air-alerts")
+        @Test(description = "TC-154: 'Air Pollution Alerts' quick action navigates to /air-alerts")
         @Story("Navigation")
         @Severity(SeverityLevel.NORMAL)
-        @Description("Clicks the Traffic Alerts quick-action-btn.")
+        @Description("Clicks the Air Pollution Alerts quick-action-btn.")
         public void TC154_quickActionAlerts() {
                 AirPollutionAlertsPage ap = dashboardPage.clickQuickActionAlerts();
                 Assert.assertTrue(ap.isOnAlertsPage(),
@@ -358,7 +358,7 @@ public class AirPollutionDashboardTest extends BaseTest {
         }
         // ── TC-168: Table row values match the API ────────────────────────────────
 
-        @Test(description = "TC-168: Real-Time Traffic Data table first row matches the latest API record")
+        @Test(description = "TC-168: Real-Time Air Pollution Data table first row matches the latest API record")
         @Story("Data accuracy — table")
         @Severity(SeverityLevel.CRITICAL)
         @Description("Seeds a reading, refreshes the dashboard, waits for table to re-render, " +

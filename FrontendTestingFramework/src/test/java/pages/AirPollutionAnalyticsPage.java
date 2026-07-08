@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * AirPollutionAnalyticsPage — Page Object for /air-pollution-analytics
  *
- * DOM facts from traffic-analytics.html:
+ * DOM facts from air-analytics.html:
  *
  * Filter inputs:
  * #filterFrom datetime-local (Start Date / Time)
@@ -112,7 +112,7 @@ public class AirPollutionAnalyticsPage extends BasePage {
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
-    @Step("Open traffic analytics page")
+    @Step("Open air pollution analytics page")
     public AirPollutionAnalyticsPage open() {
         navigateTo("/air-analytics");
         wait.waitForUrlToContain("/air-analytics");
@@ -128,7 +128,7 @@ public class AirPollutionAnalyticsPage extends BasePage {
         }
     }
 
-    @Step("Click Back link to traffic dashboard")
+    @Step("Click Back link to air pollution dashboard")
     public AirPollutionDashboardPage clickBack() {
         wait.waitForClickable(BACK_LINK).click();
         wait.waitForUrlToContain("/air");

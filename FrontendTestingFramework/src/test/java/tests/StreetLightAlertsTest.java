@@ -12,11 +12,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * StreetLightAlertsTest — TC-171 … TC-182
+ * StreetLightAlertsTest — TC-171 … TC-185
  *
  * DATA SEEDING STRATEGY
  * ─────────────────────
- * @BeforeClass — uses SettingsPage to save two traffic thresholds once:
+ * @BeforeClass — uses SettingsPage to save two street light thresholds once:
  *   Power Consumption > 100  (sensor index 0, above)
  *   Brightness Level   < 30   (sensor index 1, below)
  *
@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  *   localhost:8081 (host-side port from docker-compose 8081:8081).
  *
  * DOM CHANGES fixed in StreetLightAlertsPage (compared to previous version):
- *   - Alert Type dropdown (Traffic/Air/Light) removed — page is traffic-only.
+ *   - Alert Type dropdown (Traffic/Air/Light) removed — page is street-light-only.
  *   - New #aFilterMetric dropdown: "Power Consumption" | "Brightness Level".
  *   - Live banner replaced by toast stack (.toast-stack).
  *   - All type badges are .type-light.

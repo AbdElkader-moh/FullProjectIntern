@@ -13,7 +13,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * AirPollutionAnalyticsTest — TC-129 … TC-144
+ * AirPollutionAnalyticsTest — TC-129 … TC-147
  *
  * DATA SEEDING
  * ────────────
@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  *
  * The page is opened fresh in @BeforeMethod so each test starts on a clean state.
  *
- * FILTER BEHAVIOUR (from traffic-analytics.ts)
+ * FILTER BEHAVIOUR (from air-analytics.ts)
  * ─────────────────────────────────────────────
  *   - Pollutionlevel filter: sent to backend as a query param → server-side filtering
  *   - Location filter: sent to backend as a query param → server-side filtering
@@ -75,7 +75,7 @@ public class AirPollutionAnalyticsTest extends BaseTest {
     // Page load
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-129: Traffic analytics page loads and URL is /air-analytics")
+    @Test(description = "TC-129: Air pollution analytics page loads and URL is /air-analytics")
     @Story("Page load")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Navigates to /air-analytics and verifies the URL and page title are present.")

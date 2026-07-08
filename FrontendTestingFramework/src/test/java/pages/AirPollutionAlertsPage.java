@@ -11,11 +11,11 @@ import java.util.List;
 /**
  * AirPollutionAlertsPage — Page Object for /air-alerts
  *
- * DOM facts from UPDATED traffic-alerts.html + traffic-alerts.ts:
+ * DOM facts from UPDATED air-alerts.html + air-alerts.ts:
  *
  *  IMPORTANT CHANGES from previous version:
  *   - The "Alert Type" dropdown (Traffic/Air/Light) is GONE.
- *     The page now only shows Traffic alerts (filtered server-side).
+ *     The page now only shows Air pollution alerts (filtered server-side).
  *   - New filter: "Alert Classification" (#aFilterMetric) with options
  *     "Carbon Monoxide" and "Ozone" (from metricOptions array in TS).
  *   - Live banner is now a TOAST STACK (.toast-stack) not .live-alert-banner.
@@ -68,7 +68,7 @@ public class AirPollutionAlertsPage extends BasePage {
     private static final By STATUS_UNREAD      = By.cssSelector(".status-unread");
     private static final By STATUS_READ        = By.cssSelector(".status-read");
     /**
-     * Type badges are now always .type-air (page is traffic-only).
+     * Type badges are now always .type-air (page is air-pollution-only).
      */
     private static final By TYPE_BADGES        = By.cssSelector(".type-badge.type-air");
     private static final By METRIC_CELLS       = By.cssSelector("td.col-metric");
@@ -104,7 +104,7 @@ public class AirPollutionAlertsPage extends BasePage {
         return this;
     }
 
-    @Step("Click Back link to traffic dashboard")
+    @Step("Click Back link to air pollution dashboard")
     public AirPollutionDashboardPage clickBack() {
         wait.waitForClickable(BACK_LINK).click();
         wait.waitForUrlToContain("/air");

@@ -13,7 +13,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * StreetLightAnalyticsTest — TC-186 … TC-201
+ * StreetLightAnalyticsTest — TC-186 … TC-204
  *
  * DATA SEEDING
  * ────────────
@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
  *               The page is opened fresh in @BeforeMethod so each test starts
  *               on a clean state.
  *
- *               FILTER BEHAVIOUR (from traffic-analytics.ts)
+ *               FILTER BEHAVIOUR (from street-light-analytics.ts)
  *               ─────────────────────────────────────────────
  *               - Status filter: sent to backend as a query param → server-side
  *               filtering
@@ -256,6 +256,8 @@ public class StreetLightAnalyticsTest extends BaseTest {
         int filteredCount = analyticsPage.getRecordCountNumber();
 
         analyticsPage.clickReset();
+        
+        wait.waitForCondition(d -> !analyticsPage.isActiveFilterBadgeDisplayed());
 
         Assert.assertFalse(analyticsPage.isActiveFilterBadgeDisplayed(),
                 "TC-195 FAILED: Active filter badge still shown after reset.");
@@ -343,6 +345,9 @@ public class StreetLightAnalyticsTest extends BaseTest {
         }
         String beforePage = analyticsPage.getActivePageNumber();
         analyticsPage.clickNextPage();
+        
+        wait.waitForCondition(d -> !analyticsPage.getActivePageNumber().equals(beforePage));
+        
         String afterPage = analyticsPage.getActivePageNumber();
         Assert.assertNotEquals(afterPage, beforePage,
                 "TC-199 FAILED: Page number did not change after Next.");

@@ -11,11 +11,11 @@ import java.util.List;
 /**
  * StreetLightAlertsPage — Page Object for /street-light-alerts
  *
- * DOM facts from UPDATED traffic-alerts.html + traffic-alerts.ts:
+ * DOM facts from UPDATED street-light-alerts.html + street-light-alerts.ts:
  *
  *  IMPORTANT CHANGES from previous version:
  *   - The "Alert Type" dropdown (Traffic/Air/Light) is GONE.
- *     The page now only shows Traffic alerts (filtered server-side).
+ *     The page now only shows Street light alerts (filtered server-side).
  *   - New filter: "Alert Classification" (#aFilterMetric) with options
  *     "Power Consumption" and "Brightness Level" (from metricOptions array in TS).
  *   - Live banner is now a TOAST STACK (.toast-stack) not .live-alert-banner.
@@ -68,7 +68,7 @@ public class StreetLightAlertsPage extends BasePage {
     private static final By STATUS_UNREAD      = By.cssSelector(".status-unread");
     private static final By STATUS_READ        = By.cssSelector(".status-read");
     /**
-     * Type badges are now always .type-light (page is traffic-only).
+     * Type badges are now always .type-light (page is street-light-only).
      */
     private static final By TYPE_BADGES        = By.cssSelector(".type-badge.type-light");
     private static final By METRIC_CELLS       = By.cssSelector("td.col-metric");
@@ -104,7 +104,7 @@ public class StreetLightAlertsPage extends BasePage {
         return this;
     }
 
-    @Step("Click Back link to traffic dashboard")
+    @Step("Click Back link to street light dashboard")
     public StreetLightDashboardPage clickBack() {
         wait.waitForClickable(BACK_LINK).click();
         wait.waitForUrlMatches(".*\\/lights$");

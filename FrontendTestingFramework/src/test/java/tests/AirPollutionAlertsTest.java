@@ -12,11 +12,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * AirPollutionAlertsTest — TC-114 … TC-125
+ * AirPollutionAlertsTest — TC-114 … TC-128
  *
  * DATA SEEDING STRATEGY
  * ─────────────────────
- * @BeforeClass — uses SettingsPage to save two traffic thresholds once:
+ * @BeforeClass — uses SettingsPage to save two air pollution thresholds once:
  *   Carbon Monoxide > 100  (sensor index 0, above)
  *   Ozone   < 30   (sensor index 1, below)
  *
@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  *   localhost:8081 (host-side port from docker-compose 8081:8081).
  *
  * DOM CHANGES fixed in AirPollutionAlertsPage (compared to previous version):
- *   - Alert Type dropdown (Traffic/Air/Light) removed — page is traffic-only.
+ *   - Alert Type dropdown (Traffic/Air/Light) removed — page is air-pollution-only.
  *   - New #aFilterMetric dropdown: "Carbon Monoxide" | "Ozone".
  *   - Live banner replaced by toast stack (.toast-stack).
  *   - All type badges are .type-air.

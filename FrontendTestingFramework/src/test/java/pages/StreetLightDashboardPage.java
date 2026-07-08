@@ -18,7 +18,7 @@ import java.util.List;
  *   TC-082: PowerConsumption line chart dots match the trends API
  *   TC-083: Status distribution bars match the status-summary API
  *
- * DOM facts from traffic-dashboard.html:
+ * DOM facts from street-light-dashboard.html:
  *  ── Table ──
  *  First row cells:  td.col-location, td.col-power .power-value,
  *                    td.col-brightness .brightness-value, td .status-badge
@@ -118,7 +118,7 @@ public class StreetLightDashboardPage extends BasePage {
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
-    @Step("Open traffic dashboard page")
+    @Step("Open street light dashboard page")
     public StreetLightDashboardPage open() {
         navigateTo("/lights");
         wait.waitForUrlToContain("/lights");
@@ -274,7 +274,7 @@ public class StreetLightDashboardPage extends BasePage {
     }
 
     /**
-     * Returns the traffic power value from the first row as displayed.
+     * Returns the street light power value from the first row as displayed.
      * The span contains only the number (e.g. "450"), not the "veh/hr" unit.
      */
     @Step("Read first table row power value")

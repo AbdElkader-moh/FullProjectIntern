@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * StreetLightAnalyticsPage — Page Object for /street-light-analytics
  *
- * DOM facts from traffic-analytics.html:
+ * DOM facts from street-light-analytics.html:
  *
  *  Filter inputs:
  *    #filterFrom       datetime-local  (Start Date / Time)
@@ -105,7 +105,7 @@ public class StreetLightAnalyticsPage extends BasePage {
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
-    @Step("Open traffic analytics page")
+    @Step("Open street light analytics page")
     public StreetLightAnalyticsPage open() {
         navigateTo("/lights-analytics");
         wait.waitForUrlToContain("/lights-analytics");
@@ -118,7 +118,7 @@ public class StreetLightAnalyticsPage extends BasePage {
         try { wait.waitForInvisibility(TABLE_LOADING); } catch (Exception ignored) {}
     }
 
-    @Step("Click Back link to traffic dashboard")
+    @Step("Click Back link to street light dashboard")
     public StreetLightDashboardPage clickBack() {
         wait.waitForClickable(BACK_LINK).click();
         wait.waitForUrlMatches(".*\\/lights$");
