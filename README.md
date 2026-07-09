@@ -1,4 +1,4 @@
-# 🌆 Web CodeFlow — Smart City IoT Monitoring Platform
+# 🌆 Bayond Code — Smart City IoT Monitoring Platform
 
 > A full-stack, containerized Smart City platform that collects, processes, and visualizes real-time IoT sensor data for **Traffic**, **Air Quality**, and **Street Lighting** management. The system provides live dashboards, configurable alerting, rich analytics, and an end-to-end automated testing suite — all orchestrated through Docker Compose and a Jenkins CI/CD pipeline.
 
@@ -33,7 +33,7 @@
 
 ## 🌟 Project Overview
 
-Web CodeFlow is an enterprise-grade **IoT integration layer and monitoring platform** built for smart city infrastructure. It provides city operators and analysts with a unified interface to:
+Bayond Code is an enterprise-grade **IoT integration layer and monitoring platform** built for smart city infrastructure. It provides city operators and analysts with a unified interface to:
 
 - **Monitor** real-time sensor feeds for traffic flow, air pollution levels, and street-light health.
 - **Alert** operators instantly via configurable threshold-based rules, with real-time WebSocket toast notifications pushed directly to the browser.
