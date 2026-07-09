@@ -757,6 +757,6 @@ FullProjectIntern/
 
 <div align="center">
 
-**Built with ❤️ by the DXC Internship Team**
+**Built with ❤️ by BeyondCode**
 
 </div>
