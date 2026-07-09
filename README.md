@@ -507,19 +507,136 @@ newman run "Backend Testing/🩺 Sanity Checks — Full System.postman_collectio
 
 ## ⚙️ CI/CD Pipeline
 
-The Jenkins pipeline defined in [`Jenkinsfile`](./Jenkinsfile) automates the full build, test, and deployment cycle:
+The project ships with a **self-contained Jenkins server** defined in [`jenkins-compose.yml`](./jenkins-compose.yml). The custom [`jenkins/Dockerfile`](./jenkins/Dockerfile) extends the official Jenkins LTS image with Docker, Docker Compose, and Git pre-installed — so the Jenkins container can build and push Docker images directly from the pipeline without any additional setup on the host.
+
+---
+
+### 🚀 Running Jenkins
+
+#### Step 1 — Start the Jenkins Container
+
+From the project root, spin up Jenkins using its dedicated Compose file:
+
+```bash
+docker-compose -f jenkins-compose.yml up -d --build
+```
+
+Jenkins will be available at **http://localhost:8080**.
+
+> **Note:** Jenkins data is persisted in `C:\jenkins_home` on Windows. This directory is bind-mounted into the container so your jobs, credentials, and plugin state survive container restarts.
+
+---
+
+#### Step 2 — Unlock Jenkins (First Time Only)
+
+On first startup, Jenkins generates a one-time **admin unlock password**. Retrieve it by reading the log:
+
+```bash
+docker logs internship-jenkins
+```
+
+Look for a block like this in the output:
+
+```
+*************************************************************
+*************************************************************
+
+Jenkins initial setup is required. An admin user has been created
+and a password generated.
+Please use the following password to proceed to installation:
+
+  a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+
+This may also be found at:
+/var/jenkins_home/secrets/initialAdminPassword
+*************************************************************
+```
+
+Copy the password, open **http://localhost:8080**, paste it into the **Unlock Jenkins** screen, and click **Continue**.
+
+Alternatively, read the password directly from the container:
+
+```bash
+docker exec internship-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+---
+
+#### Step 3 — Install Plugins
+
+When prompted, choose **"Install suggested plugins"**. Jenkins will automatically install the most commonly used plugins (Git, Pipeline, Docker Pipeline, Credentials Binding, etc.). Wait for the installation to complete before proceeding.
+
+---
+
+#### Step 4 — Create the Admin User
+
+Fill in your preferred username, password, full name, and email address, then click **Save and Continue** → **Save and Finish** → **Start using Jenkins**.
+
+---
+
+#### Step 5 — Configure Required Credentials
+
+Navigate to **Dashboard → Manage Jenkins → Credentials → System → Global credentials → Add Credentials** and create the following entries exactly as named (the `Jenkinsfile` references these IDs):
+
+| Credential ID | Kind | Value |
+|---|---|---|
+| `dockerhub-creds` | Username & Password | Your DockerHub username + password |
+| `MYSQL_PASSWORD` | Secret Text | MySQL user password |
+| `MYSQL_USER` | Secret Text | MySQL username |
+| `MYSQL_ROOT_PASSWORD` | Secret Text | MySQL root password |
+| `CLOUDINARY_CLOUD_NAME` | Secret Text | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Secret Text | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Secret Text | Cloudinary API secret |
+
+---
+
+#### Step 6 — Create the Pipeline Job
+
+1. From the Jenkins Dashboard click **"New Item"**.
+2. Enter a name (e.g., `bayond-code-pipeline`) and select **"Pipeline"**, then click **OK**.
+3. Scroll to the **Pipeline** section and set **Definition** to `Pipeline script from SCM`.
+4. Set **SCM** to `Git` and enter the repository URL:
+   ```
+   https://github.com/AbdElkader-moh/FullProjectIntern.git
+   ```
+5. Set **Branch Specifier** to `*/main`.
+6. Set **Script Path** to `Jenkinsfile`.
+7. Click **Save**.
+
+---
+
+#### Step 7 — Trigger a Build
+
+Click **"Build Now"** on the pipeline job page. Jenkins will execute all stages in order:
 
 ```
 Checkout → Prepare Secrets → Verify Secrets → Build Docker Images → Docker Login → Push to DockerHub → Deploy
 ```
 
-**To use the pipeline:**
-1. Configure the following credentials in Jenkins:
-   - `dockerhub-creds` — DockerHub username & password (Username/Password credential)
-   - `MYSQL_PASSWORD`, `MYSQL_USER`, `MYSQL_ROOT_PASSWORD` — Database credentials (Secret Text)
-   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — Cloudinary API keys (Secret Text)
-2. Create a Jenkins pipeline job pointing to this repository.
-3. Trigger a build — Jenkins will handle the rest automatically.
+Monitor live progress in **Console Output**. A green ✅ indicates the pipeline completed successfully.
+
+---
+
+#### Stopping Jenkins
+
+```bash
+# Stop the Jenkins container (preserves all data in C:\jenkins_home):
+docker-compose -f jenkins-compose.yml down
+```
+
+---
+
+### Pipeline Stage Reference
+
+| Stage | Description |
+|---|---|
+| **Checkout** | Pulls the latest code from the SCM (GitHub) |
+| **Prepare Secrets** | Writes Jenkins-managed credentials into the `secrets/` directory |
+| **Verify Secrets** | Confirms all secret files are present before building |
+| **Build Images** | Runs `docker compose build` to build all service images |
+| **Docker Login** | Authenticates to DockerHub using stored Jenkins credentials |
+| **Push Images** | Tags and pushes all four service images to DockerHub |
+| **Deploy** | Tears down the existing stack and relaunches with `docker compose up -d` |
 
 ---
 
