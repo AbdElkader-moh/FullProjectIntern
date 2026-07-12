@@ -375,54 +375,47 @@ public class TrafficAnalyticsTest extends BaseTest {
                  "reads the API first record and the UI first row at the same moment, and " +
                  "asserts location, density, speed, and congestion level match.")
     public void TC087_firstRowMatchesApi() {
-        // Seed a distinctive reading with known values, then reload the page.
-        // We assert the UI first row shows exactly those values.
-        // This approach avoids the race condition where the simulator may post a
-        // newer reading between our seed and the API reader call.
-        final int    EXPECTED_DENSITY    = 277;
-        final double EXPECTED_SPEED      = 66.0;
-        final String EXPECTED_CONGESTION = "Moderate";
-        final String EXPECTED_LOCATION   = "Alexandria";
-
+        // Seed a distinctive reading just to ensure there is data.
         try {
-            SensorApiClient.postTrafficReading(
-                    EXPECTED_DENSITY, EXPECTED_SPEED, EXPECTED_CONGESTION, EXPECTED_LOCATION);
+            SensorApiClient.postTrafficReading(277, 66.0, "Moderate", "Alexandria");
         } catch (Exception e) {
             System.out.println("[TC087] Seeding warning: " + e.getMessage());
         }
 
-        // Re-apply filters so the table reloads — our reading is now the newest.
-        analyticsPage.clickApply();
-
-        // Read UI first row with retry logic to avoid stale elements and ensure table refresh
+        String[] apiValues = new String[4];
         String[] uiValues = new String[4];
+
+        // Read UI and API at the same time, with retry in case simulator adds a record right between the calls
         utils.RetryHelper.retryVoid(() -> {
+            analyticsPage.clickApply(); // reloads UI table
+            
+            apiValues[0] = TrafficApiReader.getFirstRecordLocation();
+            apiValues[1] = TrafficApiReader.getFirstRecordDensity();
+            apiValues[2] = TrafficApiReader.getFirstRecordAvgSpeed();
+            apiValues[3] = TrafficApiReader.getFirstRecordCongestionLevel();
+
             uiValues[0] = analyticsPage.getFirstRowLocation();
             uiValues[1] = analyticsPage.getFirstRowDensity();
             uiValues[2] = analyticsPage.getFirstRowSpeed();
             uiValues[3] = analyticsPage.getFirstRowCongestionLevel();
-            if (!uiValues[0].equals(EXPECTED_LOCATION) || !uiValues[1].equals(String.valueOf(EXPECTED_DENSITY))) {
-                throw new RuntimeException("First row hasn't updated to seeded data yet");
+
+            if (!uiValues[0].equals(apiValues[0]) || !uiValues[1].equals(apiValues[1])) {
+                throw new RuntimeException("UI and API mismatch (possible race condition with simulator)");
             }
-        }, "Read first row and wait for newest");
+        }, "Read API and UI first row at the same time");
 
-        String uiLocation   = uiValues[0];
-        String uiDensity    = uiValues[1];
-        String uiSpeed      = uiValues[2];
-        String uiCongestion = uiValues[3];
+        System.out.println("[TC087] UI first row — location=" + uiValues[0]
+                + " density=" + uiValues[1] + " speed=" + uiValues[2]
+                + " congestion=" + uiValues[3]);
 
-        System.out.println("[TC087] UI first row — location=" + uiLocation
-                + " density=" + uiDensity + " speed=" + uiSpeed
-                + " congestion=" + uiCongestion);
-
-        Assert.assertEquals(uiLocation, EXPECTED_LOCATION,
-                "TC-087 FAILED: location UI='" + uiLocation + "' expected='" + EXPECTED_LOCATION + "'");
-        Assert.assertEquals(uiDensity, String.valueOf(EXPECTED_DENSITY),
-                "TC-087 FAILED: density UI='" + uiDensity + "' expected='" + EXPECTED_DENSITY + "'");
-        Assert.assertEquals(uiSpeed, normaliseDecimal(String.valueOf(EXPECTED_SPEED), 1),
-                "TC-087 FAILED: speed UI='" + uiSpeed + "' expected='" + EXPECTED_SPEED + "'");
-        Assert.assertEquals(uiCongestion, EXPECTED_CONGESTION,
-                "TC-087 FAILED: congestion UI='" + uiCongestion + "' expected='" + EXPECTED_CONGESTION + "'");
+        Assert.assertEquals(uiValues[0], apiValues[0],
+                "TC-087 FAILED: location UI='" + uiValues[0] + "' expected='" + apiValues[0] + "'");
+        Assert.assertEquals(uiValues[1], apiValues[1],
+                "TC-087 FAILED: density UI='" + uiValues[1] + "' expected='" + apiValues[1] + "'");
+        Assert.assertEquals(uiValues[2], normaliseDecimal(apiValues[2], 1),
+                "TC-087 FAILED: speed UI='" + uiValues[2] + "' expected='" + apiValues[2] + "'");
+        Assert.assertEquals(uiValues[3], apiValues[3],
+                "TC-087 FAILED: congestion UI='" + uiValues[3] + "' expected='" + apiValues[3] + "'");
 
         System.out.println("TC-087 PASSED — first row matches API");
     }
