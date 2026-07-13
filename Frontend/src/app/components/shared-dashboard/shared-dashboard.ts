@@ -427,8 +427,8 @@ export class SharedDashboard implements OnInit, OnDestroy {
   }
 
   getStatValue(key: string): any {
-    return this.stats?.[key];
-  }
+    return this.getValueByPath(this.stats, key);
+}
 
   getStatAccent(index: number): string {
     const colors = ['#6366f1', '#8b5cf6', '#06b6d4', '#f97316', '#ef4444'];
@@ -695,6 +695,9 @@ get alertsRoute(): string {
   if (this.config.baseEndpoint.includes('/light')) return '/lights-alerts';
 
   return '/notifications';
+}
+private getValueByPath(source: any, path: string): any {
+  return path.split('.').reduce((value, key) => value?.[key], source);
 }
 
   logout(): void {

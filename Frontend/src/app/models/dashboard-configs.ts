@@ -32,13 +32,13 @@ export const AIR_POLLUTION_DASHBOARD_CONFIG: DashboardConfig = {
   ],
 
   statsCards: [
-    { key: 'totalRecords', label: 'Total Records' },
-    { key: 'averageCo', label: 'Average CO' },
-    { key: 'averageOzone', label: 'Average Ozone' },
-    { key: 'averagePm25', label: 'Average PM2.5' },
-    { key: 'goodCount', label: 'Good Readings' },
-    { key: 'unhealthyCount', label: 'Unhealthy Readings' },
-  ],
+  { key: 'totalRecords', label: 'Total Records' },
+  { key: 'averageCo', label: 'Average CO' },
+  { key: 'averageOzone', label: 'Average Ozone' },
+  { key: 'totalAlerts', label: 'Total Alerts' },
+  { key: 'pollutionLevelBreakdown.Good', label: 'Good Readings' },
+  { key: 'pollutionLevelBreakdown.Unhealthy', label: 'Unhealthy Readings' },
+],
 
   chartFields: [
     { key: 'co', label: 'CO' },
@@ -97,13 +97,13 @@ export const STREET_LIGHT_DASHBOARD_CONFIG: DashboardConfig = {
     { key: 'to', label: 'To Date', type: 'date' },
   ],
 
-  statsCards: [
-    { key: 'totalRecords', label: 'Total Records' },
-    { key: 'averageBrightness', label: 'Average Brightness', suffix: '%' },
-    { key: 'averagePower', label: 'Average Power' },
-    { key: 'onCount', label: 'Lights ON' },
-    { key: 'offCount', label: 'Lights OFF' },
-  ],
+ statsCards: [
+  { key: 'totalRecords', label: 'Total Records' },
+  { key: 'averageBrightness', label: 'Average Brightness', suffix: '%' },
+  { key: 'averagePowerConsumption', label: 'Average Power', suffix: ' kWh' },
+  { key: 'statusBreakdown.ON', label: 'Lights ON' },
+  { key: 'statusBreakdown.OFF', label: 'Lights OFF' },
+],
 
   chartFields: [
     { key: 'brightnessLevel', label: 'Brightness Level', suffix: '%' },
