@@ -70,15 +70,15 @@ export const AIR_POLLUTION_DASHBOARD_CONFIG: DashboardConfig = {
   },
 };
 
-export const STREET_LIGHT_DASHBOARD_CONFIG: DashboardConfig = {
+export const STREET_LIGHT_DASHBOARD_CONFIG: DashboardConfig  = { //dasgboard config da type lel object da yemshy aleh
   title: 'Street Light Management',
   icon: '💡',
   description: 'Monitor street light brightness, power consumption, and ON/OFF status.',
 
   baseEndpoint: '/api/sensors/light',
 
-  columns: [
-    { key: 'location', label: 'Location', type: 'text' },
+  columns: [  //de columns btaat eltable elly hyet3rd fel dashboard
+    { key: 'location', label: 'Location', type: 'text' }, //key da esm el field ely gy men backend , label da ely hyxhar lel user, suffix hot 3alama % baad elrakm
     { key: 'brightnessLevel', label: 'Brightness Level', type: 'number', suffix: '%' },
     { key: 'powerConsumption', label: 'Power Consumption', type: 'number', suffix: ' kWh' },
     { key: 'status', label: 'Status', type: 'badge' },
@@ -86,7 +86,7 @@ export const STREET_LIGHT_DASHBOARD_CONFIG: DashboardConfig = {
   ],
 
   filters: [
-    { key: 'location', label: 'Location', type: 'text' },
+    { key: 'location', label: 'Location', type: 'text' },  //street light dashbiard hyzhar location input, status dropdonw 
     {
       key: 'status',
       label: 'Status',
