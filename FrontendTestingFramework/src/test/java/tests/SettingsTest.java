@@ -28,7 +28,7 @@ public class SettingsTest extends BaseTest {
 
     // ── Page load ─────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-037: Settings page loads at /settings")
+    @Test(description = "TC-037: Settings page loads at /settings", groups = {"sanity"})
     @Story("Page load")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Navigates to /settings and verifies the URL contains the expected path.")
@@ -75,7 +75,7 @@ public class SettingsTest extends BaseTest {
 
     // ── Valid save ────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-041: Saving a valid threshold increases Active Thresholds count")
+    @Test(description = "TC-041: Saving a valid threshold increases Active Thresholds count", groups = {"sanity"})
     @Story("Save threshold")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Saves a mid-range Traffic Density threshold and verifies the active thresholds count increases by at least 1.")

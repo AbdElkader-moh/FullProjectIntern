@@ -116,7 +116,7 @@ public class NotificationsTest extends BaseTest {
     // Page load
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-047: Notifications page loads and URL is /notifications")
+    @Test(description = "TC-047: Notifications page loads and URL is /notifications", groups = {"sanity"})
     @Story("Page load")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Navigates to /notifications and verifies the URL contains the expected path.")
@@ -266,7 +266,7 @@ public class NotificationsTest extends BaseTest {
     // Notification presence — replaced simulator polling with API seeding
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-056: Notifications appear after sensor readings cross thresholds")
+    @Test(description = "TC-056: Notifications appear after sensor readings cross thresholds", groups = {"sanity"})
     @Story("Notification presence")
     @Severity(SeverityLevel.CRITICAL)
     @Description(

@@ -130,7 +130,7 @@ public class StreetLightAnalyticsTest extends BaseTest {
     // Status filter
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-189: Filtering by 'ON' status scopes all visible rows", groups = {"sanity"})
+    @Test(description = "TC-189: Filtering by 'ON' status scopes all visible rows")
     @Story("Status filter")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Selects ON from #filterStatus and clicks Search. All visible " +
@@ -171,7 +171,7 @@ public class StreetLightAnalyticsTest extends BaseTest {
     // Location filter
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-191: Filtering by location 'Alexandria' returns only Alexandria rows", groups = {"sanity"})
+    @Test(description = "TC-191: Filtering by location 'Alexandria' returns only Alexandria rows")
     @Story("Location filter")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Types 'Alexandria' into #filterLocation and searches. All visible location " +
@@ -375,7 +375,7 @@ public class StreetLightAnalyticsTest extends BaseTest {
     // Data accuracy
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-201: First table row values match the latest record from the API", groups = {"sanity"})
+    @Test(description = "TC-201: First table row values match the latest record from the API")
     @Story("Data accuracy")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Opens the analytics page (which loads with sort=timestamp,desc by default), " +

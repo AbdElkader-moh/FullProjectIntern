@@ -117,7 +117,7 @@ public class TrafficAnalyticsTest extends BaseTest {
     // Congestion filter
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-075: Filtering by 'Moderate' congestion scopes all visible rows", groups = {"sanity"})
+    @Test(description = "TC-075: Filtering by 'Moderate' congestion scopes all visible rows")
     @Story("Congestion filter")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Selects Moderate from #filterCongestion and clicks Search. All visible " +
@@ -162,7 +162,7 @@ public class TrafficAnalyticsTest extends BaseTest {
     // Location filter
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-077: Filtering by location 'Alexandria' returns only Alexandria rows", groups = {"sanity"})
+    @Test(description = "TC-077: Filtering by location 'Alexandria' returns only Alexandria rows")
     @Story("Location filter")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Types 'Alexandria' into #filterLocation and searches. All visible location " +
@@ -368,7 +368,7 @@ public class TrafficAnalyticsTest extends BaseTest {
     // Data accuracy
     // ─────────────────────────────────────────────────────────────────────────
 
-    @Test(description = "TC-087: First table row values match the latest record from the API", groups = {"sanity"})
+    @Test(description = "TC-087: First table row values match the latest record from the API")
     @Story("Data accuracy")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Opens the analytics page (which loads with sort=timestamp,desc by default), " +
