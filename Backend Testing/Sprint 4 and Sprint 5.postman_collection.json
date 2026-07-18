@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "153504e4-53fe-4c65-a671-ff12411f4107",
+    "_postman_id": "b9e24806-329e-418a-b4f4-ac1336d3f43c",
     "name": "Sprint 4 and Sprint 5",
     "description": "Automated test collection for GET /api/sensors/air, /air/stats, and /air/trends endpoints",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "46756296",
-    "_collection_link": "https://go.postman.co/collection/46756296-153504e4-53fe-4c65-a671-ff12411f4107?source=collection_link"
+    "_exporter_id": "52585419",
+    "_collection_link": "https://go.postman.co/collection/52585419-b9e24806-329e-418a-b4f4-ac1336d3f43c?source=collection_link"
   },
   "item": [
     {
@@ -993,7 +993,6 @@
                 {
                   "listen": "test",
                   "script": {
-                    "type": "text/javascript",
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
                       "pm.test('All expected top-level fields exist with correct types', () => {",
@@ -1007,8 +1006,50 @@
                       "  pm.expect(body).to.have.property('lowestOzone').that.is.a('number');",
                       "  pm.expect(body).to.have.property('totalAlerts').that.is.a('number');",
                       "  pm.expect(body).to.have.property('pollutionLevelBreakdown').that.is.an('object');",
+                      "});",
+                      "const schema = {",
+                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
+                      "  \"title\": \"GET /api/sensors/air/stats response\",",
+                      "  \"type\": \"object\",",
+                      "  \"required\": [\"totalRecords\", \"averageCo\", \"averageOzone\", \"highestCo\", \"lowestCo\", \"highestOzone\", \"lowestOzone\", \"totalAlerts\", \"pollutionLevelBreakdown\"],",
+                      "  \"additionalProperties\": false,",
+                      "  \"properties\": {",
+                      "    \"totalRecords\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"averageCo\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"averageOzone\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"highestCo\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"lowestCo\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"highestOzone\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"lowestOzone\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"totalAlerts\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"pollutionLevelBreakdown\": {",
+                      "      \"type\": \"object\",",
+                      "      \"required\": [\"Good\", \"Moderate\", \"Unhealthy\", \"Very_Unhealthy\", \"Hazardous\"],",
+                      "      \"additionalProperties\": false,",
+                      "      \"properties\": {",
+                      "        \"Good\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "        \"Moderate\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "        \"Unhealthy\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "        \"Very_Unhealthy\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "        \"Hazardous\": { \"type\": \"number\", \"minimum\": 0 }",
+                      "      }",
+                      "    }",
+                      "  }",
+                      "};",
+                      "pm.test('Response matches schema', () => {",
+                      "  pm.response.to.have.jsonSchema(schema);",
                       "});"
-                    ]
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
                   }
                 }
               ],
@@ -1318,7 +1359,6 @@
                 {
                   "listen": "test",
                   "script": {
-                    "type": "text/javascript",
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
                       "pm.test('Each record has correct field types', () => {",
@@ -1327,8 +1367,28 @@
                       "    pm.expect(record).to.have.property('co').that.is.a('number');",
                       "    pm.expect(record).to.have.property('ozone').that.is.a('number');",
                       "  });",
+                      "});",
+                      "const schema = {",
+                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
+                      "  \"title\": \"GET /api/sensors/air/trends response\",",
+                      "  \"type\": \"array\",",
+                      "  \"items\": {",
+                      "    \"type\": \"object\",",
+                      "    \"required\": [\"timestamp\", \"co\", \"ozone\"],",
+                      "    \"properties\": {",
+                      "      \"timestamp\": { \"type\": \"string\" },",
+                      "      \"co\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "      \"ozone\": { \"type\": \"number\", \"minimum\": 0 }",
+                      "    }",
+                      "  }",
+                      "};",
+                      "pm.test('Response matches schema', () => {",
+                      "  pm.response.to.have.jsonSchema(schema);",
                       "});"
-                    ]
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
                   }
                 }
               ],
@@ -1604,7 +1664,6 @@
                 {
                   "listen": "test",
                   "script": {
-                    "type": "text/javascript",
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
                       "pm.test('Each record has correct field types', () => {",
@@ -1615,8 +1674,47 @@
                       "    pm.expect(record).to.have.property('status').that.is.a('string');",
                       "    pm.expect(record).to.have.property('timestamp').that.is.a('string');",
                       "  });",
+                      "});",
+                      "const schema = {",
+                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
+                      "  \"title\": \"GET /api/sensors/light response\",",
+                      "  \"type\": \"object\",",
+                      "  \"required\": [\"content\", \"pageable\", \"totalElements\", \"totalPages\", \"first\", \"last\"],",
+                      "  \"properties\": {",
+                      "    \"content\": {",
+                      "      \"type\": \"array\",",
+                      "      \"items\": {",
+                      "        \"type\": \"object\",",
+                      "        \"required\": [\"location\", \"brightnessLevel\", \"powerConsumption\", \"status\", \"timestamp\"],",
+                      "        \"properties\": {",
+                      "          \"location\": { \"type\": \"string\" },",
+                      "          \"brightnessLevel\": { \"type\": \"number\" },",
+                      "          \"powerConsumption\": { \"type\": \"number\" },",
+                      "          \"status\": { \"type\": \"string\", \"enum\": [\"ON\", \"OFF\"] },",
+                      "          \"timestamp\": { \"type\": \"string\" }",
+                      "        }",
+                      "      }",
+                      "    },",
+                      "    \"pageable\": {",
+                      "      \"type\": \"object\",",
+                      "      \"properties\": {",
+                      "        \"pageSize\": { \"type\": \"number\" },",
+                      "        \"pageNumber\": { \"type\": \"number\" }",
+                      "      }",
+                      "    },",
+                      "    \"totalElements\": { \"type\": \"number\" },",
+                      "    \"totalPages\": { \"type\": \"number\" },",
+                      "    \"first\": { \"type\": \"boolean\" },",
+                      "    \"last\": { \"type\": \"boolean\" }",
+                      "  }",
+                      "};",
+                      "pm.test('Response matches schema', () => {",
+                      "  pm.response.to.have.jsonSchema(schema);",
                       "});"
-                    ]
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
                   }
                 }
               ],
@@ -2536,7 +2634,6 @@
                 {
                   "listen": "test",
                   "script": {
-                    "type": "text/javascript",
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
                       "pm.test('All expected fields exist with correct types', () => {",
@@ -2548,8 +2645,38 @@
                       "  pm.expect(body).to.have.property('lowestBrightness').that.is.a('number');",
                       "  pm.expect(body).to.have.property('totalAlerts').that.is.a('number');",
                       "  pm.expect(body).to.have.property('statusBreakdown').that.is.an('object');",
+                      "});",
+                      "const schema = {",
+                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
+                      "  \"title\": \"GET /api/sensors/light/stats response\",",
+                      "  \"type\": \"object\",",
+                      "  \"required\": [\"totalRecords\", \"averageBrightness\", \"averagePowerConsumption\", \"highestPowerConsumption\", \"lowestBrightness\", \"totalAlerts\", \"statusBreakdown\"],",
+                      "  \"additionalProperties\": false,",
+                      "  \"properties\": {",
+                      "    \"totalRecords\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"averageBrightness\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"averagePowerConsumption\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"highestPowerConsumption\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"lowestBrightness\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"totalAlerts\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "    \"statusBreakdown\": {",
+                      "      \"type\": \"object\",",
+                      "      \"required\": [\"ON\", \"OFF\"],",
+                      "      \"additionalProperties\": false,",
+                      "      \"properties\": {",
+                      "        \"ON\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "        \"OFF\": { \"type\": \"number\", \"minimum\": 0 }",
+                      "      }",
+                      "    }",
+                      "  }",
+                      "};",
+                      "pm.test('Response matches schema', () => {",
+                      "  pm.response.to.have.jsonSchema(schema);",
                       "});"
-                    ]
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
                   }
                 }
               ],
@@ -2930,7 +3057,6 @@
                 {
                   "listen": "test",
                   "script": {
-                    "type": "text/javascript",
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
                       "pm.test('Each record has correct field types', () => {",
@@ -2939,8 +3065,28 @@
                       "    pm.expect(record).to.have.property('brightnessLevel').that.is.a('number');",
                       "    pm.expect(record).to.have.property('powerConsumption').that.is.a('number');",
                       "  });",
+                      "});",
+                      "const schema = {",
+                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
+                      "  \"title\": \"GET /api/sensors/light/trends response\",",
+                      "  \"type\": \"array\",",
+                      "  \"items\": {",
+                      "    \"type\": \"object\",",
+                      "    \"required\": [\"timestamp\", \"brightnessLevel\", \"powerConsumption\"],",
+                      "    \"properties\": {",
+                      "      \"timestamp\": { \"type\": \"string\" },",
+                      "      \"brightnessLevel\": { \"type\": \"number\", \"minimum\": 0 },",
+                      "      \"powerConsumption\": { \"type\": \"number\", \"minimum\": 0 }",
+                      "    }",
+                      "  }",
+                      "};",
+                      "pm.test('Response matches schema', () => {",
+                      "  pm.response.to.have.jsonSchema(schema);",
                       "});"
-                    ]
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
                   }
                 }
               ],
