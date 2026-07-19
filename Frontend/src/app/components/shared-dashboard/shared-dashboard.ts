@@ -23,13 +23,13 @@ import {
 } from '../../models/dashboard.model';
 
 const AUTO_REFRESH_MS = 60_000;
-const CW = 700;
-const CH = 280;
-const PAD = { top: 20, right: 20, bottom: 45, left: 55 };
-const AREA_X = PAD.left;
-const AREA_Y = PAD.top;
-const AREA_W = CW - PAD.left - PAD.right;
-const AREA_H = CH - PAD.top - PAD.bottom;
+const CW = 700;  // chart width
+const CH = 280;  // chart height
+const PAD = { top: 20, right: 20, bottom: 45, left: 55 }; // chart padding
+const AREA_X = PAD.left; // chart area x
+const AREA_Y = PAD.top; // chart area y
+const AREA_W = CW - PAD.left - PAD.right; // chart area width
+const AREA_H = CH - PAD.top - PAD.bottom;  // chart area height
 
 @Component({
   selector: 'app-shared-dashboard',
@@ -39,7 +39,7 @@ const AREA_H = CH - PAD.top - PAD.bottom;
   styleUrl: './shared-dashboard.css',
 })
 export class SharedDashboard implements OnInit, OnDestroy {
-  @Input({ required: true }) config!: DashboardConfig;
+  @Input({ required: true }) config!: DashboardConfig; // dashboard config ht recieve it from the wrapper
 
   user: UserResponse | null = null;
   unreadCount = 0;
@@ -427,8 +427,8 @@ export class SharedDashboard implements OnInit, OnDestroy {
   }
 
   getStatValue(key: string): any {
-    return this.stats?.[key];
-  }
+    return this.getValueByPath(this.stats, key);
+}
 
   getStatAccent(index: number): string {
     const colors = ['#6366f1', '#8b5cf6', '#06b6d4', '#f97316', '#ef4444'];
@@ -695,6 +695,9 @@ get alertsRoute(): string {
   if (this.config.baseEndpoint.includes('/light')) return '/lights-alerts';
 
   return '/notifications';
+}
+private getValueByPath(source: any, path: string): any {
+  return path.split('.').reduce((value, key) => value?.[key], source);
 }
 
   logout(): void {

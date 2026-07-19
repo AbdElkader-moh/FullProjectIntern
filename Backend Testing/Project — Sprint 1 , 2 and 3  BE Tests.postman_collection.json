@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "7083619c-d0fe-4ec0-a813-41efa61c45ba",
+    "_postman_id": "4173167d-7af8-4c28-a14f-b2d44fa08b93",
     "name": "Project — Sprint 1 , 2 and 3  BE Tests",
     "description": "Backend integration tests for Sign Up, Sign In, Profile (GET/PUT), and Logout.\nBase URL: http://localhost:4200\nAll session-based — Postman must have 'Automatically follow redirects' ON and cookie jar enabled.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "46756296",
-    "_collection_link": "https://go.postman.co/collection/46756296-7083619c-d0fe-4ec0-a813-41efa61c45ba?source=collection_link"
+    "_exporter_id": "52585419",
+    "_collection_link": "https://go.postman.co/collection/52585419-4173167d-7af8-4c28-a14f-b2d44fa08b93?source=collection_link"
   },
   "item": [
     {

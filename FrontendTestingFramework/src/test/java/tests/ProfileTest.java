@@ -29,7 +29,7 @@ public class ProfileTest extends BaseTest {
         profilePage.open();
     }
 
-    @Test(description = "TC-024: Profile page shows all expected field labels and values")
+    @Test(description = "TC-024: Profile page shows all expected field labels and values", groups = {"sanity"})
     @Story("Profile data display")
     @Severity(SeverityLevel.NORMAL)
     @Description("Verifies that .detail-value spans are present on the profile page, meaning user data has loaded correctly.")
@@ -83,7 +83,7 @@ public class ProfileTest extends BaseTest {
         System.out.println("TC-028 PASSED");
     }
 
-    @Test(description = "TC-029: Clicking Logout navigates back to /signin")
+    @Test(description = "TC-029: Clicking Logout navigates back to /signin", groups = {"sanity"})
     @Story("Logout")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Clicks the logout button on the profile page. Expects the browser to land on /signin.")

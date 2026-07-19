@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import data.TestDataProvider;
 
 public class SensorApiClient {
 
@@ -103,14 +104,51 @@ public class SensorApiClient {
 
     // ── Core HTTP ─────────────────────────────────────────────────────────────
 
-    private static void post(String path, String jsonBody) {
+    private static final String AUTH_URL = ConfigReader.get("app.url", "http://localhost:4200");
+    private static String jwtToken = null;
+
+    private static synchronized void authenticateIfNeeded() {
+        if (jwtToken != null) return;
+        
         try {
+            String email = TestDataProvider.getEmail();
+            String password = TestDataProvider.getPassword();
+            String body = String.format("{\"email\":\"%s\",\"password\":\"%s\"}", email, password);
+            
             HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(AUTH_URL + "/api/users/login"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .timeout(Duration.ofSeconds(10))
+                    .build();
+                    
+            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                jwtToken = response.headers().firstValue("Authorization").orElse(null);
+                System.out.println("[SensorAPI] Authenticated successfully, JWT cached.");
+            } else {
+                System.err.println("[SensorAPI] Failed to authenticate: HTTP " + response.statusCode());
+            }
+        } catch (Exception e) {
+            System.err.println("[SensorAPI] Authentication error: " + e.getMessage());
+        }
+    }
+
+    private static void post(String path, String jsonBody) {
+        authenticateIfNeeded();
+        try {
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(BASE_URL + path))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                    .timeout(Duration.ofSeconds(15))
-                    .build();
+                    .timeout(Duration.ofSeconds(15));
+            
+            if (jwtToken != null && !jwtToken.isEmpty()) {
+                reqBuilder.header("Authorization", jwtToken.startsWith("Bearer ") ? jwtToken : "Bearer " + jwtToken);
+            }
+            
+            HttpRequest request = reqBuilder.build();
 
             HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
 
