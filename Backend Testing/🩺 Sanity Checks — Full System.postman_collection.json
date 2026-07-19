@@ -153,7 +153,7 @@
                   "pm.collectionVariables.set('loginPassword', password);",
                   "",
                   "pm.sendRequest({",
-                  "  url: pm.collectionVariables.get('baseUrl') + '/api/users/signup',",
+                  "  url: pm.variables.get('baseUrl') + '/api/users/signup',",
                   "  method: 'POST',",
                   "  header: { 'Content-Type': 'application/json' },",
                   "  body: {",

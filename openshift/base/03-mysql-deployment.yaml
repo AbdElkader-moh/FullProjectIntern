@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      # No runAsUser/fsGroup set on purpose: OpenShift's restricted-v2 SCC
+      # assigns an arbitrary UID (in group 0) from the project's allocated
+      # range at admission time. Pinning a UID here would make the pod fail
+      # admission unless the "anyuid" SCC is granted to the service account.
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - configMapRef:
+                name: mysql-config
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql_root_password
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql_user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql_password
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            # mysqld's socket/pid directory. The image's default ownership on
+            # this path is not reliably group-0-writable under an arbitrary
+            # UID, so it's swapped for a fresh, writable emptyDir.
+            - name: mysql-run
+              mountPath: /var/run/mysqld
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost"]
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 20
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+        - name: mysql-run
+          emptyDir: {}
+# If this still fails permission checks on your cluster (some CRI/UID range
+# combinations still trip up the stock Docker Hub mysql:8.0 image), switch
+# the image to the OpenShift-native "mysql:8.0-el9" ImageStream from the
+# `openshift` namespace, which is purpose-built for arbitrary-UID execution.

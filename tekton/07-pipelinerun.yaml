@@ -1,0 +1,34 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+
+metadata:
+  generateName: build-project-run-
+
+spec:
+
+  pipelineRef:
+    name: build-project
+
+  params:
+    - name: repo-url
+      value: https://github.com/AbdElkader-moh/FullProjectIntern.git
+
+  workspaces:
+
+    # emptyDir instead of volumeClaimTemplate: this workspace only needs to
+    # hold a git clone for the lifetime of a single PipelineRun, not persist
+    # afterward. volumeClaimTemplate minted a brand-new PVC on every run that
+    # Tekton never cleans up, which is what exhausted the project's
+    # count/persistentvolumeclaims quota.
+    - name: shared-workspace
+
+      volumeClaimTemplate:
+
+        spec:
+
+          accessModes:
+            - ReadWriteOnce
+
+          resources:
+            requests:
+              storage: 1Gi

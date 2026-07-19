@@ -1,0 +1,13 @@
+# Unchanged from k8s/mysql-pvc.yaml. No storageClassName pinned so the
+# cluster's default StorageClass is used; set one explicitly if your project
+# doesn't have a default.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,44 @@
+# Runs the "Sanity Checks" Postman collection against the just-deployed test
+# stack. Uses a glob (*Sanity*) rather than typing the collection's exact
+# filename, since it contains an emoji and an em-dash ("Backend Testing/
+# 🩺 Sanity Checks — Full System.postman_collection.json") that's fragile to
+# hardcode in a shell script.
+#
+# No more Route discovery: test resources deploy in the same namespace as
+# prod now (see openshift/overlays/test), with no Route of their own -- this
+# TaskRun's pod runs in that same namespace, so it can just hit the *-test
+# Services directly over in-cluster DNS.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: run-newman
+
+spec:
+  params:
+    - name: USER_SERVICE_URL
+      type: string
+      description: Base URL of the test user-service, e.g. http://user-service-test:8080
+    - name: SENSOR_SERVICE_URL
+      type: string
+      description: Base URL of the test sensor-service, e.g. http://sensor-service-test:8081
+
+  workspaces:
+    - name: source
+
+  steps:
+    - name: newman
+      image: postman/newman:alpine
+      script: |
+        #!/bin/sh
+        set -e
+        cd "$(workspaces.source.path)/Backend Testing"
+
+        newman run *Sanity*.postman_collection.json \
+          -e "New Environment.postman_environment.json" \
+          --env-var baseUrl="$(params.USER_SERVICE_URL)" \
+          --env-var sensorBaseUrl="$(params.SENSOR_SERVICE_URL)"
+# NOTE: verify the collection's request URLs actually resolve baseUrl /
+# sensorBaseUrl the way this expects (no scheme prefix vs with -- the
+# existing Postman environment file used "localhost:8088"-style values with
+# no scheme; these params now pass a full "http://..." URL instead, since
+# that's what's needed to reach a Service by DNS name in-cluster).

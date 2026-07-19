@@ -1,0 +1,13 @@
+# Type changed from NodePort (k8s/) to ClusterIP: external access is now via
+# the Route in 12-routes.yaml.
+apiVersion: v1
+kind: Service
+metadata:
+  name: sensor-service
+spec:
+  selector:
+    app: sensor-service
+  type: ClusterIP
+  ports:
+    - port: 8081
+      targetPort: 8081

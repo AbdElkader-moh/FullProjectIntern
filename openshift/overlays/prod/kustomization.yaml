@@ -1,0 +1,23 @@
+# Long-lived environment (the project's "beyond-code-dev" namespace -- the
+# only namespace the Developer Sandbox grants, so this is also where the
+# temporary test stack runs; see overlays/test for how the two stay isolated
+# from each other within it).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - configmaps.yaml
+  - routes.yaml
+
+namespace: beyond-code-dev
+
+images:
+  - name: nadinahmed/frontend-app
+    newTag: PLACEHOLDER
+  - name: nadinahmed/user-service
+    newTag: PLACEHOLDER
+  - name: nadinahmed/sensor-service
+    newTag: PLACEHOLDER
+  - name: nadinahmed/simulator
+    newTag: PLACEHOLDER

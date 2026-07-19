@@ -1,0 +1,52 @@
+# Moved here from openshift/base/12-routes.yaml: only prod is externally
+# reachable now. The test overlay deploys temporary *-test resources in the
+# same namespace purely for Newman/Selenium to exercise over in-cluster
+# Service DNS -- it never needs a public Route.
+#
+# No `host:` is set below, so OpenShift auto-generates one per Route
+# (<name>-<namespace>.<cluster-apps-domain>) -- run `oc get routes` after
+# applying to see the real hostnames.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: frontend
+spec:
+  to:
+    kind: Service
+    name: frontend
+  port:
+    # Must match the Service's targetPort (the pod's actual listening port),
+    # not its `port:` field -- Route targetPort is resolved against the
+    # Service's Endpoints, which record 8080, not the virtual 80.
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: user-service
+spec:
+  to:
+    kind: Service
+    name: user-service
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: sensor-service
+spec:
+  to:
+    kind: Service
+    name: sensor-service
+  port:
+    targetPort: 8081
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

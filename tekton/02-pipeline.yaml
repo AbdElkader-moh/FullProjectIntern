@@ -1,0 +1,174 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+
+metadata:
+  name: build-project
+
+spec:
+
+  workspaces:
+    - name: shared-workspace
+
+  params:
+    - name: repo-url
+      type: string
+
+  tasks:
+
+    - name: clone
+
+      taskRef:
+        name: git-clone
+
+      params:
+        - name: url
+          value: $(params.repo-url)
+
+        - name: deleteExisting
+          value: "true"
+
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+
+    - name: build-frontend
+      runAfter:
+        - clone
+      taskRef:
+        name: kaniko-build-push
+      params:
+        - name: IMAGE
+          value: nadinahmed/frontend-app:$(tasks.clone.results.commit)
+        - name: CONTEXT
+          value: Frontend
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: build-user-service
+      runAfter:
+        - clone
+      taskRef:
+        name: kaniko-build-push
+      params:
+        - name: IMAGE
+          value: nadinahmed/user-service:$(tasks.clone.results.commit)
+        - name: CONTEXT
+          value: backend/user
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: build-sensor-service
+      runAfter:
+        - clone
+      taskRef:
+        name: kaniko-build-push
+      params:
+        - name: IMAGE
+          value: nadinahmed/sensor-service:$(tasks.clone.results.commit)
+        - name: CONTEXT
+          value: backend/sensor_data
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: build-simulator
+      runAfter:
+        - clone
+      taskRef:
+        name: kaniko-build-push
+      params:
+        - name: IMAGE
+          value: nadinahmed/simulator:$(tasks.clone.results.commit)
+        - name: CONTEXT
+          value: simulator
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    # Deploys the temporary *-test stack INTO beyond-code-dev -- the
+    # Developer Sandbox only grants one namespace, so there's no separate
+    # beyond-code-test namespace anymore. Isolation from the real prod
+    # resources living in the same namespace comes entirely from the test
+    # overlay itself (nameSuffix + selector-isolating patches; see
+    # openshift/overlays/test/kustomization.yaml), not from a namespace
+    # boundary.
+    - name: deploy-test
+      runAfter:
+        - build-simulator
+        - build-sensor-service
+        - build-user-service
+        - build-frontend
+      taskRef:
+        name: deploy-overlay
+      params:
+        - name: TAG
+          value: $(tasks.clone.results.commit)
+        - name: OVERLAY
+          value: test
+        - name: NAMESPACE
+          value: beyond-code-dev
+
+    # No more Route/oc lookup: these hit the *-test Services directly over
+    # in-cluster DNS, since run-newman's pod runs in the same namespace.
+    - name: run-newman
+      runAfter:
+        - deploy-test
+      taskRef:
+        name: run-newman
+      params:
+        - name: USER_SERVICE_URL
+          value: http://user-service-test:8080
+        - name: SENSOR_SERVICE_URL
+          value: http://sensor-service-test:8081
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: run-selenium
+      runAfter:
+        - run-newman
+      taskRef:
+        name: run-selenium
+      params:
+        - name: APP_URL
+          value: http://frontend-test
+        - name: SENSOR_SERVICE_URL
+          value: http://sensor-service-test:8081
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    # Only reachable if run-selenium succeeded: Tekton skips downstream
+    # runAfter tasks (and fails the PipelineRun) as soon as any task in the
+    # chain fails, so this is the "if successful, promote to production"
+    # gate -- no extra `when:` condition needed. Re-applies the whole prod
+    # overlay (not just a bare `oc set image`) so any manifest drift -- new
+    # env vars, resource limits, etc. -- gets corrected too, not just the tag.
+    - name: deploy-prod
+      runAfter:
+        - run-selenium
+      taskRef:
+        name: deploy-overlay
+      params:
+        - name: TAG
+          value: $(tasks.clone.results.commit)
+        - name: OVERLAY
+          value: prod
+        - name: NAMESPACE
+          value: beyond-code-dev
+
+  # finally: tasks always run after every task above finishes, regardless of
+  # whether the pipeline succeeded, failed partway (e.g. a test failure
+  # before deploy-prod), or was cancelled. That's what makes this a reliable
+  # teardown instead of just another runAfter step -- a normal task chained
+  # after deploy-prod would simply never run if run-newman/run-selenium
+  # failed, leaving the *-test stack (and its PVC) behind permanently.
+  finally:
+    - name: cleanup-test
+      taskRef:
+        name: cleanup-test-resources
+      params:
+        - name: NAMESPACE
+          value: beyond-code-dev

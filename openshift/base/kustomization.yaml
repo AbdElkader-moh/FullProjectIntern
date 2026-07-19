@@ -1,0 +1,20 @@
+# Reusable base: every manifest here is environment-agnostic (no namespace,
+# no replica counts hardcoded for an environment, no real image tags baked
+# in beyond the placeholder "latest" already in the Deployments). Overlays
+# in ../overlays/{test,prod} layer the per-environment differences on top.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - 00-configmaps.yaml
+  - 01-secrets.yaml
+  - 02-mysql-pvc.yaml
+  - 03-mysql-deployment.yaml
+  - 04-mysql-service.yaml
+  - 05-user-service-deployment.yaml
+  - 06-user-service-service.yaml
+  - 07-sensor-service-deployment.yaml
+  - 08-sensor-service-service.yaml
+  - 09-simulator-deployment.yaml
+  - 10-frontend-deployment.yaml
+  - 11-frontend-service.yaml

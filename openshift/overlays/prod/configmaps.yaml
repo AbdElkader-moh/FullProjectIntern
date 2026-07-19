@@ -1,0 +1,78 @@
+# Moved here from openshift/base/00-configmaps.yaml: these 3 ConfigMaps all
+# hardcode Service DNS names (mysql, user-service, sensor-service), so they
+# can't be shared as-is with the test overlay, which renames those Services
+# to mysql-test/user-service-test/sensor-service-test. Values here are
+# unchanged from what was previously in base -- this is prod, unsuffixed.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  labels:
+    app.kubernetes.io/part-of: smart-city-app
+data:
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  USER_SERVICE_URL: "http://user-service:8080"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simulator-config
+  labels:
+    app: simulator
+data:
+  SENSOR_SERVICE_URL: "http://sensor-service:8081"
+  TRAFFIC_INTERVAL_SECONDS: "120"
+  LIGHT_INTERVAL_SECONDS: "120"
+  AIR_INTERVAL_SECONDS: "120"
+---
+# Only change from Frontend/nginx.conf: "listen 80" -> "listen 8080" (see
+# openshift/base/10-frontend-deployment.yaml for why).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-nginx-config
+  labels:
+    app: frontend
+data:
+  default.conf: |
+    server {
+        listen 8080;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+            try_files $uri $uri/ /index.html;
+        }
+
+        # User service proxy (auth, profile, settings, notifications)
+        location /api/users/ {
+            proxy_pass http://user-service:8080/api/users/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        # Sensor service proxy (traffic, air quality, street light data)
+        location /api/sensors/ {
+            proxy_pass http://sensor-service:8081/api/sensors/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        # Swagger UI (user service)
+        location /swagger-ui/ {
+            proxy_pass http://user-service:8080/swagger-ui/;
+            proxy_set_header Host $host;
+        }
+
+        location /v3/api-docs {
+            proxy_pass http://user-service:8080/v3/api-docs;
+            proxy_set_header Host $host;
+        }
+
+        location /swagger-ui.html {
+            proxy_pass http://user-service:8080/swagger-ui.html;
+            proxy_set_header Host $host;
+        }
+    }

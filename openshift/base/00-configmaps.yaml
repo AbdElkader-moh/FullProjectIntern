@@ -1,0 +1,19 @@
+# Non-secret runtime configuration, extracted out of the Deployments so it can be
+# edited with `oc edit configmap ...` without touching image or Deployment specs.
+#
+# Only mysql-config lives here: it's the one ConfigMap whose values don't
+# reference another Service's name. backend-config, simulator-config, and
+# frontend-nginx-config all hardcode Service DNS names (mysql, user-service,
+# sensor-service) -- and since the test overlay renames those Services to
+# mysql-test/user-service-test/sensor-service-test, a shared, base-level copy
+# of those 3 ConfigMaps would leave the *-test pods silently talking to
+# production's database and services instead of their own. See
+# overlays/prod/configmaps.yaml and overlays/test/configmaps.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  labels:
+    app: mysql
+data:
+  MYSQL_DATABASE: "project_db"

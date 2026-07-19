@@ -1,0 +1,27 @@
+# Starts the Tekton "build-project" Pipeline (see tekton/02-pipeline.yaml) on
+# every push to main. This lives on the GitHub side rather than as an
+# in-cluster EventListener because the OpenShift Developer Sandbox doesn't
+# grant tenants the cluster-scoped RBAC an EventListener needs (it watches
+# ClusterInterceptor objects cluster-wide on boot, regardless of which
+# interceptors any individual Trigger uses) -- see tekton/09-github-actions-sa.yaml
+# for the scoped ServiceAccount this workflow authenticates as instead.
+name: Trigger OpenShift Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to OpenShift
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: https://api.rm3.7wse.p1.openshiftapps.com:6443
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+          namespace: beyond-code-dev
+
+      - name: Start build-project PipelineRun
+        run: oc create -f tekton/07-pipelinerun.yaml

@@ -1,0 +1,14 @@
+# Type changed from NodePort (k8s/) to ClusterIP: external access is now via
+# the Route in 12-routes.yaml. Port/targetPort updated to 8080 to match the
+# nginx config override (see 00-configmaps.yaml / 10-frontend-deployment.yaml).
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: frontend
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080

@@ -1,0 +1,14 @@
+# Type changed from NodePort (k8s/) to ClusterIP: external access is now via
+# the Route in 12-routes.yaml, so the Service only needs to be reachable
+# in-cluster (by the frontend's nginx proxy and by sensor-service).
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+spec:
+  selector:
+    app: user-service
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080

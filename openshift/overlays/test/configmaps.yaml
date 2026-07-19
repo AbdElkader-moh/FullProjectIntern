@@ -1,0 +1,81 @@
+# Test-only versions of the 3 ConfigMaps that reference other Services by
+# name. nameSuffix (in kustomization.yaml) renames THIS ConfigMap's own
+# metadata.name to backend-config-test etc automatically, but it can't know
+# that the *values inside* also need to point at mysql-test/user-service-test
+# instead of mysql/user-service -- that's plain opaque string data as far as
+# Kustomize is concerned. So these values are hand-suffixed here, matching
+# the -test names the Deployments/Services in this overlay actually get.
+#
+# This is what keeps the temporary test stack from silently reading/writing
+# production's database through the real mysql/user-service/sensor-service.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  labels:
+    app.kubernetes.io/part-of: smart-city-app
+data:
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-test:3306/project_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  USER_SERVICE_URL: "http://user-service-test:8080"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simulator-config
+  labels:
+    app: simulator
+data:
+  SENSOR_SERVICE_URL: "http://sensor-service-test:8081"
+  TRAFFIC_INTERVAL_SECONDS: "120"
+  LIGHT_INTERVAL_SECONDS: "120"
+  AIR_INTERVAL_SECONDS: "120"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-nginx-config
+  labels:
+    app: frontend
+data:
+  default.conf: |
+    server {
+        listen 8080;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+            try_files $uri $uri/ /index.html;
+        }
+
+        # User service proxy (auth, profile, settings, notifications)
+        location /api/users/ {
+            proxy_pass http://user-service-test:8080/api/users/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        # Sensor service proxy (traffic, air quality, street light data)
+        location /api/sensors/ {
+            proxy_pass http://sensor-service-test:8081/api/sensors/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        # Swagger UI (user service)
+        location /swagger-ui/ {
+            proxy_pass http://user-service-test:8080/swagger-ui/;
+            proxy_set_header Host $host;
+        }
+
+        location /v3/api-docs {
+            proxy_pass http://user-service-test:8080/v3/api-docs;
+            proxy_set_header Host $host;
+        }
+
+        location /swagger-ui.html {
+            proxy_pass http://user-service-test:8080/swagger-ui.html;
+            proxy_set_header Host $host;
+        }
+    }

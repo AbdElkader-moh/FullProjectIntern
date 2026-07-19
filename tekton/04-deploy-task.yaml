@@ -1,0 +1,84 @@
+# Deploys an overlay WITHOUT depending on the git-cloned workspace: the
+# manifests come from 3 ConfigMaps (generated from your local
+# openshift/{base,overlays/test,overlays/prod} folders -- see the
+# `oc create configmap ... --from-file=...` commands you run whenever those
+# folders change) instead of a git clone. This is what makes deploy-test /
+# deploy-prod independent of pushing to GitHub.
+#
+# Split into 3 ConfigMaps, not 1, because base/kustomization.yaml,
+# overlays/test/kustomization.yaml, and overlays/prod/kustomization.yaml all
+# share the same filename -- `oc create configmap --from-file=DIR` keys
+# entries by basename, so combining them into one ConfigMap would make the
+# later ones silently overwrite the earlier ones.
+#
+# ConfigMap volumes mount read-only, but the script needs to `sed -i` the
+# overlay's kustomization.yaml (to swap in the real image tag) before
+# `oc apply -k` can use it -- so the mounted, read-only files get copied into
+# a writable scratch dir first, preserving the same relative layout Kustomize
+# expects (overlays/<name>/../../base), and everything after that operates on
+# the writable copy.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy-overlay
+
+spec:
+  params:
+    - name: TAG
+      type: string
+      description: Image tag to deploy (the git commit SHA from the clone task)
+    - name: OVERLAY
+      type: string
+      description: Overlay name, e.g. "test" or "prod" -- also the suffix of the openshift-overlay-<name> ConfigMap
+    - name: NAMESPACE
+      type: string
+      description: Target namespace the overlay deploys into
+
+  volumes:
+    - name: base-manifests
+      configMap:
+        name: openshift-base-manifests
+    - name: overlay-manifests
+      configMap:
+        name: openshift-overlay-$(params.OVERLAY)
+
+  steps:
+    - name: deploy
+      image: quay.io/openshift/origin-cli:latest
+      volumeMounts:
+        - name: base-manifests
+          mountPath: /deploy-src/base
+          readOnly: true
+        - name: overlay-manifests
+          mountPath: /deploy-src/overlay
+          readOnly: true
+      script: |
+        #!/bin/sh
+        set -e
+
+        mkdir -p /tmp/deploy/base "/tmp/deploy/overlays/$(params.OVERLAY)"
+        cp /deploy-src/base/* /tmp/deploy/base/
+        cp /deploy-src/overlay/* "/tmp/deploy/overlays/$(params.OVERLAY)/"
+
+        cd "/tmp/deploy/overlays/$(params.OVERLAY)"
+
+        # Swap in the real, just-built image tag. See openshift/overlays/*/kustomization.yaml
+        # for the images: block this replaces.
+        sed -i "s/PLACEHOLDER/$(params.TAG)/g" kustomization.yaml
+
+        oc apply -k . -n "$(params.NAMESPACE)"
+
+        # Overlay-aware Deployment names: the "test" overlay applies
+        # nameSuffix: -test (see openshift/overlays/test/kustomization.yaml),
+        # so a bare "deployment/user-service" here would silently check
+        # prod's already-stable Deployment instead of waiting on the
+        # freshly-created *-test one -- letting run-newman start before the
+        # test pods are actually ready.
+        SUFFIX=""
+        [ "$(params.OVERLAY)" = "test" ] && SUFFIX="-test"
+
+        oc rollout status deployment/frontend${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
+        oc rollout status deployment/user-service${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
+        oc rollout status deployment/sensor-service${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
+        oc rollout status deployment/mysql${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
+        oc rollout status deployment/simulator${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s

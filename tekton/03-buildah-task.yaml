@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: kaniko-build-push
+
+spec:
+  params:
+    - name: IMAGE
+      type: string
+    - name: CONTEXT
+      type: string
+
+  workspaces:
+    - name: source
+
+  volumes:
+    - name: docker-config
+      secret:
+        secretName: dockerhub-creds
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+
+  steps:
+    - name: build-and-push
+      image: gcr.io/kaniko-project/executor:latest
+
+      command:
+        - /kaniko/executor
+      
+      computeResources:
+        requests:
+          cpu: "1000m"
+          memory: "2Gi"
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+      args:
+        - --dockerfile=/workspace/source/$(params.CONTEXT)/Dockerfile
+        - --context=/workspace/source/$(params.CONTEXT)
+        - --destination=docker.io/$(params.IMAGE)
+      volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+
+      env:
+        - name: DOCKER_CONFIG
+          value: /kaniko/.docker

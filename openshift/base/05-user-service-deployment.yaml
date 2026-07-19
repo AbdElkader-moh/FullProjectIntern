@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: user-service
+          image: nadinahmed/user-service:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: backend-config
+          env:
+            - name: SPRING_DATASOURCE_USERNAME_FILE
+              value: /run/secrets/mysql_user
+            - name: SPRING_DATASOURCE_PASSWORD_FILE
+              value: /run/secrets/mysql_password
+            - name: CLOUDINARY_CLOUD_NAME_FILE
+              value: /run/secrets/cloudinary_cloud_name
+            - name: CLOUDINARY_API_KEY_FILE
+              value: /run/secrets/cloudinary_api_key
+            - name: CLOUDINARY_API_SECRET_FILE
+              value: /run/secrets/cloudinary_api_secret
+            # NOTE: missing from the original k8s/user-service-deployment.yaml.
+            # JwtUtil crashes on startup without it (see openshift/01-secrets.yaml).
+            - name: JWT_SECRET_FILE
+              value: /run/secrets/jwt_secret
+          resources:
+            requests:
+              cpu: 250m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          volumeMounts:
+            - name: mysql-secrets
+              mountPath: /run/secrets/mysql_user
+              subPath: mysql_user
+              readOnly: true
+            - name: mysql-secrets
+              mountPath: /run/secrets/mysql_password
+              subPath: mysql_password
+              readOnly: true
+            - name: cloudinary-secrets
+              mountPath: /run/secrets/cloudinary_cloud_name
+              subPath: cloudinary_cloud_name
+              readOnly: true
+            - name: cloudinary-secrets
+              mountPath: /run/secrets/cloudinary_api_key
+              subPath: cloudinary_api_key
+              readOnly: true
+            - name: cloudinary-secrets
+              mountPath: /run/secrets/cloudinary_api_secret
+              subPath: cloudinary_api_secret
+              readOnly: true
+            - name: jwt-secrets
+              mountPath: /run/secrets/jwt_secret
+              subPath: jwt_secret
+              readOnly: true
+      volumes:
+        - name: mysql-secrets
+          secret:
+            secretName: mysql-secret
+        - name: cloudinary-secrets
+          secret:
+            secretName: cloudinary-secret
+        - name: jwt-secrets
+          secret:
+            secretName: jwt-secret

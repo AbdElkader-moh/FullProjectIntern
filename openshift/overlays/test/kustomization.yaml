@@ -1,0 +1,200 @@
+# Temporary test stack, deployed into the SAME namespace as prod
+# (beyond-code-dev) -- the Developer Sandbox only grants one namespace, so
+# there's no separate beyond-code-test namespace to isolate into anymore.
+# Isolation instead comes from every resource here being renamed and
+# re-labeled so it can never be selected by, or collide with, the
+# already-running prod resources:
+#
+#   - nameSuffix gives every object a distinct name (frontend-test, etc).
+#   - commonLabels stamps `variant: test` on everything, purely so the
+#     pipeline's cleanup step can do one blanket
+#     `oc delete ... -l variant=test` instead of naming every resource.
+#   - The patches below are the part that actually matters for correctness:
+#     Kubernetes Service selectors match as a SUBSET check, so a pod
+#     carrying `app: frontend` would still satisfy prod's frontend Service
+#     selector (`app: frontend`) even with an extra `variant: test` label
+#     tacked on -- "has at least these labels" is still true. Renaming with
+#     nameSuffix and adding commonLabels alone would silently make prod's
+#     Service start routing live traffic to this temporary test pod. The
+#     patches give every test Deployment/Service a genuinely different `app`
+#     value (frontend-test, mysql-test, ...) so prod's existing, unmodified
+#     selectors can never match a test pod, full stop -- without needing to
+#     touch (or restart) anything already running in prod.
+#   - configmaps.yaml similarly re-points every cross-service URL
+#     (mysql, user-service, sensor-service) at its -test counterpart, so
+#     these pods can't end up reading or writing prod's database.
+#   - No Route: Newman/Selenium hit these Services directly over in-cluster
+#     DNS (http://frontend-test, http://user-service-test:8080, ...), so
+#     there's nothing here for the outside world to reach anyway.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - configmaps.yaml
+
+namespace: beyond-code-dev
+
+nameSuffix: -test
+
+commonLabels:
+  variant: test
+
+patches:
+  - target:
+      kind: Deployment
+      name: frontend
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: frontend
+      spec:
+        selector:
+          matchLabels:
+            app: frontend-test
+        template:
+          metadata:
+            labels:
+              app: frontend-test
+  - target:
+      kind: Service
+      name: frontend
+    patch: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: frontend
+      spec:
+        selector:
+          app: frontend-test
+
+  - target:
+      kind: Deployment
+      name: user-service
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: user-service
+      spec:
+        selector:
+          matchLabels:
+            app: user-service-test
+        template:
+          metadata:
+            labels:
+              app: user-service-test
+  - target:
+      kind: Service
+      name: user-service
+    patch: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: user-service
+      spec:
+        selector:
+          app: user-service-test
+
+  - target:
+      kind: Deployment
+      name: sensor-service
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: sensor-service
+      spec:
+        selector:
+          matchLabels:
+            app: sensor-service-test
+        template:
+          metadata:
+            labels:
+              app: sensor-service-test
+  - target:
+      kind: Service
+      name: sensor-service
+    patch: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: sensor-service
+      spec:
+        selector:
+          app: sensor-service-test
+
+  - target:
+      kind: Deployment
+      name: mysql
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mysql
+      spec:
+        selector:
+          matchLabels:
+            app: mysql-test
+        template:
+          metadata:
+            labels:
+              app: mysql-test
+  - target:
+      kind: Service
+      name: mysql
+    patch: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: mysql
+      spec:
+        selector:
+          app: mysql-test
+
+  - target:
+      kind: Deployment
+      name: simulator
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: simulator
+      spec:
+        selector:
+          matchLabels:
+            app: simulator-test
+        template:
+          metadata:
+            labels:
+              app: simulator-test
+
+# Native Kustomize field -- no patch file needed. Explicit on purpose even
+# though base already defaults every Deployment to 1, so this overlay stays
+# correct if base's defaults ever change.
+replicas:
+  - name: frontend
+    count: 1
+  - name: user-service
+    count: 1
+  - name: sensor-service
+    count: 1
+  - name: mysql
+    count: 1
+  - name: simulator
+    count: 1
+
+# Tekton overwrites these tags at deploy time (see tekton/04-deploy-task.yaml),
+# e.g. by running:
+#   sed -i "s/PLACEHOLDER/<git-commit-sha>/g" kustomization.yaml
+# before `oc apply -k .`.
+images:
+  - name: nadinahmed/frontend-app
+    newTag: PLACEHOLDER
+  - name: nadinahmed/user-service
+    newTag: PLACEHOLDER
+  - name: nadinahmed/sensor-service
+    newTag: PLACEHOLDER
+  - name: nadinahmed/simulator
+    newTag: PLACEHOLDER

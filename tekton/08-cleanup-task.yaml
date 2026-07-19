@@ -1,0 +1,30 @@
+# Tears down the temporary test stack. Runs as a Pipeline `finally:` task
+# (see tekton/02-pipeline.yaml), so it executes unconditionally after all
+# regular tasks finish -- whether the test/promote steps passed, failed, or
+# were skipped -- which is what keeps -test resources (and their PVC) from
+# silently accumulating run after run.
+#
+# `-l variant=test` is enough to catch everything: every object the test
+# overlay produces gets that label via commonLabels (see
+# openshift/overlays/test/kustomization.yaml), regardless of which file it
+# came from, so this doesn't need to enumerate resource names individually.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: cleanup-test-resources
+
+spec:
+  params:
+    - name: NAMESPACE
+      type: string
+
+  steps:
+    - name: cleanup
+      image: quay.io/openshift/origin-cli:latest
+      script: |
+        #!/bin/sh
+        set -e
+        oc delete deployment,service,configmap,secret,pvc \
+          -l variant=test \
+          -n "$(params.NAMESPACE)" \
+          --ignore-not-found

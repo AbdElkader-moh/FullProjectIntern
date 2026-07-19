@@ -1,0 +1,54 @@
+# Runs the Selenium/TestNG suite (FrontendTestingFramework/) against the
+# just-deployed test stack.
+#
+# ConfigReader.get() in that project already resolves config in this
+# priority order: JVM system property -> environment variable ->
+# config.properties -> throw (see FrontendTestingFramework/src/test/java/
+# utils/ConfigReader.java). pom.xml's surefire config additionally wires
+# APP_URL (env var) into the app.url system property automatically. So:
+#   - APP_URL env var covers app.url (frontend, via pom.xml)
+#   - app.sensor.url and headless are passed explicitly as -D flags, since
+#     nothing else wires them for us.
+#
+# No more Route discovery: test resources deploy in the same namespace as
+# prod now (see openshift/overlays/test), with no Route of their own -- this
+# TaskRun's pod runs in that same namespace, so Chrome just hits the *-test
+# Services directly over in-cluster DNS instead of going out through a
+# public hostname.
+#
+# Chrome isn't in the base Maven image, so it's installed at task runtime.
+# If this pipeline runs often, baking a custom "maven+chromium" image ahead
+# of time instead of apt-get-installing it on every run would be faster.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: run-selenium
+
+spec:
+  params:
+    - name: APP_URL
+      type: string
+      description: Base URL of the test frontend, e.g. http://frontend-test
+    - name: SENSOR_SERVICE_URL
+      type: string
+      description: Base URL of the test sensor-service, e.g. http://sensor-service-test:8081
+
+  workspaces:
+    - name: source
+
+  steps:
+    - name: selenium-tests
+      image: maven:3.9-eclipse-temurin-11
+      script: |
+        #!/bin/sh
+        set -e
+
+        apt-get update -qq && apt-get install -y -qq chromium > /dev/null
+
+        export APP_URL="$(params.APP_URL)"
+
+        cd "$(workspaces.source.path)/FrontendTestingFramework"
+
+        mvn -B test \
+          -Dheadless=true \
+          -Dapp.sensor.url="$(params.SENSOR_SERVICE_URL)"
