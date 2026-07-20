@@ -1,0 +1,25 @@
+# Registers this repo with the cluster's shared Pipelines-as-Code controller
+# (a fixed, always-on service in openshift-pipelines that every Developer
+# Sandbox tenant shares -- confirmed reachable at
+# https://pipelines-as-code-controller-openshift-pipelines.apps.rm3.7wse.p1.openshiftapps.com,
+# even though this tenant has no read access to anything else in that
+# namespace). PAC reads the actual trigger config from .tekton/*.yaml files
+# in the repo itself (PipelineRun manifests with
+# pipelinesascode.tekton.dev/on-event annotations -- see .tekton/push.yaml)
+# rather than anything defined here -- this Repository object just tells PAC
+# which repo to watch and which secret to verify its webhook against.
+apiVersion: pipelinesascode.tekton.dev/v1alpha1
+kind: Repository
+metadata:
+  name: fullprojectintern
+  namespace: beyond-code-dev
+spec:
+  url: "https://github.com/AbdElkader-moh/FullProjectIntern"
+  git_provider:
+    type: github
+    secret:
+      name: pac-github-webhook-config
+      key: provider.token
+    webhook_secret:
+      name: pac-github-webhook-config
+      key: webhook.secret

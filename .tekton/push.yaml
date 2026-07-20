@@ -1,0 +1,35 @@
+# Picked up by the shared Pipelines-as-Code controller on every push GitHub
+# forwards via the webhook configured on this repo (see
+# tekton/10-pac-repository.yaml). Restricted to main via on-target-branch --
+# same reasoning as the CEL filter in the abandoned EventListener attempt:
+# run-selenium succeeding always leads straight to deploy-prod
+# (tekton/02-pipeline.yaml has no branch check of its own), so this must not
+# fire for feature branches.
+#
+# max-keep-runs caps how many finished PipelineRuns PAC leaves behind for
+# this file -- without it, every push adds another set of pods that never
+# get cleaned up, which is exactly what exhausted the namespace's 50-pod
+# quota before (see tekton/04-deploy-task.yaml's history).
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: build-project-run-
+  annotations:
+    pipelinesascode.tekton.dev/on-event: "[push]"
+    pipelinesascode.tekton.dev/on-target-branch: "[main]"
+    pipelinesascode.tekton.dev/max-keep-runs: "3"
+spec:
+  pipelineRef:
+    name: build-project
+  params:
+    - name: repo-url
+      value: "{{ repo_url }}"
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
