@@ -11,13 +11,18 @@
 # get cleaned up, which is exactly what exhausted the namespace's 50-pod
 # quota before (see tekton/04-deploy-task.yaml's history).
 #
-# PAC doesn't resolve pipelineRef against Pipeline objects already sitting in
-# the cluster -- it only knows Pipelines it can fetch and inline itself, so
-# the "pipeline" annotation below points it at the raw file (fetched using
-# the provider.token in tekton/10-pac-repository.yaml, since this is a
-# private repo). PAC matches it to spec.pipelineRef.name by the fetched
-# file's own metadata.name, which is why that still has to say
-# "build-project" too.
+# PAC doesn't resolve pipelineRef/taskRef against objects already sitting in
+# the cluster -- it only knows Pipelines/Tasks it can fetch and inline itself
+# at resolve time, so every Task the Pipeline references (not just the
+# Pipeline itself) needs to be reachable through these annotations too:
+#   - "git-clone" is a bare Tekton Hub name (no local file -- it was applied
+#     straight from the catalog originally), which PAC resolves against the
+#     Hub instead of a URL.
+#   - the rest are raw-file URLs into this repo's own tekton/ task
+#     definitions, fetched with the same provider.token as the pipeline
+#     annotation above (private repo).
+# PAC matches each fetched file back to the taskRef.name used inside
+# tekton/02-pipeline.yaml by the fetched file's own metadata.name.
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
@@ -27,6 +32,7 @@ metadata:
     pipelinesascode.tekton.dev/on-target-branch: "[main]"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/pipeline: "https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/02-pipeline.yaml"
+    pipelinesascode.tekton.dev/task: "[git-clone, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/03-buildah-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/04-deploy-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/05-newman-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/06-selenium-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/08-cleanup-task.yaml]"
 spec:
   pipelineRef:
     name: build-project
