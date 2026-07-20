@@ -10,6 +10,14 @@
 # this file -- without it, every push adds another set of pods that never
 # get cleaned up, which is exactly what exhausted the namespace's 50-pod
 # quota before (see tekton/04-deploy-task.yaml's history).
+#
+# PAC doesn't resolve pipelineRef against Pipeline objects already sitting in
+# the cluster -- it only knows Pipelines it can fetch and inline itself, so
+# the "pipeline" annotation below points it at the raw file (fetched using
+# the provider.token in tekton/10-pac-repository.yaml, since this is a
+# private repo). PAC matches it to spec.pipelineRef.name by the fetched
+# file's own metadata.name, which is why that still has to say
+# "build-project" too.
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
@@ -18,6 +26,7 @@ metadata:
     pipelinesascode.tekton.dev/on-event: "[push]"
     pipelinesascode.tekton.dev/on-target-branch: "[main]"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/pipeline: "https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/02-pipeline.yaml"
 spec:
   pipelineRef:
     name: build-project
