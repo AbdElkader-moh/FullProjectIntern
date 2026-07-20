@@ -16,12 +16,14 @@ jobs:
   trigger-pipeline:
     runs-on: ubuntu-latest
     steps:
-      - name: Log in to OpenShift
-        uses: redhat-actions/oc-login@v1
-        with:
-          openshift_server_url: https://api.rm3.7wse.p1.openshiftapps.com:6443
-          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-          namespace: beyond-code-dev
+        name: Test
 
-      - name: Start build-project PipelineRun
-        run: oc create -f tekton/07-pipelinerun.yaml
+        on:
+          workflow_dispatch:
+
+        jobs:
+          test:
+            runs-on: ubuntu-latest
+
+            steps:
+              - run: echo "Hello"
