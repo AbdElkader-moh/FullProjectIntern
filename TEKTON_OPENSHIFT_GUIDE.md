@@ -13,7 +13,7 @@ follow along and know exactly what to do to continue the work.
 
 ---
 
-## 0. Concepts, in plain language
+## 0. Concepts, in plain language..
 
 Read this once before diving into the steps — everything below assumes you know what these words mean.
 
