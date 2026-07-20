@@ -53,7 +53,7 @@ needing to touch or restart anything already running in prod.
 # Preview what would be applied
 oc kustomize openshift/overlays/prod
 kubectl kustomize openshift/overlays/test
-
+/
 # Apply (Tekton does this itself -- see tekton/04-deploy-task.yaml -- but for
 # a manual test, swap PLACEHOLDER for a real, already-pushed tag first)
 oc apply -k openshift/overlays/prod
