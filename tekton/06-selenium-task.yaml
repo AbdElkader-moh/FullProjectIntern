@@ -38,15 +38,12 @@ spec:
 
   steps:
     - name: selenium-tests
-      image: maven:3.9-eclipse-temurin-11
+      image: maven:3.9-eclipse-temurin-11-alpine
       script: |
         #!/bin/sh
         set -e
 
-        whoami
-        id
-        apt-get update
-        apt-get install -y chromium
+        apk add --no-cache chromium chromium-chromedriver
 
         export APP_URL="$(params.APP_URL)"
 
