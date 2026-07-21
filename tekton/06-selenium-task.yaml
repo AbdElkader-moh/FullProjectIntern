@@ -44,7 +44,8 @@ spec:
         set -e
 
         apk add --no-cache chromium chromium-chromedriver
-
+        
+        export CHROMEDRIVER_PATH=/usr/bin/chromedriver
         export APP_URL="$(params.APP_URL)"
 
         cd "$(workspaces.source.path)/FrontendTestingFramework"
