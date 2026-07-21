@@ -1,4 +1,4 @@
-# 🌆 Bayond Code — Smart City IoT Monitoring Platform
+# 🌆 Beyond Code — Smart City IoT Monitoring Platform
 
 > A full-stack, containerized Smart City platform that collects, processes, and visualizes real-time IoT sensor data for **Traffic**, **Air Quality**, and **Street Lighting** management. The system provides live dashboards, configurable alerting, rich analytics, and an end-to-end automated testing suite — all orchestrated through Docker Compose and a Jenkins CI/CD pipeline.
 
