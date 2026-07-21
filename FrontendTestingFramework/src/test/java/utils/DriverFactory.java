@@ -49,7 +49,13 @@ public class DriverFactory {
                 break;
             case "chrome":
             default:
-                WebDriverManager.chromedriver().setup();
+                String chromeDriverPath = System.getenv("CHROMEDRIVER_PATH");
+
+                if (chromeDriverPath != null && !chromeDriverPath.isBlank()) {
+                    System.setProperty("webdriver.chrome.driver", chromeDriverPath);
+                } else {
+                    WebDriverManager.chromedriver().setup();
+                }
                 ChromeOptions chromeOptions = new ChromeOptions();
                 if (headless) {
                     chromeOptions.addArguments("--headless=new");
