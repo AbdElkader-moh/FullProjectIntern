@@ -44,6 +44,14 @@ spec:
         set -e
 
         apk add --no-cache chromium chromium-chromedriver
+        echo "=== Browser diagnostics ==="
+        which chromium || true
+        which chromium-browser || true
+        which chromedriver || true
+        chromium --version || true
+        chromium-browser --version || true
+        chromedriver --version || true
+        ls -l /usr/bin/chromium* /usr/bin/chromedriver || true
         
         export CHROMEDRIVER_PATH=/usr/bin/chromedriver
         export APP_URL="$(params.APP_URL)"
