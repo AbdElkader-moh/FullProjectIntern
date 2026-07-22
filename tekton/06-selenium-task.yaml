@@ -1,6 +1,6 @@
 # Runs the Selenium/TestNG suite (FrontendTestingFramework/) against the
 # just-deployed test stack.
-#comment
+#comments
 # ConfigReader.get() in that project already resolves config in this
 # priority order: JVM system property -> environment variable ->
 # config.properties -> throw (see FrontendTestingFramework/src/test/java/
