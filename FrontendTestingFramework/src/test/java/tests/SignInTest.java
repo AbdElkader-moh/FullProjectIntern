@@ -28,7 +28,10 @@ public class SignInTest extends BaseTest {
         signInPage.open();
     }
 
-    @Test(description = "TC-015: Successful login with correct credentials", groups = {"sanity"})
+    @Test(description = "TC-015: Successful login with correct credentials", 
+          groups = {"sanity"},
+          dependsOnGroups = {"sanity-setup"}
+         )
     @Story("Happy path login")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Enters correct email and password. Expects redirect to /home.")
