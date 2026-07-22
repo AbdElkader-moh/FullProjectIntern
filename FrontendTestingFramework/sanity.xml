@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="SmartCity Sanity Test Suite" verbose="1">
+
+<suite name="SmartCity Sanity Test Suite"
+       verbose="1"
+       parallel="false"
+       preserve-order="true">
 
     <listeners>
         <listener class-name="listeners.TestListener"/>
@@ -8,12 +12,26 @@
         <listener class-name="listeners.AllureListener"/>
     </listeners>
 
-    <test name="Sanity Tests">
+    <!-- Run account creation first -->
+    <test name="Sanity Setup" preserve-order="true">
+        <classes>
+            <class name="tests.SignUpTest">
+                <methods>
+                    <include name="TC002_signUpWithPhoto"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Then run the remaining sanity tests -->
+    <test name="Sanity Tests" preserve-order="true">
         <groups>
             <run>
                 <include name="sanity"/>
+                <exclude name="sanity-setup"/>
             </run>
         </groups>
+
         <packages>
             <package name="tests.*"/>
         </packages>
