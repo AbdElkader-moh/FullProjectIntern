@@ -29,8 +29,7 @@ public class SignInTest extends BaseTest {
     }
 
     @Test(description = "TC-015: Successful login with correct credentials", 
-          groups = {"sanity"},
-          dependsOnGroups = {"sanity-setup"}
+          groups = {"sanity"}
          )
     @Story("Happy path login")
     @Severity(SeverityLevel.BLOCKER)
