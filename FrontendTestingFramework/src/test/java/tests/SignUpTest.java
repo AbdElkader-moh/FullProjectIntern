@@ -40,7 +40,9 @@ public class SignUpTest extends BaseTest {
         System.out.println("TC-001 PASSED");
     }
 
-    @Test(description = "TC-002: Successful signup with all valid fields and a photo", groups = {"sanity"})
+    @Test(
+        description = "TC-002: Successful signup with all valid fields and a photo",
+        groups = {"sanity", "sanity-setup"})
     @Story("Happy path registration")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Submits the signup form with all valid inputs including a photo. Expects redirect to /signin.")
@@ -48,8 +50,8 @@ public class SignUpTest extends BaseTest {
         String imagePath = ConfigReader.getSignupImagePath();
         signUpPage.submitRegistration(
                 "Nadin", "Abdelaal",
-                TestDataProvider.generateUniqueEmail("tc002"),
-                TestDataProvider.minLengthPassword(),
+                TestDataProvider.getEmail(),
+                TestDataProvider.getPassword(),
                 imagePath
         );
         Assert.assertTrue(signUpPage.redirectedToSignIn(),
