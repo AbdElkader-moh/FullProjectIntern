@@ -59,6 +59,7 @@ spec:
         cd "$(workspaces.source.path)/FrontendTestingFramework"
 
         mvn -B test \
-          -Dheadless=true \
-          -Dwebdriver.chrome.driver=/usr/bin/chromedriver
-          -Dapp.sensor.url="$(params.SENSOR_SERVICE_URL)"
+        -DsuiteXmlFile=sanity.xml \
+        -Dheadless=true \
+        -Dwebdriver.chrome.driver=/usr/bin/chromedriver \
+        -Dapp.sensor.url="$(params.SENSOR_SERVICE_URL)"
