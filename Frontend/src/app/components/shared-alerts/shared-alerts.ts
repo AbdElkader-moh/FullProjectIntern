@@ -101,22 +101,32 @@ export class SharedAlerts implements OnInit, OnDestroy {
     this.toastTimers.clear();
   }
 
-  private loadUser(): void {
-    const current = this.authService.currentUser;
+ private loadUser(): void {
+  const current = this.authService.currentUser;
 
-    if (current) {
-      this.user = current;
-      return;
+  if (current) {
+    this.user = current;
+
+    if (!this.stompClient?.active) {
+      this.connectWebSocket();
     }
 
-    this.authService.getProfile().subscribe({
-      next: (user: UserResponse) => {
-        this.user = user;
-        this.cdr.detectChanges();
-      },
-      error: () => this.router.navigate(['/signin']),
-    });
+    return;
   }
+
+  this.authService.getProfile().subscribe({
+    next: (user: UserResponse) => {
+      this.user = user;
+
+      if (!this.stompClient?.active) {
+        this.connectWebSocket();
+      }
+
+      this.cdr.detectChanges();
+    },
+    error: () => this.router.navigate(['/signin']),
+  });
+}
 
   get firstName(): string {
     return this.user?.firstName || 'User';
