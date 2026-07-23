@@ -798,7 +798,10 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "noauth"
+      }
     },
     {
       "name": "3️⃣  Sensor Service — GET Traffic (port 8081)",

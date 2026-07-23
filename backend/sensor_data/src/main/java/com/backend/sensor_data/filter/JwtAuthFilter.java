@@ -31,7 +31,14 @@ public class JwtAuthFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
 
-        if (!request.getRequestURI().startsWith("/api/sensors")) {
+        // Sensor ingestion (POST) is called by the simulator and other IoT
+        // devices, which have no user account to authenticate as -- only the
+        // dashboard reads (GET) go through a logged-in browser session and
+        // stay behind the JWT check.
+        boolean isSensorEndpoint = request.getRequestURI().startsWith("/api/sensors");
+        boolean isSensorIngest = isSensorEndpoint && "POST".equalsIgnoreCase(request.getMethod());
+
+        if (!isSensorEndpoint || isSensorIngest) {
             chain.doFilter(req, res);
             return;
         }

@@ -1903,7 +1903,10 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "noauth"
+      }
     },
     {
       "name": "💡 Sensor Data — Street Light",
@@ -2370,7 +2373,10 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "noauth"
+      }
     },
     {
       "name": "🌫 Sensor Data — Air Pollution",
@@ -2899,7 +2905,10 @@
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "noauth"
+      }
     },
     {
       "name": "⚙️ User Settings",
@@ -3520,6 +3529,9 @@
                 "sensors",
                 "air"
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "response": []
