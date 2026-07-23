@@ -53,10 +53,16 @@ public class AirPollutionAlertsTest extends BaseTest {
 
             // Carbon Monoxide above 40
             settingsPage.createThreshold("air quality", 0, 40, true);
+            Assert.assertFalse(settingsPage.isThresholdErrorDisplayed(),
+                    "[Setup] FAILED: Carbon Monoxide threshold was rejected by the server — "
+                            + "TC126 would otherwise fail with a misleading toast timeout.");
             System.out.println("[Setup] Carbon Monoxide > 40 saved");
 
             // Ozone below 30
             settingsPage.createThreshold("air quality", 1, 30, false);
+            Assert.assertFalse(settingsPage.isThresholdErrorDisplayed(),
+                    "[Setup] FAILED: Ozone threshold was rejected by the server — "
+                            + "TC126 would otherwise fail with a misleading toast timeout.");
             System.out.println("[Setup] Ozone < 30 saved");
 
         } catch (Exception e) {
@@ -256,9 +262,15 @@ public class AirPollutionAlertsTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Seeds a new alert while on the page and verifies the toast stack shows it.")
     public void TC126_toastNotificationPopupDisplays() {
-        SensorApiClient.postHighCarbonMonoxideReading();
-        wait.waitForCondition(d -> alertsPage.hasActiveToasts());
-        Assert.assertTrue(alertsPage.hasActiveToasts(),
+        // The WS/STOMP subscription in shared-alerts.ts finishes connecting shortly
+        // after page load, off the critical path that alertsPage.open() waits on.
+        // If we post before it's subscribed, the broadcast is lost (no replay), so
+        // retry the seed post — a later attempt is guaranteed to land after connect.
+        boolean toastAppeared = utils.RetryHelper.retryUntilTrue(() -> {
+            SensorApiClient.postHighCarbonMonoxideReading();
+            return new utils.WaitHelper(driver, 10).waitForCondition(d -> alertsPage.hasActiveToasts());
+        }, "wait for toast after seeding Carbon Monoxide alert");
+        Assert.assertTrue(toastAppeared,
                 "TC-126 FAILED: Toast notification did not appear.");
         
         // Clean up toast for the next test

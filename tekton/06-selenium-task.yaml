@@ -39,6 +39,13 @@ spec:
   steps:
     - name: selenium-tests
       image: maven:3.9-eclipse-temurin-11-alpine
+      computeResources:
+        requests:
+          cpu: "1000m"
+          memory: "2Gi"
+        limits:
+          cpu: "2"
+          memory: "4Gi"
       script: |
         #!/bin/sh
         set -e

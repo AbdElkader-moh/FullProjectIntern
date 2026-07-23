@@ -53,10 +53,16 @@ public class StreetLightAlertsTest extends BaseTest {
 
             // Power Consumption above 100 (Power Consumption is index 1)
             settingsPage.createThreshold("street light", 1, 100, true);
+            Assert.assertFalse(settingsPage.isThresholdErrorDisplayed(),
+                    "[Setup] FAILED: Power Consumption threshold was rejected by the server — "
+                            + "TC183 would otherwise fail with a misleading toast timeout.");
             System.out.println("[Setup] Power Consumption > 100 saved");
 
             // Brightness Level below 30 (Brightness Level is index 0)
             settingsPage.createThreshold("street light", 0, 30, false);
+            Assert.assertFalse(settingsPage.isThresholdErrorDisplayed(),
+                    "[Setup] FAILED: Brightness Level threshold was rejected by the server — "
+                            + "TC183 would otherwise fail with a misleading toast timeout.");
             System.out.println("[Setup] Brightness Level < 30 saved");
 
         } catch (Exception e) {
@@ -252,9 +258,15 @@ public class StreetLightAlertsTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Seeds a new alert while on the page and verifies the toast stack shows it.")
     public void TC183_toastNotificationPopupDisplays() {
-        SensorApiClient.postHighPowerConsumptionReading();
-        wait.waitForCondition(d -> alertsPage.hasActiveToasts());
-        Assert.assertTrue(alertsPage.hasActiveToasts(),
+        // The WS/STOMP subscription in shared-alerts.ts finishes connecting shortly
+        // after page load, off the critical path that alertsPage.open() waits on.
+        // If we post before it's subscribed, the broadcast is lost (no replay), so
+        // retry the seed post — a later attempt is guaranteed to land after connect.
+        boolean toastAppeared = utils.RetryHelper.retryUntilTrue(() -> {
+            SensorApiClient.postHighPowerConsumptionReading();
+            return new utils.WaitHelper(driver, 10).waitForCondition(d -> alertsPage.hasActiveToasts());
+        }, "wait for toast after seeding Power Consumption alert");
+        Assert.assertTrue(toastAppeared,
                 "TC-183 FAILED: Toast notification did not appear.");
         
         // Clean up toast for the next test
