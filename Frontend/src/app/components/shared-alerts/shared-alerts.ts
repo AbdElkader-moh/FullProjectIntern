@@ -171,6 +171,7 @@ export class SharedAlerts implements OnInit, OnDestroy {
 
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS('/ws'),
+      reconnectDelay: 5000,
       onConnect: () => {
         this.stompClient.subscribe(`/topic/alerts/${userId}`, (msg: IMessage) => {
           const alert = JSON.parse(msg.body);
