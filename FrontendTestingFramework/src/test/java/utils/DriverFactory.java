@@ -6,8 +6,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.logging.LogType;
+import org.openqa.selenium.logging.LoggingPreferences;
 
 import java.time.Duration;
+import java.util.logging.Level;
 
 /**
  * DriverFactory: Manages WebDriver lifecycle per thread (thread-safe for parallel runs).
@@ -65,6 +68,14 @@ public class DriverFactory {
                 chromeOptions.addArguments("--window-size=1920,1080");
                 chromeOptions.addArguments("--disable-extensions");
                 chromeOptions.addArguments("--remote-allow-origins=*");
+
+                // Without this, driver.manage().logs().get(LogType.BROWSER) always
+                // comes back empty — there is no other way to see JS console errors
+                // (e.g. a thrown exception inside connectWebSocket()) from a CI run.
+                LoggingPreferences logPrefs = new LoggingPreferences();
+                logPrefs.enable(LogType.BROWSER, Level.ALL);
+                chromeOptions.setCapability("goog:loggingPrefs", logPrefs);
+
                 driver = new ChromeDriver(chromeOptions);
                 break;
         }
