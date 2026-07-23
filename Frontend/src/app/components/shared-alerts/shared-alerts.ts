@@ -166,7 +166,7 @@ export class SharedAlerts implements OnInit, OnDestroy {
   }
 
   private connectWebSocket(): void {
-    const userId = this.authService.currentUser?.id;
+    const userId = this.user?.id ?? this.authService.currentUser?.id;
     if (!userId) return;
 
     this.stompClient = new Client({
