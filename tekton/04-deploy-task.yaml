@@ -77,8 +77,8 @@ spec:
         SUFFIX=""
         [ "$(params.OVERLAY)" = "test" ] && SUFFIX="-test"
 
-        oc rollout status deployment/frontend${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
-        oc rollout status deployment/user-service${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
-        oc rollout status deployment/sensor-service${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
-        oc rollout status deployment/mysql${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
-        oc rollout status deployment/simulator${SUFFIX} -n "$(params.NAMESPACE)" --timeout=180s
+        oc rollout status deployment/frontend${SUFFIX} -n "$(params.NAMESPACE)" --timeout=240s
+        oc rollout status deployment/user-service${SUFFIX} -n "$(params.NAMESPACE)" --timeout=240s
+        oc rollout status deployment/sensor-service${SUFFIX} -n "$(params.NAMESPACE)" --timeout=240s
+        oc rollout status deployment/mysql${SUFFIX} -n "$(params.NAMESPACE)" --timeout=240s
+        oc rollout status deployment/simulator${SUFFIX} -n "$(params.NAMESPACE)" --timeout=240s
