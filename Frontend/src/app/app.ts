@@ -62,21 +62,10 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!userId) return;
 
     this.stompClient = new Client({
-      /**
-       * FIX — Issue 1 & WebSocket: Use SockJS webSocketFactory instead of brokerURL.
-       *
-       * Root cause: The previous implementation used `brokerURL: 'ws://localhost:8081/ws/websocket'`
-       * which attempts a raw WebSocket connection. However, the backend is configured with
-       * SockJS (`/ws` endpoint). SockJS requires its own client-side library and a different
-       * connection URL format. Using a raw WebSocket URL against a SockJS endpoint causes
-       * the handshake to fail silently — no alerts were ever received at the app level.
-       *
-       * Fix: Use `webSocketFactory: () => new SockJS(url)` which correctly initiates
-       * the SockJS handshake protocol with the Spring STOMP broker.
-       *
-       * This matches the working implementation in traffic-alerts.ts.
-       */
-      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      // Relative path so this resolves through nginx's /ws proxy in every
+      // environment. A hardcoded http://localhost:8081/ws only ever worked on
+      // a local dev machine where frontend and backend share a host.
+      webSocketFactory: () => new SockJS('/ws'),
 
       // FIX: Auto-reconnect after 5 seconds on disconnect (network interruption, container restart)
       reconnectDelay: 5_000,
