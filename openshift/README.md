@@ -1,4 +1,4 @@
-# OpenShift manifests (Kustomize)
+# OpenShift manifests (Kustomize)..
 
 Deploys frontend, user-service, sensor-service, mysql, and simulator to the
 Developer Sandbox project. Both environments below run in the **same**
