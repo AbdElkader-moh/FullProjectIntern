@@ -5,7 +5,7 @@
 # instead of mysql/user-service -- that's plain opaque string data as far as
 # Kustomize is concerned. So these values are hand-suffixed here, matching
 # the -test names the Deployments/Services in this overlay actually get.
-#
+#comment
 # This is what keeps the temporary test stack from silently reading/writing
 # production's database through the real mysql/user-service/sensor-service.
 apiVersion: v1
