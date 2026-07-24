@@ -15,6 +15,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,11 +29,15 @@ import com.backend.user.dto.UpdateProfilePictureRequest;
 import com.backend.user.dto.UserResponse;
 import com.backend.user.entity.User;
 import com.backend.user.exception.ConflictException;
+import com.backend.user.exception.ExternalServiceException;
 import com.backend.user.exception.NotFoundException;
 import com.backend.user.exception.UnauthorizedException;
 import com.backend.user.repository.UserRepository;
 import com.backend.user.util.JwtUtil;
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Uploader;
+
+import java.io.IOException;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -111,6 +116,45 @@ class UserServiceImplTest {
         when(userRepository.existsByEmail("test@test.com")).thenReturn(true);
 
         assertThrows(ConflictException.class, () -> userService.signup(request));
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void signup_cloudinaryNotConfigured_shouldThrowExternalServiceException() {
+        UserServiceImpl serviceWithNoCloudinary = new UserServiceImpl(
+                userRepository, settingsRepository, notificationRepository, null, jwtUtil);
+
+        SignupRequest request = new SignupRequest();
+        request.setEmail("test@test.com");
+        request.setFirstName("Test");
+        request.setLastName("User");
+        request.setPassword("123456");
+        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{1, 2, 3}));
+
+        when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
+
+        assertThrows(ExternalServiceException.class, () -> serviceWithNoCloudinary.signup(request));
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void signup_cloudinaryUploadFails_shouldThrowExternalServiceException() throws IOException {
+        SignupRequest request = new SignupRequest();
+        request.setEmail("test@test.com");
+        request.setFirstName("Test");
+        request.setLastName("User");
+        request.setPassword("123456");
+        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{1, 2, 3}));
+
+        when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
+
+        Uploader uploader = mock(Uploader.class);
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(byte[].class), any())).thenThrow(new IOException("network error"));
+
+        assertThrows(ExternalServiceException.class, () -> userService.signup(request));
 
         verify(userRepository, never()).save(any(User.class));
     }
@@ -256,6 +300,47 @@ class UserServiceImplTest {
 
         assertThrows(NotFoundException.class,
                 () -> userService.updateProfilePicture(request, session));
+    }
+
+    @Test
+    void updateProfilePicture_cloudinaryNotConfigured_shouldThrowExternalServiceException() {
+        UserServiceImpl serviceWithNoCloudinary = new UserServiceImpl(
+                userRepository, settingsRepository, notificationRepository, null, jwtUtil);
+
+        UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
+        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{1, 2, 3}));
+
+        when(session.getAttribute("userId")).thenReturn(1L);
+
+        User user = new User();
+        user.setId(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThrows(ExternalServiceException.class,
+                () -> serviceWithNoCloudinary.updateProfilePicture(request, session));
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateProfilePicture_cloudinaryUploadFails_shouldThrowExternalServiceException() throws IOException {
+        UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
+        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{1, 2, 3}));
+
+        when(session.getAttribute("userId")).thenReturn(1L);
+
+        User user = new User();
+        user.setId(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        Uploader uploader = mock(Uploader.class);
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(byte[].class), any())).thenThrow(new IOException("network error"));
+
+        assertThrows(ExternalServiceException.class,
+                () -> userService.updateProfilePicture(request, session));
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     // ---------- CHANGE PASSWORD TESTS ----------
