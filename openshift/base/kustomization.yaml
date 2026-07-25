@@ -7,7 +7,6 @@ kind: Kustomization
 
 resources:
   - 00-configmaps.yaml
-  - 01-secrets.yaml
   - 02-mysql-pvc.yaml
   - 03-mysql-deployment.yaml
   - 04-mysql-service.yaml
