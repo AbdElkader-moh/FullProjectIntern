@@ -4,6 +4,7 @@ metadata:
   name: mysql
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   strategy:
     type: Recreate
   selector:
