@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,7 @@ import com.backend.user.entity.Notification;
 import com.backend.user.entity.Settings;
 import com.backend.user.entity.User;
 import com.backend.user.exception.ConflictException;
+import com.backend.user.exception.ExternalServiceException;
 import com.backend.user.exception.NotFoundException;
 import com.backend.user.exception.UnauthorizedException;
 import com.backend.user.repository.NotificationRepository;
@@ -77,7 +77,7 @@ public class UserServiceImpl implements UserService {
         try {
             if (request.getProfilePicture() != null && !request.getProfilePicture().isEmpty()) {
                 if (cloudinary == null) {
-                    throw new RuntimeException("Server configuration error: Cloudinary secrets missing. Image upload disabled.");
+                    throw new ExternalServiceException("Server configuration error: Cloudinary secrets missing. Image upload disabled.");
                 }
                 Map uploadResult = cloudinary.uploader().upload(
                         request.getProfilePicture().getBytes(),
@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
                 user.setProfilePicture("");
             }
         } catch (IOException e) {
-            throw new RuntimeException("Could not upload profile picture to Cloudinary.");
+            throw new ExternalServiceException("Could not upload profile picture to Cloudinary.");
         }
 
         if (request.getPassword() == null || request.getPassword().length() < 6) {
@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
         try {
             if (request.getProfilePicture() != null && !request.getProfilePicture().isEmpty()) {
                 if (cloudinary == null) {
-                    throw new RuntimeException("Server configuration error: Cloudinary secrets missing. Image upload disabled.");
+                    throw new ExternalServiceException("Server configuration error: Cloudinary secrets missing. Image upload disabled.");
                 }
                 Map uploadResult = cloudinary.uploader().upload(
                         request.getProfilePicture().getBytes(),
@@ -159,7 +159,7 @@ public class UserServiceImpl implements UserService {
                 user.setProfilePicture(uploadResult.get("url").toString());
             }
         } catch (IOException e) {
-            throw new RuntimeException("Could not upload profile picture to Cloudinary.");
+            throw new ExternalServiceException("Could not upload profile picture to Cloudinary.");
         }
 
         User savedUser = userRepository.save(user);
@@ -219,7 +219,7 @@ public class UserServiceImpl implements UserService {
         }
         return settingsRepository.findByUserId(userId).stream()
                 .map(s -> new SettingsDTO(s.getId(), s.getType(), s.getMetric(), s.getThresholdValue(), s.getAlertType()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -306,7 +306,7 @@ public class UserServiceImpl implements UserService {
                 n.getId(), n.getType(), n.getMetric(), n.getValue(),
                 n.getThresholdValue(), n.getAlertType(), n.getLocation(),
                 n.getIsRead(), n.getCreatedAt()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
