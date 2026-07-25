@@ -29,6 +29,7 @@ import com.backend.sensor_data.dto.TrafficDataDto;
 import com.backend.sensor_data.dto.TrafficStatsDto;
 import com.backend.sensor_data.dto.TrafficTrendDto;
 import com.backend.sensor_data.entity.CongestionLevel;
+import com.backend.sensor_data.entity.PollutionLevel;
 import com.backend.sensor_data.entity.Status;
 import com.backend.sensor_data.entity.TrafficData;
 import com.backend.sensor_data.service.SensorDataService;
@@ -55,7 +56,6 @@ public class SensorController {
     // Extracted here instead of a formal pattern since all three call
     // sites live in this one class; see report notes on Template Method.
     // ---------------------------------------------------------------
-
     /**
      * Validates page/size params. Returns an error ResponseEntity if invalid,
      * or null if the params are valid and processing should continue.
@@ -73,9 +73,9 @@ public class SensorController {
     }
 
     /**
-     * Parses a "field,dir" sort param against an allowed field set.
-     * Throws IllegalArgumentException on an unrecognized field, which
-     * callers catch and turn into a 400 response.
+     * Parses a "field,dir" sort param against an allowed field set. Throws
+     * IllegalArgumentException on an unrecognized field, which callers catch
+     * and turn into a 400 response.
      */
     private Sort buildSort(String sort, Set<String> allowedSortFields) {
         if (sort == null || sort.isBlank()) {
@@ -88,7 +88,8 @@ public class SensorController {
         }
         Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
-        return Sort.by(dir, field);
+
+        return Sort.by(dir, field); // pass through unmodified
     }
 
     @PostMapping("/traffic")
@@ -189,7 +190,7 @@ public class SensorController {
     }
 
     private static final Set<String> AIR_SORT_FIELDS = Set.of(
-            "timestamp", "location", "co", "ozone", "pollutionLevel");
+            "timestamp", "location", "co", "ozone", "pollutionLevel", "pm2_5", "pm10", "no2", "so2");
 
     @GetMapping("/air")
     @Operation(summary = "Get air pollution sensor data", description = "Retrieves air pollution readings with optional filtering by location, date range, sorting, and pagination.")
@@ -199,6 +200,7 @@ public class SensorController {
     })
     public ResponseEntity<?> getAirData(
             @RequestParam(required = false) String location,
+            @RequestParam(required = false) PollutionLevel pollutionLevel,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(defaultValue = "0") int page,
@@ -219,7 +221,7 @@ public class SensorController {
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
-        return ResponseEntity.ok(sensorDataService.getAirData(location, from, to, pageable));
+        return ResponseEntity.ok(sensorDataService.getAirData(location, pollutionLevel, from, to, pageable));
     }
 
     @GetMapping("/air/stats")
