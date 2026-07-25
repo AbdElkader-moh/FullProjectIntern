@@ -63,6 +63,9 @@ public class UserServiceImpl implements UserService {
     );
     private static final Set<String> VALID_ALERT_TYPES = Set.of("above", "below");
 
+    private static final String SESSION_USER_ID = "userId";
+    private static final String USER_NOT_FOUND_MESSAGE = "User not found.";
+
     @Override
     public UserResponse signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -111,7 +114,7 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("Invalid email or password.");
         }
 
-        session.setAttribute("userId", user.getId());
+        session.setAttribute(SESSION_USER_ID, user.getId());
         return "Login successful";
     }
 
@@ -124,28 +127,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getCurrentUser(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
 
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found."));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND_MESSAGE));
 
         return mapToResponse(user);
     }
 
     @Override
     public UserResponse updateProfilePicture(UpdateProfilePictureRequest request, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
 
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found."));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND_MESSAGE));
 
         try {
             if (request.getProfilePicture() != null && !request.getProfilePicture().isEmpty()) {
@@ -184,14 +187,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(ChangePasswordRequest request, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
 
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found."));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND_MESSAGE));
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             throw new UnauthorizedException("Old password is incorrect.");
@@ -213,7 +216,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<SettingsDTO> getSettings(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
@@ -224,7 +227,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SettingsDTO addSetting(SettingsDTO req, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
@@ -236,7 +239,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<SettingsDTO> updateSettings(List<SettingsDTO> requests, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
@@ -271,7 +274,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SettingsDTO updateSetting(String id, SettingsDTO request, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
@@ -289,7 +292,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteSetting(String id, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
@@ -303,7 +306,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<NotificationDTO> getNotifications(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
@@ -314,7 +317,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void markNotificationAsRead(String id, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
@@ -329,7 +332,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void markAllNotificationsAsRead(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
@@ -342,7 +345,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteNotification(String id, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(SESSION_USER_ID);
         if (userId == null) {
             throw new UnauthorizedException("You are not logged in.");
         }
