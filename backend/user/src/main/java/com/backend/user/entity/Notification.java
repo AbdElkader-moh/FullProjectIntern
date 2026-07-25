@@ -2,6 +2,7 @@ package com.backend.user.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "notifications")
@@ -34,7 +35,7 @@ public class Notification {
     private Boolean isRead = false;
 
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now(ZoneId.systemDefault());
 
     public Notification() {
         this.id = java.util.UUID.randomUUID().toString();

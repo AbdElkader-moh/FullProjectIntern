@@ -1,8 +1,9 @@
+
 package com.backend.user.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-
+import java.time.ZoneId;
 @Entity
 @Table(name = "users")
 public class User {
@@ -32,11 +33,15 @@ public class User {
     private LocalDateTime createdAt;
 
     public User() {
+        
+    // Intentionally empty: required by JPA/Hibernate to instantiate
+    // this entity via reflection. No initialization needed here.
+
     }
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 
     public Long getId() {
