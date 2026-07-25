@@ -21,7 +21,7 @@ openshift/
         └── configmaps.yaml
 ```
 
-## Why prod and test each have their own `configmaps.yaml`
+## Why prod and test each have their own `configmaps.yaml`..
 
 `backend-config`, `simulator-config`, and the nginx proxy config all hardcode
 Service DNS names (`mysql`, `user-service`, `sensor-service`). Since the test
