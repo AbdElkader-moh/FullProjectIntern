@@ -26,6 +26,13 @@ class SettingsDTOTest {
 
     // ---------- Traffic / trafficDensity (0-500) ----------
 
+    // Sonar's S1612 ("replace lambda with method reference") is a false positive here:
+    // assertDoesNotThrow has two overloads (Executable and ThrowingSupplier<T>), and a bare
+    // void method reference like s::validateThreshold is ambiguous between them — it fails
+    // to compile (confirmed via mvn test). The lambda block disambiguates to Executable.
+    // Suppressed rather than "fixed" back into a build break; see java:S2143/JwtUtil
+    // precedent in SonarQube-Fixes-JwtUtil-and-Duplicated-Literals-Log.md for the same pattern.
+    @SuppressWarnings("java:S1612")
     @ParameterizedTest
     @CsvSource({
             "trafficDensity, 0",
@@ -54,6 +61,7 @@ class SettingsDTOTest {
 
     // ---------- Traffic / avgSpeed (0-120) ----------
 
+    @SuppressWarnings("java:S1612") // see explanation above trafficDensity_withinRange_validAliases_noException
     @ParameterizedTest
     @CsvSource({
             "avgSpeed, 0",
@@ -81,6 +89,7 @@ class SettingsDTOTest {
 
     // ---------- Air / co (0-50) ----------
 
+    @SuppressWarnings("java:S1612") // see explanation above trafficDensity_withinRange_validAliases_noException
     @ParameterizedTest
     @CsvSource({
             "co, 0",
@@ -100,6 +109,7 @@ class SettingsDTOTest {
 
     // ---------- Air / ozone (0-300) ----------
 
+    @SuppressWarnings("java:S1612") // see explanation above trafficDensity_withinRange_validAliases_noException
     @ParameterizedTest
     @CsvSource({
             "ozone, 0",
@@ -126,6 +136,7 @@ class SettingsDTOTest {
 
     // ---------- Light / brightnessLevel (0-100) ----------
 
+    @SuppressWarnings("java:S1612") // see explanation above trafficDensity_withinRange_validAliases_noException
     @ParameterizedTest
     @CsvSource({
             "brightnessLevel, 0",
@@ -145,6 +156,7 @@ class SettingsDTOTest {
 
     // ---------- Light / powerConsumption (0-5000) ----------
 
+    @SuppressWarnings("java:S1612") // see explanation above trafficDensity_withinRange_validAliases_noException
     @ParameterizedTest
     @CsvSource({
             "powerConsumption, 0",
@@ -195,6 +207,7 @@ class SettingsDTOTest {
         assertEquals("alertType must be 'above' or 'below'.", ex.getMessage());
     }
 
+    @SuppressWarnings("java:S1612") // see explanation above trafficDensity_withinRange_validAliases_noException
     @ParameterizedTest
     @CsvSource({"above", "ABOVE", "Above", "below", "BELOW", "Below"})
     void alertType_caseInsensitive_valid(String alertType) {
@@ -204,6 +217,7 @@ class SettingsDTOTest {
 
     // ---------- overload delegating to instance fields ----------
 
+    @SuppressWarnings("java:S1612") // see explanation above trafficDensity_withinRange_validAliases_noException
     @Test
     void validateThreshold_noArgOverload_delegatesToInstanceFields() {
         SettingsDTO s = dto("Air", "ozone", 100f, "above");
