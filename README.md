@@ -31,7 +31,7 @@
 
 ---
 
-## 🌟 Project Overview.
+## 🌟 Project Overview...
 
 Bayond Code is an enterprise-grade **IoT integration layer and monitoring platform** built for smart city infrastructure. It provides city operators and analysts with a unified interface to:
 
