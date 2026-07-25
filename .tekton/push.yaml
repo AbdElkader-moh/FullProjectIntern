@@ -32,13 +32,15 @@ metadata:
     pipelinesascode.tekton.dev/on-target-branch: "[main]"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/pipeline: "https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/02-pipeline.yaml"
-    pipelinesascode.tekton.dev/task: "[git-clone, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/03-buildah-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/04-deploy-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/05-newman-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/06-selenium-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/08-cleanup-task.yaml]"
+    pipelinesascode.tekton.dev/task: "[git-clone, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/03-buildah-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/04-deploy-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/05-newman-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/06-selenium-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/08-cleanup-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/09-unit-test-task.yaml, https://raw.githubusercontent.com/AbdElkader-moh/FullProjectIntern/main/tekton/11-sonar-task.yaml]"
 spec:
   pipelineRef:
     name: build-project
   params:
     - name: repo-url
       value: "{{ repo_url }}"
+    - name: sonar-organization
+      value: abdelkader-moh
   workspaces:
     - name: shared-workspace
       volumeClaimTemplate:

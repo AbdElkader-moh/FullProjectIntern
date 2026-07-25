@@ -12,6 +12,9 @@ spec:
   params:
     - name: repo-url
       type: string
+    - name: sonar-organization
+      type: string
+      description: SonarCloud organization key
 
   tasks:
 
@@ -45,9 +48,69 @@ spec:
         - name: source
           workspace: shared-workspace
 
-    - name: build-user-service
+    # Unit tests + SonarCloud gate the backend builds -- if either fails, the
+    # corresponding build-*-service task never runs, so nothing gets built,
+    # deployed, or exercised by the slow Newman/Selenium suites on top of
+    # code that's already known to be broken or below the quality bar.
+    - name: test-user-service
       runAfter:
         - clone
+      taskRef:
+        name: run-maven-tests
+      params:
+        - name: CONTEXT
+          value: backend/user
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: test-sensor-service
+      runAfter:
+        - clone
+      taskRef:
+        name: run-maven-tests
+      params:
+        - name: CONTEXT
+          value: backend/sensor_data
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: sonar-user-service
+      runAfter:
+        - test-user-service
+      taskRef:
+        name: sonarcloud-scan
+      params:
+        - name: CONTEXT
+          value: backend/user
+        - name: SONAR_ORGANIZATION
+          value: $(params.sonar-organization)
+        - name: SONAR_PROJECT_KEY
+          value: beyond-code-user-service
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: sonar-sensor-service
+      runAfter:
+        - test-sensor-service
+      taskRef:
+        name: sonarcloud-scan
+      params:
+        - name: CONTEXT
+          value: backend/sensor_data
+        - name: SONAR_ORGANIZATION
+          value: $(params.sonar-organization)
+        - name: SONAR_PROJECT_KEY
+          value: beyond-code-sensor-service
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: build-user-service
+      runAfter:
+        - sonar-user-service
       taskRef:
         name: kaniko-build-push
       params:
@@ -61,7 +124,7 @@ spec:
 
     - name: build-sensor-service
       runAfter:
-        - clone
+        - sonar-sensor-service
       taskRef:
         name: kaniko-build-push
       params:

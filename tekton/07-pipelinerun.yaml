@@ -12,6 +12,10 @@ spec:
   params:
     - name: repo-url
       value: https://github.com/AbdElkader-moh/FullProjectIntern.git
+    # TODO: replace with your real SonarCloud organization key
+    # (sonarcloud.io -> your org -> Administration -> Organization key).
+    - name: sonar-organization
+      value: abdelkader-moh
 
   workspaces:
 

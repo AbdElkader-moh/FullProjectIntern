@@ -1,0 +1,51 @@
+# Runs SonarCloud static analysis for a backend service, using the JUnit
+# results and JaCoCo coverage produced by run-maven-tests (see
+# 09-unit-test-task.yaml) in the same workspace.
+#
+# sonar.qualitygate.wait=true makes this Maven goal poll SonarCloud until the
+# Quality Gate result is computed and FAIL the task if the gate doesn't pass
+# -- not just if the scan upload itself errors. That's what makes this an
+# actual gate rather than a report nobody reads.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: sonarcloud-scan
+
+spec:
+  params:
+    - name: CONTEXT
+      type: string
+      description: Path (relative to the workspace root) to the Maven module to analyze, e.g. "backend/user"
+    - name: SONAR_ORGANIZATION
+      type: string
+      description: SonarCloud organization key
+    - name: SONAR_PROJECT_KEY
+      type: string
+      description: SonarCloud project key for this service
+
+  workspaces:
+    - name: source
+
+  steps:
+    - name: sonar-scan
+      # SonarCloud Cloud's scanner engine requires the JVM running it to be
+      # 21+ (separate from the project's own target bytecode version, which
+      # stays 17 per pom.xml -- the scanner just reads compiled .class files,
+      # it doesn't recompile them).
+      image: maven:3.9-eclipse-temurin-21
+      workingDir: $(workspaces.source.path)/$(params.CONTEXT)
+      env:
+        - name: SONAR_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: sonarcloud-creds
+              key: SONAR_TOKEN
+      script: |
+        #!/bin/sh
+        set -e
+        mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.organization=$(params.SONAR_ORGANIZATION) \
+          -Dsonar.projectKey=$(params.SONAR_PROJECT_KEY) \
+          -Dsonar.token=$SONAR_TOKEN \
+          -Dsonar.qualitygate.wait=true
