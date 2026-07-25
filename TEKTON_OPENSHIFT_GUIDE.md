@@ -264,6 +264,19 @@ imperatively too (none of it is safe to keep as committed YAML with real values)
      --docker-password=<your-dockerhub-token>
    ```
 
+3b. **SonarCloud token** (referenced by `tekton/11-sonar-task.yaml`). Generate one at
+    sonarcloud.io → My Account → Security, then:
+    ```bash
+    oc create secret generic sonarcloud-creds \
+      --from-literal=SONAR_TOKEN='...'
+    ```
+    Also make sure a project exists on SonarCloud (under your organization) for each key used in
+    `tekton/02-pipeline.yaml`'s `sonar-user-service` / `sonar-sensor-service` tasks
+    (`beyond-code-user-service`, `beyond-code-sensor-service`) — SonarCloud can auto-create them
+    on first analysis if "Auto-provisioning" is enabled for the org, otherwise create them by hand
+    first. And set the real org key in `tekton/07-pipelinerun.yaml`'s `sonar-organization` param
+    (currently a `REPLACE_ME_SONAR_ORG` placeholder).
+
 4. **The 3 ConfigMaps `deploy-overlay` reads from** — regenerate these every time anything under
    `openshift/base/` or `openshift/overlays/*/` changes:
    ```bash
@@ -288,6 +301,8 @@ imperatively too (none of it is safe to keep as committed YAML with real values)
    oc apply -f tekton/05-newman-task.yaml
    oc apply -f tekton/06-selenium-task.yaml
    oc apply -f tekton/08-cleanup-task.yaml
+   oc apply -f tekton/09-unit-test-task.yaml
+   oc apply -f tekton/11-sonar-task.yaml
    oc apply -f tekton/02-pipeline.yaml
    # git-clone is a standard Tekton Hub task, not defined in this repo:
    oc apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-clone/0.9/git-clone.yaml

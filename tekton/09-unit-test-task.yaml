@@ -1,0 +1,29 @@
+# Runs the Maven unit test suite (JUnit via Surefire, coverage via JaCoCo)
+# for a backend service.
+#
+# Both backend Dockerfiles build with `mvn clean package -DskipTests`, so
+# before this task existed, nothing in CI ever actually ran these tests --
+# this is the real gate. The Docker build keeps skipping them on purpose,
+# to avoid re-running the same suite twice; this task is what verifies them.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: run-maven-tests
+
+spec:
+  params:
+    - name: CONTEXT
+      type: string
+      description: Path (relative to the workspace root) to the Maven module to test, e.g. "backend/user"
+
+  workspaces:
+    - name: source
+
+  steps:
+    - name: test
+      image: maven:3.9-eclipse-temurin-17
+      workingDir: $(workspaces.source.path)/$(params.CONTEXT)
+      script: |
+        #!/bin/sh
+        set -e
+        mvn -B test
