@@ -28,7 +28,11 @@ spec:
 
   steps:
     - name: sonar-scan
-      image: maven:3.9-eclipse-temurin-17
+      # SonarCloud Cloud's scanner engine requires the JVM running it to be
+      # 21+ (separate from the project's own target bytecode version, which
+      # stays 17 per pom.xml -- the scanner just reads compiled .class files,
+      # it doesn't recompile them).
+      image: maven:3.9-eclipse-temurin-21
       workingDir: $(workspaces.source.path)/$(params.CONTEXT)
       env:
         - name: SONAR_TOKEN
