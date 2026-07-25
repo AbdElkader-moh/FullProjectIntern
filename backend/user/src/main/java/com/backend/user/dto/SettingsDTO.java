@@ -75,7 +75,8 @@ public class SettingsDTO {
     }
 
     public void validateThreshold(String type, String metric) {
-        float min, max;
+        float min;
+        float max;
 
         switch (type) {
             case "Traffic" -> {

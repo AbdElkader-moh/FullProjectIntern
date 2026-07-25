@@ -33,19 +33,28 @@ public class NotificationDTO {
     @Schema(description = "Timestamp when the notification was created")
     private LocalDateTime createdAt;
 
-    public NotificationDTO() {}
+    public NotificationDTO() {
+        // Intentionally empty: required for frameworks (e.g. Jackson deserialization)
+        // that instantiate this DTO via reflection and populate it using setters.
+    }
 
-    public NotificationDTO(String id, String type, String metric, Float value, Float thresholdValue,
-                           String alertType, String location, Boolean isRead, LocalDateTime createdAt) {
-        this.id = id;
-        this.type = type;
-        this.metric = metric;
-        this.value = value;
-        this.thresholdValue = thresholdValue;
-        this.alertType = alertType;
-        this.location = location;
-        this.isRead = isRead;
-        this.createdAt = createdAt;
+    /**
+     * Builds a NotificationDTO from a Notification entity.
+     * Replaces the old 9-parameter constructor (flagged by SonarQube as
+     * exceeding the 7-parameter limit) with a single, named construction point.
+     */
+    public static NotificationDTO fromEntity(com.backend.user.entity.Notification notification) {
+        NotificationDTO dto = new NotificationDTO();
+        dto.setId(notification.getId());
+        dto.setType(notification.getType());
+        dto.setMetric(notification.getMetric());
+        dto.setValue(notification.getValue());
+        dto.setThresholdValue(notification.getThresholdValue());
+        dto.setAlertType(notification.getAlertType());
+        dto.setLocation(notification.getLocation());
+        dto.setIsRead(notification.getIsRead());
+        dto.setCreatedAt(notification.getCreatedAt());
+        return dto;
     }
 
     public String getId() { return id; }

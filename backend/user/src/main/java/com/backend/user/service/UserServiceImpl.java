@@ -255,9 +255,15 @@ public class UserServiceImpl implements UserService {
                 settings = settingsRepository.findByUserIdAndTypeAndMetric(userId, req.getType(), req.getMetric()).orElse(null);
             }
 
-            // Create new
-            Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
-            settingsRepository.save(newSettings);
+            if (settings != null) {
+                // Update the existing row in place instead of inserting a duplicate.
+                settings.setThresholdValue(req.getThresholdValue());
+                settings.setAlertType(req.getAlertType());
+                settingsRepository.save(settings);
+            } else {
+                Settings newSettings = new Settings(userId, req.getType(), req.getMetric(), req.getThresholdValue(), req.getAlertType());
+                settingsRepository.save(newSettings);
+            }
 
         }
         return getSettings(session);
@@ -302,10 +308,7 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException("You are not logged in.");
         }
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(n -> new NotificationDTO(
-                n.getId(), n.getType(), n.getMetric(), n.getValue(),
-                n.getThresholdValue(), n.getAlertType(), n.getLocation(),
-                n.getIsRead(), n.getCreatedAt()))
+                .map(NotificationDTO::fromEntity)
                 .toList();
     }
 

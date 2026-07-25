@@ -17,6 +17,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,9 +25,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.backend.user.dto.ChangePasswordRequest;
 import com.backend.user.dto.LoginRequest;
+import com.backend.user.dto.SettingsDTO;
 import com.backend.user.dto.SignupRequest;
 import com.backend.user.dto.UpdateProfilePictureRequest;
 import com.backend.user.dto.UserResponse;
+import com.backend.user.entity.Settings;
 import com.backend.user.entity.User;
 import com.backend.user.exception.ConflictException;
 import com.backend.user.exception.ExternalServiceException;
@@ -38,6 +41,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.Uploader;
 
 import java.io.IOException;
+import java.util.List;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -439,5 +443,98 @@ class UserServiceImplTest {
         userService.logout(session);
 
         verify(session).invalidate();
+    }
+
+    // ---------- UPDATE SETTINGS (BULK UPSERT) TESTS ----------
+    @Test
+    void updateSettings_notLoggedIn_shouldThrowUnauthorizedException() {
+        when(session.getAttribute("userId")).thenReturn(null);
+
+        List<SettingsDTO> requests = List.of(
+                new SettingsDTO(null, "Traffic", "Traffic Density", 100.0f, "above"));
+
+        assertThrows(UnauthorizedException.class,
+                () -> userService.updateSettings(requests, session));
+
+        verify(settingsRepository, never()).save(any(Settings.class));
+    }
+
+    @Test
+    void updateSettings_foundById_shouldUpdateInPlace() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+
+        Settings existing = new Settings(1L, "Traffic", "Traffic Density", 80.0f, "above");
+        existing.setId("setting-1");
+
+        SettingsDTO req = new SettingsDTO("setting-1", "Traffic", "Traffic Density", 120.0f, "above");
+
+        when(settingsRepository.findById("setting-1")).thenReturn(Optional.of(existing));
+        when(settingsRepository.findByUserId(1L)).thenReturn(List.of(existing));
+
+        userService.updateSettings(List.of(req), session);
+
+        assertEquals(120.0f, existing.getThresholdValue(), 0.001f);
+        verify(settingsRepository).save(existing);
+        verify(settingsRepository, never()).findByUserIdAndTypeAndMetric(anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    void updateSettings_idNotFoundButMatchesByTypeAndMetric_shouldUpdateInPlace() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+
+        Settings existing = new Settings(1L, "Air", "Carbon Monoxide", 50.0f, "above");
+        existing.setId("setting-2");
+
+        // Stale/unknown id supplied, but type+metric matches an existing row.
+        SettingsDTO req = new SettingsDTO("stale-id", "Air", "Carbon Monoxide", 75.0f, "above");
+
+        when(settingsRepository.findById("stale-id")).thenReturn(Optional.empty());
+        when(settingsRepository.findByUserIdAndTypeAndMetric(1L, "Air", "Carbon Monoxide"))
+                .thenReturn(Optional.of(existing));
+        when(settingsRepository.findByUserId(1L)).thenReturn(List.of(existing));
+
+        userService.updateSettings(List.of(req), session);
+
+        assertEquals(75.0f, existing.getThresholdValue(), 0.001f);
+        verify(settingsRepository).save(existing);
+    }
+
+    @Test
+    void updateSettings_noMatchFound_shouldInsertNew() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+
+        SettingsDTO req = new SettingsDTO(null, "Light", "Brightness Level", 60.0f, "below");
+
+        when(settingsRepository.findByUserIdAndTypeAndMetric(1L, "Light", "Brightness Level"))
+                .thenReturn(Optional.empty());
+        when(settingsRepository.findByUserId(1L)).thenReturn(List.of());
+
+        userService.updateSettings(List.of(req), session);
+
+        ArgumentCaptor<Settings> captor = ArgumentCaptor.forClass(Settings.class);
+        verify(settingsRepository).save(captor.capture());
+        assertEquals("Light", captor.getValue().getType());
+        assertEquals(60.0f, captor.getValue().getThresholdValue(), 0.001f);
+    }
+
+    @Test
+    void updateSettings_mixedBatch_shouldUpdateOneAndInsertOne() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+
+        Settings existing = new Settings(1L, "Traffic", "Average Speed", 40.0f, "below");
+        existing.setId("setting-3");
+
+        SettingsDTO updateReq = new SettingsDTO("setting-3", "Traffic", "Average Speed", 55.0f, "below");
+        SettingsDTO newReq = new SettingsDTO(null, "Air", "Ozone", 30.0f, "above");
+
+        when(settingsRepository.findById("setting-3")).thenReturn(Optional.of(existing));
+        when(settingsRepository.findByUserIdAndTypeAndMetric(1L, "Air", "Ozone"))
+                .thenReturn(Optional.empty());
+        when(settingsRepository.findByUserId(1L)).thenReturn(List.of(existing));
+
+        userService.updateSettings(List.of(updateReq, newReq), session);
+
+        assertEquals(55.0f, existing.getThresholdValue(), 0.001f);
+        verify(settingsRepository, times(2)).save(any(Settings.class));
     }
 }
