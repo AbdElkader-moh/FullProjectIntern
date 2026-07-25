@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -23,9 +23,7 @@ import com.backend.sensor_data.dto.TrafficStatsDto;
 import com.backend.sensor_data.dto.TrafficTrendDto;
 import com.backend.sensor_data.entity.AirPollutionData;
 import com.backend.sensor_data.entity.CongestionLevel;
-import com.backend.sensor_data.entity.Notification;
 import com.backend.sensor_data.entity.PollutionLevel;
-import com.backend.sensor_data.entity.Settings;
 import com.backend.sensor_data.entity.Status;
 import com.backend.sensor_data.entity.StreetLightData;
 import com.backend.sensor_data.entity.TrafficData;
@@ -41,15 +39,11 @@ import jakarta.transaction.Transactional;
 @Service
 public class SensorDataService {
 
-    private static final Logger logger = LoggerFactory.getLogger(SensorDataService.class);
     private final SensorProcessorFactory processorFactory;
 
     private final TrafficDataRepository trafficRepo;
     private final AirPollutionDataRepository airRepo;
     private final StreetLightDataRepository lightRepo;
-
-    private final SettingsRepository settingsRepository;
-    private final SimpMessagingTemplate messagingTemplate;
 
     private final NotificationRepository notificationRepository;
 
@@ -61,45 +55,13 @@ public class SensorDataService {
         this.trafficRepo = trafficRepo;
         this.airRepo = airRepo;
         this.lightRepo = lightRepo;
-        this.settingsRepository = settingsRepository;
-        this.messagingTemplate = messagingTemplate;
         this.notificationRepository = notificationRepository;
         this.processorFactory = processorFactory;
     }
 
     @Transactional
-    public TrafficData saveTrafficData(TrafficDataDto dto) {
-        if (dto.getLocation() == null || dto.getLocation().trim().isEmpty()) {
-            throw new IllegalArgumentException("Invalid location: cannot be blank");
-        }
-        if (dto.getCongestionLevel() == null) {
-            throw new IllegalArgumentException("Invalid congestion level: cannot be null");
-        }
-        if (dto.getTrafficDensity() == null) {
-            throw new IllegalArgumentException("trafficDensity is required");
-        }
-        if (dto.getTrafficDensity() < 0 || dto.getTrafficDensity() > 500) {
-            throw new IllegalArgumentException("Invalid traffic density: must be between 0 and 500");
-        }
-        if (dto.getAvgSpeed() == null) {
-            throw new IllegalArgumentException("avgSpeed is required");
-        }
-        if (dto.getAvgSpeed() < 0 || dto.getAvgSpeed() > 120) {
-            throw new IllegalArgumentException("Invalid average speed: must be between 0 and 120");
-        }
-
-        TrafficData data = new TrafficData();
-        data.setLocation(dto.getLocation());
-        data.setTrafficDensity(dto.getTrafficDensity());
-        data.setAvgSpeed(dto.getAvgSpeed());
-        data.setCongestionLevel(dto.getCongestionLevel());
-
-        trafficRepo.save(data);
-
-        checkAlerts("Traffic", "Traffic Density", data.getTrafficDensity(), data.getLocation());
-        checkAlerts("Traffic", "Average Speed", data.getAvgSpeed(), data.getLocation());
-
-        return data;
+    public void saveTrafficData(TrafficDataDto dto) {
+        processorFactory.<TrafficDataDto>getProcessor("TRAFFIC").process(dto);
     }
 
     @Transactional
@@ -142,41 +104,6 @@ public class SensorDataService {
         }
 
         return trafficRepo.findAll(spec, pageable);
-    }
-
-    private void checkAlerts(String type, String metric, Number value, String location) {
-        List<Settings> matchingSettings = settingsRepository.findByTypeAndMetric(type, metric);
-
-        for (Settings setting : matchingSettings) {
-            float threshold = setting.getThresholdValue();
-            String alertType = setting.getAlertType();
-            Long userId = setting.getUserId();
-            float actual = value.floatValue();
-
-            boolean triggered = ("above".equalsIgnoreCase(alertType) && actual > threshold)
-                    || ("below".equalsIgnoreCase(alertType) && actual < threshold);
-
-            if (!triggered) {
-                continue;
-            }
-
-            logger.warn("[ALERT] {} {} ({}) exceeded threshold ({}) at {}",
-                    type, metric, actual, threshold, location);
-
-            Notification notification = new Notification(
-                    userId, type, metric, actual, threshold, alertType, location);
-            notificationRepository.save(notification);
-
-            messagingTemplate.convertAndSend(
-                    "/topic/alerts/" + userId,
-                    Map.of(
-                            "type", type,
-                            "metric", metric,
-                            "value", actual,
-                            "thresholdValue", threshold,
-                            "alertType", alertType,
-                            "location", location));
-        }
     }
 
     public TrafficStatsDto getTrafficStats() {
@@ -227,6 +154,7 @@ public class SensorDataService {
 
     public Page<AirPollutionData> getAirData(
             String location,
+            PollutionLevel pollutionLevel,
             LocalDateTime from,
             LocalDateTime to,
             Pageable pageable) {
@@ -236,20 +164,38 @@ public class SensorDataService {
         if (pageable.getPageSize() <= 0) {
             throw new IllegalArgumentException("Page size must be greater than 0");
         }
-
         if (from != null && to != null && from.isAfter(to)) {
             throw new IllegalArgumentException("'from' date cannot be after 'to' date");
         }
 
         if (location != null && !location.trim().isEmpty()) {
-            spec = spec.and(
-                    (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+            spec = spec.and((root, query, cb)
+                    -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+        }
+        if (pollutionLevel != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("pollutionLevel"), pollutionLevel));
         }
         if (from != null) {
             spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
         }
         if (to != null) {
             spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+        }
+
+        Sort sort = pageable.getSort();
+        if (sort.isSorted()) {
+            spec = spec.and((root, query, cb) -> {
+                List<jakarta.persistence.criteria.Order> orders = sort.stream()
+                        .map(order -> order.isAscending()
+                        ? cb.asc(root.get(order.getProperty()))
+                        : cb.desc(root.get(order.getProperty())))
+                        .toList();
+                query.orderBy(orders);
+                return null; // contributes no predicate, only ordering
+            });
+            // strip the sort from the Pageable so findAll's own QueryUtils
+            // sort-translation doesn't run (and re-trigger the bug) or conflict
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         }
 
         return airRepo.findAll(spec, pageable);
