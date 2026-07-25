@@ -5,6 +5,11 @@ import java.nio.file.Paths;
 
 public class SecretReader {
 
+    private SecretReader() {
+        // Utility class: only static members, no instances should be created.
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static String readSecret(String fileEnvName, String fallbackEnvName) {
         try {
             String filePath = System.getenv(fileEnvName);

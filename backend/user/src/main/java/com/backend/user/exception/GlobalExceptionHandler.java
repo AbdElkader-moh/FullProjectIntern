@@ -32,12 +32,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", ex.getMessage()));
     }
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
-        String message ="All Fields Must be filled";
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
+    String message = "All Fields Must be filled";
 
-        return ResponseEntity.badRequest().body(
-                Map.of("message", message)
-        );
+    return ResponseEntity.badRequest().body(
+            Map.of("message", message)
+    );
     }
     @ExceptionHandler(ExternalServiceException.class)
     public ResponseEntity<Map<String, String>> handleExternalService(ExternalServiceException ex) {
