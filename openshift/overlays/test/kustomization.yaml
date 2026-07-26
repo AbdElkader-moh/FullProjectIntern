@@ -85,6 +85,24 @@ patches:
           metadata:
             labels:
               app: user-service-test
+          spec:
+            # mysql-secret/cloudinary-secret/jwt-secret are no longer part of
+            # this kustomize build (see openshift/base/kustomization.yaml --
+            # secrets are applied out-of-band, not managed by kustomize), so
+            # nameSuffix can't auto-rewrite these secretName references the
+            # way it does for Deployment/Service names above. Point them at
+            # the -test copies explicitly instead, or these pods would read
+            # prod's real DB password / JWT signing key.
+            volumes:
+              - name: mysql-secrets
+                secret:
+                  secretName: mysql-secret-test
+              - name: cloudinary-secrets
+                secret:
+                  secretName: cloudinary-secret-test
+              - name: jwt-secrets
+                secret:
+                  secretName: jwt-secret-test
   - target:
       kind: Service
       name: user-service
@@ -113,6 +131,17 @@ patches:
           metadata:
             labels:
               app: sensor-service-test
+          spec:
+            # See the user-service patch above: secrets are no longer
+            # kustomize-managed, so these secretName refs need to be
+            # repointed at the -test copies explicitly.
+            volumes:
+              - name: mysql-secrets
+                secret:
+                  secretName: mysql-secret-test
+              - name: jwt-secrets
+                secret:
+                  secretName: jwt-secret-test
   - target:
       kind: Service
       name: sensor-service
@@ -141,6 +170,28 @@ patches:
           metadata:
             labels:
               app: mysql-test
+          spec:
+            # mysql-secret is no longer kustomize-managed (applied out-of-band
+            # instead) -- repoint at the -test copy explicitly, same reasoning
+            # as the user-service/sensor-service patches below.
+            containers:
+              - name: mysql
+                env:
+                  - name: MYSQL_ROOT_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: mysql-secret-test
+                        key: mysql_root_password
+                  - name: MYSQL_USER
+                    valueFrom:
+                      secretKeyRef:
+                        name: mysql-secret-test
+                        key: mysql_user
+                  - name: MYSQL_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: mysql-secret-test
+                        key: mysql_password
   - target:
       kind: Service
       name: mysql

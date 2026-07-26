@@ -1,27 +1,4 @@
-# Build artifacts
-**/target/
-**/*.jar
-**/*.war
-**/*.ear
-
-# IDEs and Editors
-.idea/
-*.iml
-.vscode/
-.classpath
-.project
-.settings/
-*.swp
-*.swo
-
-# Environment and Secrets
+﻿test_output.txt
 secrets/
-**/*.log
-bug_report.md
-
-node_modules/
 k8s/secrets.yaml
- 
- s e c r e t s / * . t x t 
- 
- 
+FrontendTestingFramework/target/

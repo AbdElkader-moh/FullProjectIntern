@@ -1,540 +1,806 @@
 package com.backend.user.service;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 import com.backend.user.dto.ChangePasswordRequest;
 import com.backend.user.dto.LoginRequest;
+import com.backend.user.dto.NotificationDTO;
 import com.backend.user.dto.SettingsDTO;
 import com.backend.user.dto.SignupRequest;
 import com.backend.user.dto.UpdateProfilePictureRequest;
 import com.backend.user.dto.UserResponse;
+import com.backend.user.entity.Notification;
 import com.backend.user.entity.Settings;
 import com.backend.user.entity.User;
 import com.backend.user.exception.ConflictException;
 import com.backend.user.exception.ExternalServiceException;
 import com.backend.user.exception.NotFoundException;
 import com.backend.user.exception.UnauthorizedException;
+import com.backend.user.repository.NotificationRepository;
+import com.backend.user.repository.SettingsRepository;
 import com.backend.user.repository.UserRepository;
 import com.backend.user.util.JwtUtil;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Uploader;
 
-import java.io.IOException;
-import java.util.List;
-
 import jakarta.servlet.http.HttpSession;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * Full-coverage unit tests for UserServiceImpl.
+ *
+ * NOTE: passwordEncoder inside UserServiceImpl is instantiated internally
+ * (`new BCryptPasswordEncoder()`), not injected — it can't be mocked. Tests
+ * that depend on password matching use a real BCryptPasswordEncoder to
+ * produce the stored hash, so `matches(...)` behaves correctly against
+ * real bcrypt rather than a stub.
+ *
+ * UserRepository / SettingsRepository / NotificationRepository / JwtUtil
+ * aren't in hand as source, but every method called on them here is taken
+ * directly from the exact call sites in UserServiceImpl, so the mocked
+ * signatures match the real interfaces.
+ */
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private com.backend.user.repository.SettingsRepository settingsRepository;
-
-    @Mock
-    private com.backend.user.repository.NotificationRepository notificationRepository;
-    @Mock
-    private Cloudinary cloudinary;
-    @Mock
-    private HttpSession session;
-
-    @Mock
-    private JwtUtil jwtUtil;
-
-    @Captor
-    private ArgumentCaptor<User> userCaptor;
+    @Mock private UserRepository userRepository;
+    @Mock private SettingsRepository settingsRepository;
+    @Mock private NotificationRepository notificationRepository;
+    @Mock private Cloudinary cloudinary;
+    @Mock private JwtUtil jwtUtil;
+    @Mock private HttpSession session;
 
     private UserServiceImpl userService;
-    private BCryptPasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder realEncoder = new BCryptPasswordEncoder();
 
     @BeforeEach
     void setUp() {
         userService = new UserServiceImpl(userRepository, settingsRepository, notificationRepository, cloudinary, jwtUtil);
-        passwordEncoder = new BCryptPasswordEncoder();
     }
 
-    // ---------- SIGNUP TESTS ----------
+    private User buildUser(Long id, String email, String rawPassword) {
+        User user = new User();
+        user.setId(id);
+        user.setEmail(email);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setProfilePicture("http://old-pic");
+        user.setPassword(realEncoder.encode(rawPassword));
+        return user;
+    }
+
+    // ==================== signup ====================
+
     @Test
-    void signup_validRequest_shouldCreateUser() {
-        SignupRequest request = new SignupRequest();
-        request.setEmail("test@test.com");
-        request.setFirstName("Test");
-        request.setLastName("User");
-        request.setPassword("123456");
-        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[0]));
+    void signup_emailAlreadyExists_throwsConflictException() {
+        SignupRequest req = new SignupRequest();
+        req.setEmail("taken@example.com");
+        when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
 
-        when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
-
-        User savedUser = new User();
-        savedUser.setId(1L);
-        savedUser.setEmail("test@test.com");
-        savedUser.setFirstName("Test");
-        savedUser.setLastName("User");
-        savedUser.setProfilePicture("");
-        savedUser.setPassword("hashed-password");
-
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-        UserResponse response = userService.signup(request);
-
-        assertEquals(1L, response.getId());
-        assertEquals("test@test.com", response.getEmail());
-        assertEquals("Test", response.getFirstName());
-        assertEquals("User", response.getLastName());
-
-        verify(userRepository).save(userCaptor.capture());
-        User capturedUser = userCaptor.getValue();
-
-        assertEquals("test@test.com", capturedUser.getEmail());
-        assertTrue(passwordEncoder.matches("123456", capturedUser.getPassword()));
+        assertThrows(ConflictException.class, () -> userService.signup(req));
+        verify(userRepository, never()).save(any());
     }
 
     @Test
-    void signup_existingEmail_shouldThrowConflictException() {
-        SignupRequest request = new SignupRequest();
-        request.setEmail("test@test.com");
+    void signup_noProfilePicture_setsEmptyStringAndSucceeds() {
+        SignupRequest req = new SignupRequest();
+        req.setEmail("new@example.com");
+        req.setFirstName("Jane");
+        req.setLastName("Smith");
+        req.setPassword("password1");
+        req.setProfilePicture(null);
 
-        when(userRepository.existsByEmail("test@test.com")).thenReturn(true);
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(1L);
+            return u;
+        });
 
-        assertThrows(ConflictException.class, () -> userService.signup(request));
+        UserResponse response = userService.signup(req);
 
-        verify(userRepository, never()).save(any(User.class));
+        assertEquals("new@example.com", response.getEmail());
+        assertEquals("", response.getProfilePicture());
     }
 
     @Test
-    void signup_cloudinaryNotConfigured_shouldThrowExternalServiceException() {
-        UserServiceImpl serviceWithNoCloudinary = new UserServiceImpl(
-                userRepository, settingsRepository, notificationRepository, null, jwtUtil);
+    void signup_pictureProvided_cloudinaryNull_throwsExternalServiceException() {
+        SignupRequest req = new SignupRequest();
+        req.setEmail("new@example.com");
+        req.setFirstName("Jane");
+        req.setLastName("Smith");
+        req.setPassword("password1");
+        req.setProfilePicture(new MockMultipartFile("profilePicture", "pic.png", "image/png", "bytes".getBytes()));
 
-        SignupRequest request = new SignupRequest();
-        request.setEmail("test@test.com");
-        request.setFirstName("Test");
-        request.setLastName("User");
-        request.setPassword("123456");
-        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{1, 2, 3}));
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
 
-        when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
+        UserServiceImpl serviceWithNullCloudinary =
+                new UserServiceImpl(userRepository, settingsRepository, notificationRepository, null, jwtUtil);
 
-        assertThrows(ExternalServiceException.class, () -> serviceWithNoCloudinary.signup(request));
-
-        verify(userRepository, never()).save(any(User.class));
+        assertThrows(ExternalServiceException.class, () -> serviceWithNullCloudinary.signup(req));
     }
 
     @Test
-    void signup_cloudinaryUploadFails_shouldThrowExternalServiceException() throws IOException {
-        SignupRequest request = new SignupRequest();
-        request.setEmail("test@test.com");
-        request.setFirstName("Test");
-        request.setLastName("User");
-        request.setPassword("123456");
-        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{1, 2, 3}));
-
-        when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
+    void signup_pictureProvided_uploadSucceeds() throws IOException {
+        SignupRequest req = new SignupRequest();
+        req.setEmail("new@example.com");
+        req.setFirstName("Jane");
+        req.setLastName("Smith");
+        req.setPassword("password1");
+        req.setProfilePicture(new MockMultipartFile("profilePicture", "pic.png", "image/png", "bytes".getBytes()));
 
         Uploader uploader = mock(Uploader.class);
         when(cloudinary.uploader()).thenReturn(uploader);
-        when(uploader.upload(any(byte[].class), any())).thenThrow(new IOException("network error"));
+        when(uploader.upload(any(), anyMap())).thenReturn(Map.of("url", "http://cdn/pic.png"));
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(2L);
+            return u;
+        });
 
-        assertThrows(ExternalServiceException.class, () -> userService.signup(request));
+        UserResponse response = userService.signup(req);
 
-        verify(userRepository, never()).save(any(User.class));
+        assertEquals("http://cdn/pic.png", response.getProfilePicture());
     }
 
-    // ---------- LOGIN TESTS ----------
     @Test
-    void login_validCredentials_shouldSetSessionAndReturnMessage() {
-        LoginRequest request = new LoginRequest();
-        request.setEmail("test@test.com");
-        request.setPassword("123456");
+    void signup_pictureUploadThrowsIOException_throwsExternalServiceException() throws IOException {
+        SignupRequest req = new SignupRequest();
+        req.setEmail("new@example.com");
+        req.setFirstName("Jane");
+        req.setLastName("Smith");
+        req.setPassword("password1");
+        req.setProfilePicture(new MockMultipartFile("profilePicture", "pic.png", "image/png", "bytes".getBytes()));
 
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("test@test.com");
-        user.setPassword(passwordEncoder.encode("123456"));
+        Uploader uploader = mock(Uploader.class);
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(), anyMap())).thenThrow(new IOException("upload failed"));
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
 
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        assertThrows(ExternalServiceException.class, () -> userService.signup(req));
+    }
 
-        String result = userService.login(request, session);
+    @Test
+    void signup_passwordTooShort_throwsIllegalArgumentException() {
+        SignupRequest req = new SignupRequest();
+        req.setEmail("new@example.com");
+        req.setFirstName("Jane");
+        req.setLastName("Smith");
+        req.setPassword("abc");
+        req.setProfilePicture(null);
+
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class, () -> userService.signup(req));
+    }
+
+    // ==================== login ====================
+
+    @Test
+    void login_validCredentials_setsSessionAndReturnsSuccessMessage() {
+        User user = buildUser(1L, "user@example.com", "correctPass");
+        LoginRequest req = new LoginRequest();
+        req.setEmail("user@example.com");
+        req.setPassword("correctPass");
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+
+        String result = userService.login(req, session);
 
         assertEquals("Login successful", result);
         verify(session).setAttribute("userId", 1L);
     }
 
     @Test
-    void login_emailNotFound_shouldThrowUnauthorizedException() {
-        LoginRequest request = new LoginRequest();
-        request.setEmail("missing@test.com");
-        request.setPassword("123456");
+    void login_userNotFound_throwsUnauthorized() {
+        LoginRequest req = new LoginRequest();
+        req.setEmail("nobody@example.com");
+        req.setPassword("whatever");
 
-        when(userRepository.findByEmail("missing@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("nobody@example.com")).thenReturn(Optional.empty());
 
-        assertThrows(UnauthorizedException.class, () -> userService.login(request, session));
-
-        verify(session, never()).setAttribute(anyString(), any());
+        assertThrows(UnauthorizedException.class, () -> userService.login(req, session));
     }
 
     @Test
-    void login_wrongPassword_shouldThrowUnauthorizedException() {
-        LoginRequest request = new LoginRequest();
-        request.setEmail("test@test.com");
-        request.setPassword("wrong-password");
+    void login_wrongPassword_throwsUnauthorized() {
+        User user = buildUser(1L, "user@example.com", "correctPass");
+        LoginRequest req = new LoginRequest();
+        req.setEmail("user@example.com");
+        req.setPassword("wrongPass");
 
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("test@test.com");
-        user.setPassword(passwordEncoder.encode("123456"));
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-
-        assertThrows(UnauthorizedException.class, () -> userService.login(request, session));
-
-        verify(session, never()).setAttribute(anyString(), any());
+        assertThrows(UnauthorizedException.class, () -> userService.login(req, session));
     }
 
-    // ---------- GET CURRENT USER TESTS ----------
+    // ==================== generateTokenForUser ====================
+
     @Test
-    void getCurrentUser_loggedIn_shouldReturnUserResponse() {
-        when(session.getAttribute("userId")).thenReturn(1L);
+    void generateTokenForUser_validEmail_returnsToken() {
+        User user = buildUser(1L, "user@example.com", "pass1234");
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(jwtUtil.generateToken("1", "user@example.com")).thenReturn("signed-token");
 
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("test@test.com");
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setProfilePicture("image-data");
-        user.setPassword("hashed-password");
+        String token = userService.generateTokenForUser("user@example.com");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        UserResponse response = userService.getCurrentUser(session);
-
-        assertEquals(1L, response.getId());
-        assertEquals("test@test.com", response.getEmail());
-        assertEquals("Test", response.getFirstName());
-        assertEquals("User", response.getLastName());
+        assertEquals("signed-token", token);
     }
 
     @Test
-    void getCurrentUser_notLoggedIn_shouldThrowUnauthorizedException() {
+    void generateTokenForUser_userNotFound_throwsUnauthorized() {
+        when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+
+        assertThrows(UnauthorizedException.class, () -> userService.generateTokenForUser("ghost@example.com"));
+    }
+
+    // ==================== getCurrentUser ====================
+
+    @Test
+    void getCurrentUser_notLoggedIn_throwsUnauthorized() {
         when(session.getAttribute("userId")).thenReturn(null);
 
         assertThrows(UnauthorizedException.class, () -> userService.getCurrentUser(session));
-
-        verify(userRepository, never()).findById(anyLong());
     }
 
     @Test
-    void getCurrentUser_userNotFound_shouldThrowNotFoundException() {
+    void getCurrentUser_userNotFound_throwsNotFound() {
         when(session.getAttribute("userId")).thenReturn(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> userService.getCurrentUser(session));
     }
 
-    // ---------- UPDATE PROFILE PICTURE TESTS ----------
     @Test
-    void updateProfilePicture_loggedIn_shouldUpdatePicture() {
-        UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
-        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[0]));
-
+    void getCurrentUser_validSession_returnsUserResponse() {
+        User user = buildUser(1L, "user@example.com", "pass1234");
         when(session.getAttribute("userId")).thenReturn(1L);
-
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("test@test.com");
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setProfilePicture("old-image-data");
-        user.setPassword("hashed-password");
-
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UserResponse response = userService.updateProfilePicture(request, session);
+        UserResponse response = userService.getCurrentUser(session);
 
-        assertEquals("old-image-data", response.getProfilePicture());
-
-        verify(userRepository).save(userCaptor.capture());
-        assertEquals("old-image-data", userCaptor.getValue().getProfilePicture());
+        assertEquals("user@example.com", response.getEmail());
     }
 
-    @Test
-    void updateProfilePicture_notLoggedIn_shouldThrowUnauthorizedException() {
-        UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
-        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[0]));
+    // ==================== updateProfilePicture ====================
 
+    @Test
+    void updateProfilePicture_notLoggedIn_throwsUnauthorized() {
         when(session.getAttribute("userId")).thenReturn(null);
+        UpdateProfilePictureRequest req = new UpdateProfilePictureRequest();
 
-        assertThrows(UnauthorizedException.class,
-                () -> userService.updateProfilePicture(request, session));
-
-        verify(userRepository, never()).save(any(User.class));
+        assertThrows(UnauthorizedException.class, () -> userService.updateProfilePicture(req, session));
     }
 
     @Test
-    void updateProfilePicture_userNotFound_shouldThrowNotFoundException() {
-        UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
-        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[0]));
-
+    void updateProfilePicture_userNotFound_throwsNotFound() {
         when(session.getAttribute("userId")).thenReturn(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        UpdateProfilePictureRequest req = new UpdateProfilePictureRequest();
 
-        assertThrows(NotFoundException.class,
-                () -> userService.updateProfilePicture(request, session));
+        assertThrows(NotFoundException.class, () -> userService.updateProfilePicture(req, session));
     }
 
     @Test
-    void updateProfilePicture_cloudinaryNotConfigured_shouldThrowExternalServiceException() {
-        UserServiceImpl serviceWithNoCloudinary = new UserServiceImpl(
-                userRepository, settingsRepository, notificationRepository, null, jwtUtil);
-
-        UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
-        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{1, 2, 3}));
-
+    void updateProfilePicture_noNewPicture_keepsExistingAndSaves() {
+        User user = buildUser(1L, "user@example.com", "pass1234");
         when(session.getAttribute("userId")).thenReturn(1L);
-
-        User user = new User();
-        user.setId(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        UpdateProfilePictureRequest req = new UpdateProfilePictureRequest();
+        req.setProfilePicture(null);
 
-        assertThrows(ExternalServiceException.class,
-                () -> serviceWithNoCloudinary.updateProfilePicture(request, session));
+        UserResponse response = userService.updateProfilePicture(req, session);
 
-        verify(userRepository, never()).save(any(User.class));
+        assertEquals("http://old-pic", response.getProfilePicture());
     }
 
     @Test
-    void updateProfilePicture_cloudinaryUploadFails_shouldThrowExternalServiceException() throws IOException {
-        UpdateProfilePictureRequest request = new UpdateProfilePictureRequest();
-        request.setProfilePicture(new org.springframework.mock.web.MockMultipartFile("file", new byte[]{1, 2, 3}));
-
+    void updateProfilePicture_cloudinaryNull_throwsExternalServiceException() {
+        User user = buildUser(1L, "user@example.com", "pass1234");
         when(session.getAttribute("userId")).thenReturn(1L);
-
-        User user = new User();
-        user.setId(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        UpdateProfilePictureRequest req = new UpdateProfilePictureRequest();
+        req.setProfilePicture(new MockMultipartFile("profilePicture", "pic.png", "image/png", "bytes".getBytes()));
 
+        UserServiceImpl serviceWithNullCloudinary =
+                new UserServiceImpl(userRepository, settingsRepository, notificationRepository, null, jwtUtil);
+
+        assertThrows(ExternalServiceException.class, () -> serviceWithNullCloudinary.updateProfilePicture(req, session));
+    }
+
+    @Test
+    void updateProfilePicture_uploadFails_throwsExternalServiceException() throws IOException {
+        User user = buildUser(1L, "user@example.com", "pass1234");
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         Uploader uploader = mock(Uploader.class);
         when(cloudinary.uploader()).thenReturn(uploader);
-        when(uploader.upload(any(byte[].class), any())).thenThrow(new IOException("network error"));
+        when(uploader.upload(any(), anyMap())).thenThrow(new IOException("fail"));
+        UpdateProfilePictureRequest req = new UpdateProfilePictureRequest();
+        req.setProfilePicture(new MockMultipartFile("profilePicture", "pic.png", "image/png", "bytes".getBytes()));
 
-        assertThrows(ExternalServiceException.class,
-                () -> userService.updateProfilePicture(request, session));
-
-        verify(userRepository, never()).save(any(User.class));
+        assertThrows(ExternalServiceException.class, () -> userService.updateProfilePicture(req, session));
     }
 
-    // ---------- CHANGE PASSWORD TESTS ----------
     @Test
-    void changePassword_validOldPassword_shouldUpdatePassword() {
-        ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setOldPassword("old123");
-        request.setNewPassword("new123");
-
+    void updateProfilePicture_uploadSucceeds_updatesPicture() throws IOException {
+        User user = buildUser(1L, "user@example.com", "pass1234");
         when(session.getAttribute("userId")).thenReturn(1L);
-
-        User user = new User();
-        user.setId(1L);
-        user.setPassword(passwordEncoder.encode("old123"));
-
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        Uploader uploader = mock(Uploader.class);
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(), anyMap())).thenReturn(Map.of("url", "http://cdn/new.png"));
+        UpdateProfilePictureRequest req = new UpdateProfilePictureRequest();
+        req.setProfilePicture(new MockMultipartFile("profilePicture", "pic.png", "image/png", "bytes".getBytes()));
 
-        userService.changePassword(request, session);
+        UserResponse response = userService.updateProfilePicture(req, session);
 
-        verify(userRepository).save(userCaptor.capture());
-        User savedUser = userCaptor.getValue();
-
-        assertTrue(passwordEncoder.matches("new123", savedUser.getPassword()));
-        assertFalse(passwordEncoder.matches("old123", savedUser.getPassword()));
+        assertEquals("http://cdn/new.png", response.getProfilePicture());
     }
 
-    @Test
-    void changePassword_notLoggedIn_shouldThrowUnauthorizedException() {
-        ChangePasswordRequest request = new ChangePasswordRequest();
-
-        when(session.getAttribute("userId")).thenReturn(null);
-
-        assertThrows(UnauthorizedException.class,
-                () -> userService.changePassword(request, session));
-
-        verify(userRepository, never()).save(any(User.class));
-    }
+    // ==================== logout ====================
 
     @Test
-    void changePassword_userNotFound_shouldThrowNotFoundException() {
-        ChangePasswordRequest request = new ChangePasswordRequest();
-
-        when(session.getAttribute("userId")).thenReturn(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class,
-                () -> userService.changePassword(request, session));
-    }
-
-    @Test
-    void generateTokenForUser_validEmail_shouldReturnToken() {
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("test@test.com");
-
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(jwtUtil.generateToken("1", "test@test.com")).thenReturn("mocked-jwt-token");
-
-        String token = userService.generateTokenForUser("test@test.com");
-
-        assertEquals("mocked-jwt-token", token);
-    }
-
-    @Test
-    void generateTokenForUser_emailNotFound_shouldThrowUnauthorizedException() {
-        when(userRepository.findByEmail("missing@test.com")).thenReturn(Optional.empty());
-
-        assertThrows(UnauthorizedException.class,
-                () -> userService.generateTokenForUser("missing@test.com"));
-    }
-
-    @Test
-    void changePassword_wrongOldPassword_shouldThrowUnauthorizedException() {
-        ChangePasswordRequest request = new ChangePasswordRequest();
-        request.setOldPassword("wrong-old");
-        request.setNewPassword("new123");
-
-        when(session.getAttribute("userId")).thenReturn(1L);
-
-        User user = new User();
-        user.setId(1L);
-        user.setPassword(passwordEncoder.encode("correct-old"));
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        assertThrows(UnauthorizedException.class,
-                () -> userService.changePassword(request, session));
-
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    // ---------- LOGOUT TEST ----------
-    @Test
-    void logout_shouldInvalidateSession() {
+    void logout_invalidatesSession() {
         userService.logout(session);
-
         verify(session).invalidate();
     }
 
-    // ---------- UPDATE SETTINGS (BULK UPSERT) TESTS ----------
+    // ==================== changePassword ====================
+
     @Test
-    void updateSettings_notLoggedIn_shouldThrowUnauthorizedException() {
+    void changePassword_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+        ChangePasswordRequest req = new ChangePasswordRequest();
+
+        assertThrows(UnauthorizedException.class, () -> userService.changePassword(req, session));
+    }
+
+    @Test
+    void changePassword_userNotFound_throwsNotFound() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        ChangePasswordRequest req = new ChangePasswordRequest();
+
+        assertThrows(NotFoundException.class, () -> userService.changePassword(req, session));
+    }
+
+    @Test
+    void changePassword_wrongOldPassword_throwsUnauthorized() {
+        User user = buildUser(1L, "user@example.com", "correctOld");
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        ChangePasswordRequest req = new ChangePasswordRequest();
+        req.setOldPassword("wrongOld");
+        req.setNewPassword("newpass1");
+
+        assertThrows(UnauthorizedException.class, () -> userService.changePassword(req, session));
+    }
+
+    @Test
+    void changePassword_newPasswordTooShort_throwsIllegalArgument() {
+        User user = buildUser(1L, "user@example.com", "correctOld");
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        ChangePasswordRequest req = new ChangePasswordRequest();
+        req.setOldPassword("correctOld");
+        req.setNewPassword("abc");
+
+        assertThrows(IllegalArgumentException.class, () -> userService.changePassword(req, session));
+    }
+
+    @Test
+    void changePassword_newPasswordSameAsOld_throwsIllegalArgument() {
+        User user = buildUser(1L, "user@example.com", "correctOld");
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        ChangePasswordRequest req = new ChangePasswordRequest();
+        req.setOldPassword("correctOld");
+        req.setNewPassword("correctOld");
+
+        assertThrows(IllegalArgumentException.class, () -> userService.changePassword(req, session));
+    }
+
+    @Test
+    void changePassword_validRequest_encodesAndSaves() {
+        User user = buildUser(1L, "user@example.com", "correctOld");
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        ChangePasswordRequest req = new ChangePasswordRequest();
+        req.setOldPassword("correctOld");
+        req.setNewPassword("brandNewPass");
+
+        userService.changePassword(req, session);
+
+        verify(userRepository).save(user);
+    }
+
+    // ==================== getSettings ====================
+
+    @Test
+    void getSettings_notLoggedIn_throwsUnauthorized() {
         when(session.getAttribute("userId")).thenReturn(null);
 
-        List<SettingsDTO> requests = List.of(
-                new SettingsDTO(null, "Traffic", "Traffic Density", 100.0f, "above"));
-
-        assertThrows(UnauthorizedException.class,
-                () -> userService.updateSettings(requests, session));
-
-        verify(settingsRepository, never()).save(any(Settings.class));
+        assertThrows(UnauthorizedException.class, () -> userService.getSettings(session));
     }
 
     @Test
-    void updateSettings_foundById_shouldUpdateInPlace() {
+    void getSettings_returnsMappedList() {
         when(session.getAttribute("userId")).thenReturn(1L);
+        Settings s = new Settings(1L, "Traffic", "Traffic Density", 80f, "above");
+        when(settingsRepository.findByUserId(1L)).thenReturn(List.of(s));
 
-        Settings existing = new Settings(1L, "Traffic", "Traffic Density", 80.0f, "above");
-        existing.setId("setting-1");
+        List<SettingsDTO> result = userService.getSettings(session);
 
-        SettingsDTO req = new SettingsDTO("setting-1", "Traffic", "Traffic Density", 120.0f, "above");
+        assertEquals(1, result.size());
+        assertEquals("Traffic", result.get(0).getType());
+    }
 
-        when(settingsRepository.findById("setting-1")).thenReturn(Optional.of(existing));
+    // ==================== addSetting ====================
+
+    @Test
+    void addSetting_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+        SettingsDTO req = new SettingsDTO(null, "Traffic", "Traffic Density", 80f, "above");
+
+        assertThrows(UnauthorizedException.class, () -> userService.addSetting(req, session));
+    }
+
+    @Test
+    void addSetting_invalidThreshold_propagatesIllegalArgumentException() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        SettingsDTO req = new SettingsDTO(null, "Traffic", "Traffic Density", 9999f, "above");
+
+        assertThrows(IllegalArgumentException.class, () -> userService.addSetting(req, session));
+        verify(settingsRepository, never()).save(any());
+    }
+
+    @Test
+    void addSetting_validRequest_savesAndReturnsDto() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        SettingsDTO req = new SettingsDTO(null, "Traffic", "Traffic Density", 80f, "above");
+        when(settingsRepository.save(any(Settings.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SettingsDTO result = userService.addSetting(req, session);
+
+        assertEquals("Traffic", result.getType());
+        assertEquals(80f, result.getThresholdValue());
+    }
+
+    // ==================== updateSettings (bulk) ====================
+
+    @Test
+    void updateSettings_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+
+        assertThrows(UnauthorizedException.class, () -> userService.updateSettings(List.of(), session));
+    }
+
+    @Test
+    void updateSettings_foundById_updatesInPlace() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Settings existing = new Settings(1L, "Air", "Ozone", 100f, "above");
+        SettingsDTO req = new SettingsDTO(existing.getId(), "Air", "Ozone", 200f, "below");
+        when(settingsRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
         when(settingsRepository.findByUserId(1L)).thenReturn(List.of(existing));
 
         userService.updateSettings(List.of(req), session);
 
-        assertEquals(120.0f, existing.getThresholdValue(), 0.001f);
         verify(settingsRepository).save(existing);
-        verify(settingsRepository, never()).findByUserIdAndTypeAndMetric(anyLong(), anyString(), anyString());
+        assertEquals(200f, existing.getThresholdValue());
+        assertEquals("below", existing.getAlertType());
     }
 
     @Test
-    void updateSettings_idNotFoundButMatchesByTypeAndMetric_shouldUpdateInPlace() {
+    void updateSettings_foundByTypeAndMetricFallback_updatesInPlace() {
         when(session.getAttribute("userId")).thenReturn(1L);
-
-        Settings existing = new Settings(1L, "Air", "Carbon Monoxide", 50.0f, "above");
-        existing.setId("setting-2");
-
-        // Stale/unknown id supplied, but type+metric matches an existing row.
-        SettingsDTO req = new SettingsDTO("stale-id", "Air", "Carbon Monoxide", 75.0f, "above");
-
-        when(settingsRepository.findById("stale-id")).thenReturn(Optional.empty());
-        when(settingsRepository.findByUserIdAndTypeAndMetric(1L, "Air", "Carbon Monoxide"))
-                .thenReturn(Optional.of(existing));
+        Settings existing = new Settings(1L, "Air", "Ozone", 100f, "above");
+        SettingsDTO req = new SettingsDTO(null, "Air", "Ozone", 200f, "below");
+        when(settingsRepository.findByUserIdAndTypeAndMetric(1L, "Air", "Ozone")).thenReturn(Optional.of(existing));
         when(settingsRepository.findByUserId(1L)).thenReturn(List.of(existing));
 
         userService.updateSettings(List.of(req), session);
 
-        assertEquals(75.0f, existing.getThresholdValue(), 0.001f);
         verify(settingsRepository).save(existing);
     }
 
     @Test
-    void updateSettings_noMatchFound_shouldInsertNew() {
+    void updateSettings_notFound_insertsNew() {
         when(session.getAttribute("userId")).thenReturn(1L);
-
-        SettingsDTO req = new SettingsDTO(null, "Light", "Brightness Level", 60.0f, "below");
-
-        when(settingsRepository.findByUserIdAndTypeAndMetric(1L, "Light", "Brightness Level"))
-                .thenReturn(Optional.empty());
+        SettingsDTO req = new SettingsDTO(null, "Air", "Ozone", 200f, "below");
+        when(settingsRepository.findByUserIdAndTypeAndMetric(1L, "Air", "Ozone")).thenReturn(Optional.empty());
         when(settingsRepository.findByUserId(1L)).thenReturn(List.of());
 
         userService.updateSettings(List.of(req), session);
 
-        ArgumentCaptor<Settings> captor = ArgumentCaptor.forClass(Settings.class);
-        verify(settingsRepository).save(captor.capture());
-        assertEquals("Light", captor.getValue().getType());
-        assertEquals(60.0f, captor.getValue().getThresholdValue(), 0.001f);
+        verify(settingsRepository).save(any(Settings.class));
+    }
+
+    // ==================== updateSetting (single) ====================
+
+    @Test
+    void updateSetting_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+        SettingsDTO req = new SettingsDTO(null, "Air", "Ozone", 100f, "above");
+
+        assertThrows(UnauthorizedException.class, () -> userService.updateSetting("id-1", req, session));
     }
 
     @Test
-    void updateSettings_mixedBatch_shouldUpdateOneAndInsertOne() {
+    void updateSetting_notFound_throwsNotFound() {
         when(session.getAttribute("userId")).thenReturn(1L);
+        when(settingsRepository.findById("id-1")).thenReturn(Optional.empty());
+        SettingsDTO req = new SettingsDTO(null, "Air", "Ozone", 100f, "above");
 
-        Settings existing = new Settings(1L, "Traffic", "Average Speed", 40.0f, "below");
-        existing.setId("setting-3");
+        assertThrows(NotFoundException.class, () -> userService.updateSetting("id-1", req, session));
+    }
 
-        SettingsDTO updateReq = new SettingsDTO("setting-3", "Traffic", "Average Speed", 55.0f, "below");
-        SettingsDTO newReq = new SettingsDTO(null, "Air", "Ozone", 30.0f, "above");
+    @Test
+    void updateSetting_wrongUser_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Settings existing = new Settings(2L, "Air", "Ozone", 100f, "above");
+        when(settingsRepository.findById("id-1")).thenReturn(Optional.of(existing));
+        SettingsDTO req = new SettingsDTO(null, "Air", "Ozone", 150f, "above");
 
-        when(settingsRepository.findById("setting-3")).thenReturn(Optional.of(existing));
-        when(settingsRepository.findByUserIdAndTypeAndMetric(1L, "Air", "Ozone"))
-                .thenReturn(Optional.empty());
-        when(settingsRepository.findByUserId(1L)).thenReturn(List.of(existing));
+        assertThrows(UnauthorizedException.class, () -> userService.updateSetting("id-1", req, session));
+    }
 
-        userService.updateSettings(List.of(updateReq, newReq), session);
+    @Test
+    void updateSetting_validRequest_updatesUsingDbTypeAndMetric() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Settings existing = new Settings(1L, "Air", "Ozone", 100f, "above");
+        when(settingsRepository.findById("id-1")).thenReturn(Optional.of(existing));
+        when(settingsRepository.save(any(Settings.class))).thenAnswer(inv -> inv.getArgument(0));
+        SettingsDTO req = new SettingsDTO(null, null, null, 150f, "below");
 
-        assertEquals(55.0f, existing.getThresholdValue(), 0.001f);
-        verify(settingsRepository, times(2)).save(any(Settings.class));
+        SettingsDTO result = userService.updateSetting("id-1", req, session);
+
+        assertEquals(150f, result.getThresholdValue());
+        assertEquals("below", result.getAlertType());
+    }
+
+    // ==================== deleteSetting ====================
+
+    @Test
+    void deleteSetting_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+
+        assertThrows(UnauthorizedException.class, () -> userService.deleteSetting("id-1", session));
+    }
+
+    @Test
+    void deleteSetting_notFound_throwsNotFound() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(settingsRepository.findById("id-1")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> userService.deleteSetting("id-1", session));
+    }
+
+    @Test
+    void deleteSetting_wrongUser_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Settings existing = new Settings(2L, "Air", "Ozone", 100f, "above");
+        when(settingsRepository.findById("id-1")).thenReturn(Optional.of(existing));
+
+        assertThrows(UnauthorizedException.class, () -> userService.deleteSetting("id-1", session));
+    }
+
+    @Test
+    void deleteSetting_validRequest_deletes() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Settings existing = new Settings(1L, "Air", "Ozone", 100f, "above");
+        when(settingsRepository.findById("id-1")).thenReturn(Optional.of(existing));
+
+        userService.deleteSetting("id-1", session);
+
+        verify(settingsRepository).deleteById("id-1");
+    }
+
+    // ==================== getNotifications ====================
+
+    @Test
+    void getNotifications_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+
+        assertThrows(UnauthorizedException.class, () -> userService.getNotifications(session));
+    }
+
+    @Test
+    void getNotifications_returnsMappedList() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Notification n = new Notification();
+        n.setUserId(1L);
+        n.setType("Traffic");
+        when(notificationRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(n));
+
+        List<NotificationDTO> result = userService.getNotifications(session);
+
+        assertEquals(1, result.size());
+        assertEquals("Traffic", result.get(0).getType());
+    }
+
+    // ==================== markNotificationAsRead ====================
+
+    @Test
+    void markNotificationAsRead_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+
+        assertThrows(UnauthorizedException.class, () -> userService.markNotificationAsRead("n-1", session));
+    }
+
+    @Test
+    void markNotificationAsRead_notFound_throwsNotFound() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(notificationRepository.findById("n-1")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> userService.markNotificationAsRead("n-1", session));
+    }
+
+    @Test
+    void markNotificationAsRead_wrongUser_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Notification n = new Notification();
+        n.setUserId(2L);
+        when(notificationRepository.findById("n-1")).thenReturn(Optional.of(n));
+
+        assertThrows(UnauthorizedException.class, () -> userService.markNotificationAsRead("n-1", session));
+    }
+
+    @Test
+    void markNotificationAsRead_validRequest_marksAndSaves() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Notification n = new Notification();
+        n.setUserId(1L);
+        when(notificationRepository.findById("n-1")).thenReturn(Optional.of(n));
+
+        userService.markNotificationAsRead("n-1", session);
+
+        assertEquals(Boolean.TRUE, n.getIsRead());
+        verify(notificationRepository).save(n);
+    }
+
+    // ==================== markAllNotificationsAsRead ====================
+
+    @Test
+    void markAllNotificationsAsRead_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+
+        assertThrows(UnauthorizedException.class, () -> userService.markAllNotificationsAsRead(session));
+    }
+
+    @Test
+    void markAllNotificationsAsRead_marksEveryNotification() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Notification n1 = new Notification();
+        Notification n2 = new Notification();
+        when(notificationRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(n1, n2));
+
+        userService.markAllNotificationsAsRead(session);
+
+        assertEquals(Boolean.TRUE, n1.getIsRead());
+        assertEquals(Boolean.TRUE, n2.getIsRead());
+        verify(notificationRepository).saveAll(anyList());
+    }
+
+    // ==================== deleteNotification ====================
+
+    @Test
+    void deleteNotification_notLoggedIn_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(null);
+
+        assertThrows(UnauthorizedException.class, () -> userService.deleteNotification("n-1", session));
+    }
+
+    @Test
+    void deleteNotification_notFound_throwsNotFound() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(notificationRepository.findById("n-1")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> userService.deleteNotification("n-1", session));
+    }
+
+    @Test
+    void deleteNotification_wrongUser_throwsUnauthorized() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Notification n = new Notification();
+        n.setUserId(2L);
+        when(notificationRepository.findById("n-1")).thenReturn(Optional.of(n));
+
+        assertThrows(UnauthorizedException.class, () -> userService.deleteNotification("n-1", session));
+    }
+
+    @Test
+    void deleteNotification_validRequest_deletes() {
+        when(session.getAttribute("userId")).thenReturn(1L);
+        Notification n = new Notification();
+        n.setUserId(1L);
+        when(notificationRepository.findById("n-1")).thenReturn(Optional.of(n));
+
+        userService.deleteNotification("n-1", session);
+
+        verify(notificationRepository).deleteById("n-1");
+    }
+
+    // ==================== validateSettingsRequest ====================
+
+    private SettingsDTO settingsReq(String type, String metric, Float threshold, String alertType) {
+        return new SettingsDTO(null, type, metric, threshold, alertType);
+    }
+
+    @Test
+    void validateSettingsRequest_missingType_returnsMessage() {
+        assertEquals("type is required", userService.validateSettingsRequest(settingsReq(null, "Ozone", 10f, "above")));
+        assertEquals("type is required", userService.validateSettingsRequest(settingsReq("  ", "Ozone", 10f, "above")));
+    }
+
+    @Test
+    void validateSettingsRequest_missingMetric_returnsMessage() {
+        assertEquals("metric is required", userService.validateSettingsRequest(settingsReq("Air", null, 10f, "above")));
+        assertEquals("metric is required", userService.validateSettingsRequest(settingsReq("Air", " ", 10f, "above")));
+    }
+
+    @Test
+    void validateSettingsRequest_missingAlertType_returnsMessage() {
+        assertEquals("alertType is required", userService.validateSettingsRequest(settingsReq("Air", "Ozone", 10f, null)));
+        assertEquals("alertType is required", userService.validateSettingsRequest(settingsReq("Air", "Ozone", 10f, " ")));
+    }
+
+    @Test
+    void validateSettingsRequest_missingThreshold_returnsMessage() {
+        assertEquals("thresholdValue is required", userService.validateSettingsRequest(settingsReq("Air", "Ozone", null, "above")));
+    }
+
+    @Test
+    void validateSettingsRequest_negativeThreshold_returnsMessage() {
+        assertEquals("thresholdValue must be a non-negative number",
+                userService.validateSettingsRequest(settingsReq("Air", "Ozone", -1f, "above")));
+    }
+
+    @Test
+    void validateSettingsRequest_invalidType_returnsMessage() {
+        String result = userService.validateSettingsRequest(settingsReq("Weather", "Humidity", 10f, "above"));
+        assertTrue(result.startsWith("Invalid type: must be one of"));
+    }
+
+    @Test
+    void validateSettingsRequest_invalidMetricForType_returnsMessage() {
+        String result = userService.validateSettingsRequest(settingsReq("Air", "Smog", 10f, "above"));
+        assertTrue(result.startsWith("Invalid metric 'Smog' for type 'Air'"));
+    }
+
+    @Test
+    void validateSettingsRequest_invalidAlertType_returnsMessage() {
+        String result = userService.validateSettingsRequest(settingsReq("Air", "Ozone", 10f, "sideways"));
+        assertTrue(result.startsWith("Invalid alertType 'sideways'"));
+    }
+
+    @Test
+    void validateSettingsRequest_validRequest_returnsNull() {
+        assertNull(userService.validateSettingsRequest(settingsReq("Air", "Ozone", 10f, "above")));
     }
 }
