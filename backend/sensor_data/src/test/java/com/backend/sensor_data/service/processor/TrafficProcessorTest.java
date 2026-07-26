@@ -3,12 +3,11 @@ package com.backend.sensor_data.service.processor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
@@ -42,12 +41,8 @@ class TrafficProcessorTest {
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
+    @InjectMocks
     private TrafficProcessor processor;
-
-    @BeforeEach
-    void setUp() {
-        processor = new TrafficProcessor(strategy, trafficRepo, messagingTemplate);
-    }
 
     private TrafficDataDto validDto() {
         TrafficDataDto dto = new TrafficDataDto();

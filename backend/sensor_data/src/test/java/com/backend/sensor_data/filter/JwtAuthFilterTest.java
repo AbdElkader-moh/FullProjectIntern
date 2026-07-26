@@ -1,17 +1,21 @@
 package com.backend.sensor_data.filter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.backend.sensor_data.util.JwtUtil;
@@ -23,12 +27,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Covers JwtAuthFilter.doFilter branch-by-branch:
- *   1. non-sensor endpoint, any method            -> always passes through
- *   2. sensor endpoint + POST (ingest)             -> passes through, no auth check
- *   3. sensor endpoint + GET, no Authorization     -> 401
- *   4. sensor endpoint + GET, malformed header      -> 401
- *   5. sensor endpoint + GET, valid Bearer token    -> passes through
- *   6. sensor endpoint + GET, invalid/expired token -> 401
+ * 1. non-sensor endpoint, any method -> always passes through
+ * 2. sensor endpoint + POST (ingest) -> passes through, no auth check
+ * 3. sensor endpoint + GET, no Authorization -> 401
+ * 4. sensor endpoint + GET, malformed header -> 401
+ * 5. sensor endpoint + GET, valid Bearer token -> passes through
+ * 6. sensor endpoint + GET, invalid/expired token -> 401
  */
 @ExtendWith(MockitoExtension.class)
 class JwtAuthFilterTest {
@@ -45,14 +49,16 @@ class JwtAuthFilterTest {
     @Mock
     private FilterChain chain;
 
+    @InjectMocks
     private JwtAuthFilter filter;
+
     private StringWriter responseBody;
 
     @BeforeEach
     void setUp() {
-        filter = new JwtAuthFilter(jwtUtil);
         responseBody = new StringWriter();
-        // Writer is stubbed lazily per-test via stubWriter(), only where the filter actually writes a body.
+        // Writer is stubbed lazily per-test via stubWriter(), only where the filter
+        // actually writes a body.
     }
 
     private void stubWriter() throws IOException {
@@ -79,7 +85,8 @@ class JwtAuthFilterTest {
     @Test
     void nonSensorEndpoint_POST_bypassesAuthEntirely() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/users/signup");
-        // Same reasoning as above: the method check is never reached for a non-sensor URI.
+        // Same reasoning as above: the method check is never reached for a non-sensor
+        // URI.
 
         filter.doFilter(request, response, chain);
 
@@ -226,7 +233,8 @@ class JwtAuthFilterTest {
 
         filter.doFilter(request, response, chain);
 
-        // Under current implementation this IS treated as a sensor endpoint (prefix match),
+        // Under current implementation this IS treated as a sensor endpoint (prefix
+        // match),
         // so it should 401 without a valid token. If this ever changes intentionally,
         // update this test alongside the fix.
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);

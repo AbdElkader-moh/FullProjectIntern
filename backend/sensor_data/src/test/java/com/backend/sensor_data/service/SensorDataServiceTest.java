@@ -1,24 +1,26 @@
 package com.backend.sensor_data.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -54,32 +56,33 @@ import com.backend.sensor_data.service.processor.AbstractSensorProcessor;
  * I'll correct in one pass, same as the processor test files):
  *
  * 1. SensorProcessorFactory.getProcessor(String) returns
- *    AbstractSensorProcessor<D, Object> directly (confirmed from
- *    SensorProcessorFactory.java) with a process(D dto) method inherited
- *    from AbstractSensorProcessor -- process()'s exact signature is assumed
- *    since I don't have AbstractSensorProcessor.java itself.
+ * AbstractSensorProcessor<D, Object> directly (confirmed from
+ * SensorProcessorFactory.java) with a process(D dto) method inherited
+ * from AbstractSensorProcessor -- process()'s exact signature is assumed
+ * since I don't have AbstractSensorProcessor.java itself.
  * 2. TrafficData/AirPollutionData/StreetLightData all have a
- *    setTimestamp(LocalDateTime) setter (used by getXTrends()'s
- *    findTop50ByOrderByTimestampDesc() + data.getTimestamp() call).
+ * setTimestamp(LocalDateTime) setter (used by getXTrends()'s
+ * findTop50ByOrderByTimestampDesc() + data.getTimestamp() call).
  * 3. TrafficStatsDto/AirStatsDto/LightStatsDto getter names are assumed to
- *    mirror their constructor-parameter / builder-property names exactly
- *    (e.g. averageTrafficDensity -> getAverageTrafficDensity()).
+ * mirror their constructor-parameter / builder-property names exactly
+ * (e.g. averageTrafficDensity -> getAverageTrafficDensity()).
  */
 @ExtendWith(MockitoExtension.class)
 class SensorDataServiceTest {
 
-    @Mock private TrafficDataRepository trafficRepo;
-    @Mock private AirPollutionDataRepository airRepo;
-    @Mock private StreetLightDataRepository lightRepo;
-    @Mock private NotificationRepository notificationRepository;
-    @Mock private SensorProcessorFactory processorFactory;
+    @Mock
+    private TrafficDataRepository trafficRepo;
+    @Mock
+    private AirPollutionDataRepository airRepo;
+    @Mock
+    private StreetLightDataRepository lightRepo;
+    @Mock
+    private NotificationRepository notificationRepository;
+    @Mock
+    private SensorProcessorFactory processorFactory;
 
+    @InjectMocks
     private SensorDataService service;
-
-    @BeforeEach
-    void setUp() {
-        service = new SensorDataService(trafficRepo, airRepo, lightRepo, notificationRepository, processorFactory);
-    }
 
     // ---------------- ingestion delegation ----------------
 
@@ -168,8 +171,8 @@ class SensorDataServiceTest {
     }
 
     // -- per-branch coverage: each filter condition exercised independently
-    //    (not only "all together" or "none"), consolidated into a single
-    //    parameterized test since the 4 cases share identical structure --
+    // (not only "all together" or "none"), consolidated into a single
+    // parameterized test since the 4 cases share identical structure --
 
     @ParameterizedTest(name = "getTrafficData: {0}")
     @MethodSource("trafficDataSingleFilterCases")

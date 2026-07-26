@@ -1,18 +1,19 @@
 package com.backend.sensor_data.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -45,12 +46,8 @@ class SensorControllerTest {
     @Mock
     private SensorDataService sensorDataService;
 
+    @InjectMocks
     private SensorController controller;
-
-    @BeforeEach
-    void setUp() {
-        controller = new SensorController(sensorDataService);
-    }
 
     // ---------------- ingestion endpoints ----------------
 
@@ -221,7 +218,8 @@ class SensorControllerTest {
         verify(sensorDataService).getTrafficCongestionSummary();
     }
 
-    // ---------------- buildSort() with field aliases via getAirData ----------------
+    // ---------------- buildSort() with field aliases via getAirData
+    // ----------------
 
     @Test
     void getAirData_aliasedSortField_resolvesToRealFieldName() {
@@ -232,7 +230,8 @@ class SensorControllerTest {
 
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(sensorDataService).getAirData(any(), any(), any(), any(), pageableCaptor.capture());
-        // The alias map resolves the public "pm2_5" sort key to the entity's real "pm25" field.
+        // The alias map resolves the public "pm2_5" sort key to the entity's real
+        // "pm25" field.
         Sort.Order order = pageableCaptor.getValue().getSort().getOrderFor("pm25");
         assertThat(order).isNotNull();
     }

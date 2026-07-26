@@ -3,12 +3,11 @@ package com.backend.sensor_data.service.processor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
@@ -18,13 +17,18 @@ import com.backend.sensor_data.repository.StreetLightDataRepository;
 import com.backend.sensor_data.service.strategy.LightThresholdStrategy;
 
 /**
- * Covers StreetLightProcessor's 6 validation checks (each with a boundary case),
+ * Covers StreetLightProcessor's 6 validation checks (each with a boundary
+ * case),
  * plus mapToEntity, save, checkThreshold, and broadcast.
  *
- * NOTE: validate/mapToEntity/save/checkThreshold/broadcast are `protected` and this
- * test class lives in the same package, so they're exercised directly rather than
- * only indirectly through the (not-shown) AbstractSensorProcessor.process() template method.
- * If a ProcessorTest base/integration test already covers the full process() flow,
+ * NOTE: validate/mapToEntity/save/checkThreshold/broadcast are `protected` and
+ * this
+ * test class lives in the same package, so they're exercised directly rather
+ * than
+ * only indirectly through the (not-shown) AbstractSensorProcessor.process()
+ * template method.
+ * If a ProcessorTest base/integration test already covers the full process()
+ * flow,
  * treat this as the unit-level complement to it.
  */
 @ExtendWith(MockitoExtension.class)
@@ -39,12 +43,8 @@ class StreetLightProcessorTest {
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
+    @InjectMocks
     private StreetLightProcessor processor;
-
-    @BeforeEach
-    void setUp() {
-        processor = new StreetLightProcessor(strategy, lightRepo, messagingTemplate);
-    }
 
     private StreetLightDataDto validDto() {
         StreetLightDataDto dto = new StreetLightDataDto();

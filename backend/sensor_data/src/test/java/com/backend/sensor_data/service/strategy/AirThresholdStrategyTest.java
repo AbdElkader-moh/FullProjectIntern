@@ -1,18 +1,17 @@
 package com.backend.sensor_data.service.strategy;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.util.List;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
@@ -32,16 +31,15 @@ import com.backend.sensor_data.repository.SettingsRepository;
 @ExtendWith(MockitoExtension.class)
 class AirThresholdStrategyTest {
 
-    @Mock private SettingsRepository settingsRepository;
-    @Mock private NotificationRepository notificationRepository;
-    @Mock private SimpMessagingTemplate messagingTemplate;
+    @Mock
+    private SettingsRepository settingsRepository;
+    @Mock
+    private NotificationRepository notificationRepository;
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
 
+    @InjectMocks
     private AirThresholdStrategy strategy;
-
-    @BeforeEach
-    void setUp() {
-        strategy = new AirThresholdStrategy(settingsRepository, notificationRepository, messagingTemplate);
-    }
 
     private AirPollutionData reading(float co, float ozone) {
         AirPollutionData data = new AirPollutionData();
