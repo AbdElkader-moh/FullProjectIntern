@@ -21,12 +21,14 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String ERROR_KEY = "error";
+    private static final String DETAILS_KEY = "details";
 
     @ExceptionHandler(PropertyReferenceException.class)
     public ResponseEntity<Map<String, String>> handlePropertyReference(PropertyReferenceException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", "Invalid sort property.");
-        error.put("details", ex.getMessage());
+        error.put(ERROR_KEY, "Invalid sort property.");
+        error.put(DETAILS_KEY, ex.getMessage());
         logger.warn("Property reference error: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
@@ -34,8 +36,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, String>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", "Invalid parameter format.");
-        error.put("details", "Parameter '" + ex.getName() + "' has invalid value: " + ex.getValue());
+        error.put(ERROR_KEY, "Invalid parameter format.");
+        error.put(DETAILS_KEY, "Parameter '" + ex.getName() + "' has invalid value: " + ex.getValue());
         logger.warn("Type mismatch: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
@@ -52,8 +54,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, String>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", "Malformed JSON request or invalid data format.");
-        error.put("details", ex.getMostSpecificCause().getMessage());
+        error.put(ERROR_KEY, "Malformed JSON request or invalid data format.");
+        error.put(DETAILS_KEY, ex.getMostSpecificCause().getMessage());
         logger.warn("HTTP message not readable: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
@@ -61,8 +63,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, String>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", "HTTP method not supported.");
-        error.put("details", ex.getMessage());
+        error.put(ERROR_KEY, "HTTP method not supported.");
+        error.put(DETAILS_KEY, ex.getMessage());
         logger.warn("Method not supported: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.METHOD_NOT_ALLOWED);
     }
@@ -70,8 +72,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", "Database constraint violation.");
-        error.put("details", ex.getMostSpecificCause().getMessage());
+        error.put(ERROR_KEY, "Database constraint violation.");
+        error.put(DETAILS_KEY, ex.getMostSpecificCause().getMessage());
         logger.error("Data integrity violation: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
@@ -79,8 +81,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", "Validation failed for sensor data condition.");
-        error.put("details", ex.getMessage());
+        error.put(ERROR_KEY, "Validation failed for sensor data condition.");
+        error.put(DETAILS_KEY, ex.getMessage());
         logger.warn("Condition check failed: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
@@ -88,8 +90,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", "An unexpected internal server error occurred.");
-        error.put("details", ex.getMessage());
+        error.put(ERROR_KEY, "An unexpected internal server error occurred.");
+        error.put(DETAILS_KEY, ex.getMessage());
         logger.error("Unexpected error occurred: ", ex);
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }

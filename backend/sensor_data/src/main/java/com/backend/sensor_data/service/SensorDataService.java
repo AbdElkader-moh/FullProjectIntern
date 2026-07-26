@@ -47,6 +47,9 @@ public class SensorDataService {
 
     private final NotificationRepository notificationRepository;
 
+    private static final String LOCATION_KEY = "location";
+    private static final String TIMEST_KEY = "timestamp";
+
     public SensorDataService(TrafficDataRepository trafficRepo, AirPollutionDataRepository airRepo,
             StreetLightDataRepository lightRepo, SettingsRepository settingsRepository,
             SimpMessagingTemplate messagingTemplate,
@@ -88,7 +91,7 @@ public class SensorDataService {
 
         if (location != null && !location.trim().isEmpty()) {
             spec = spec.and(
-                    (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+                    (root, query, cb) -> cb.like(cb.lower(root.get(LOCATION_KEY)), "%" + location.toLowerCase() + "%"));
         }
 
         if (congestionLevel != null) {
@@ -96,11 +99,11 @@ public class SensorDataService {
         }
 
         if (from != null) {
-            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(TIMEST_KEY), from));
         }
 
         if (to != null) {
-            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(TIMEST_KEY), to));
         }
 
         return trafficRepo.findAll(spec, pageable);
@@ -170,16 +173,16 @@ public class SensorDataService {
 
         if (location != null && !location.trim().isEmpty()) {
             spec = spec.and((root, query, cb)
-                    -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+                    -> cb.like(cb.lower(root.get(LOCATION_KEY)), "%" + location.toLowerCase() + "%"));
         }
         if (pollutionLevel != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("pollutionLevel"), pollutionLevel));
         }
         if (from != null) {
-            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(TIMEST_KEY), from));
         }
         if (to != null) {
-            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(TIMEST_KEY), to));
         }
 
         Sort sort = pageable.getSort();
@@ -258,16 +261,16 @@ public class SensorDataService {
 
         if (location != null && !location.trim().isEmpty()) {
             spec = spec.and(
-                    (root, query, cb) -> cb.like(cb.lower(root.get("location")), "%" + location.toLowerCase() + "%"));
+                    (root, query, cb) -> cb.like(cb.lower(root.get(LOCATION_KEY)), "%" + location.toLowerCase() + "%"));
         }
         if (status != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
         if (from != null) {
-            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(TIMEST_KEY), from));
         }
         if (to != null) {
-            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), to));
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(TIMEST_KEY), to));
         }
 
         return lightRepo.findAll(spec, pageable);

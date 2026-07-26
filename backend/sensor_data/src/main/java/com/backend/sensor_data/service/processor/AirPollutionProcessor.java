@@ -44,7 +44,7 @@ public class AirPollutionProcessor extends AbstractSensorProcessor<AirPollutionD
         entity.setLocation(dto.getLocation());
         entity.setCo(dto.getCo());
         entity.setOzone(dto.getOzone());
-        entity.setPm2_5(dto.getPm2_5());
+        entity.setPm25(dto.getPm25());
         entity.setPm10(dto.getPm10());
         entity.setNo2(dto.getNo2());
         entity.setSo2(dto.getSo2());

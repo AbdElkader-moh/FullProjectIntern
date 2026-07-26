@@ -45,6 +45,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class SensorController {
 
     private final SensorDataService sensorDataService;
+    private static final String ERROR_KEY = "error";
+    private static final String DETAILS_KEY = "details";
+    private static final String VALIDATION_FAILED = "Validation failed";
+    private static final String LOCATION_FIELD = "location";
+    private static final String TIMEST_FIELD = "timestamp";
 
     public SensorController(SensorDataService sensorDataService) {
         this.sensorDataService = sensorDataService;
@@ -63,11 +68,11 @@ public class SensorController {
     private ResponseEntity<?> validatePagination(int page, int size) {
         if (page < 0) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", "Page must be >= 0"));
+                    ERROR_KEY, VALIDATION_FAILED, DETAILS_KEY, "Page must be >= 0"));
         }
         if (size <= 0) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", "Page size must be greater than 0"));
+                    ERROR_KEY, VALIDATION_FAILED, DETAILS_KEY, "Page size must be greater than 0"));
         }
         return null;
     }
@@ -78,6 +83,10 @@ public class SensorController {
      * and turn into a 400 response.
      */
     private Sort buildSort(String sort, Set<String> allowedSortFields) {
+        return buildSort(sort, allowedSortFields, Map.of());
+    }
+
+    private Sort buildSort(String sort, Set<String> allowedSortFields, Map<String, String> fieldAliases) {
         if (sort == null || sort.isBlank()) {
             return Sort.unsorted();
         }
@@ -89,7 +98,8 @@ public class SensorController {
         Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1]))
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
 
-        return Sort.by(dir, field); // pass through unmodified
+        String resolvedField = fieldAliases.getOrDefault(field, field);
+        return Sort.by(dir, resolvedField);
     }
 
     @PostMapping("/traffic")
@@ -126,7 +136,7 @@ public class SensorController {
     }
 
     private static final Set<String> TRAFFIC_SORT_FIELDS = Set.of(
-            "timestamp", "location", "trafficDensity", "avgSpeed", "congestionLevel");
+            TIMEST_FIELD, LOCATION_FIELD, "trafficDensity", "avgSpeed", "congestionLevel");
 
     @GetMapping("/traffic")
     @Operation(summary = "Get traffic sensor data", description = "Retrieves traffic sensor readings with optional filtering by location, congestion level, date range, sorting, and pagination.")
@@ -153,7 +163,7 @@ public class SensorController {
             sortObj = buildSort(sort, TRAFFIC_SORT_FIELDS);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", ex.getMessage()));
+                    ERROR_KEY, VALIDATION_FAILED, DETAILS_KEY, ex.getMessage()));
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
@@ -190,7 +200,10 @@ public class SensorController {
     }
 
     private static final Set<String> AIR_SORT_FIELDS = Set.of(
-            "timestamp", "location", "co", "ozone", "pollutionLevel", "pm2_5", "pm10", "no2", "so2");
+            TIMEST_FIELD, LOCATION_FIELD, "co", "ozone", "pollutionLevel", "pm2_5", "pm10", "no2", "so2");
+
+    private static final Map<String, String> AIR_SORT_FIELD_ALIASES = Map.of(
+        "pm2_5", "pm25");
 
     @GetMapping("/air")
     @Operation(summary = "Get air pollution sensor data", description = "Retrieves air pollution readings with optional filtering by location, date range, sorting, and pagination.")
@@ -214,10 +227,10 @@ public class SensorController {
 
         Sort sortObj;
         try {
-            sortObj = buildSort(sort, AIR_SORT_FIELDS);
+            sortObj = buildSort(sort, AIR_SORT_FIELDS, AIR_SORT_FIELD_ALIASES);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", ex.getMessage()));
+                    ERROR_KEY, VALIDATION_FAILED, DETAILS_KEY, ex.getMessage()));
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
@@ -243,7 +256,7 @@ public class SensorController {
     }
 
     private static final Set<String> LIGHT_SORT_FIELDS = Set.of(
-            "timestamp", "location", "brightnessLevel", "powerConsumption", "status");
+            TIMEST_FIELD, LOCATION_FIELD, "brightnessLevel", "powerConsumption", "status");
 
     @GetMapping("/light")
     @Operation(summary = "Get street light sensor data", description = "Retrieves street light readings with optional filtering by location, status, date range, sorting, and pagination.")
@@ -270,7 +283,7 @@ public class SensorController {
             sortObj = buildSort(sort, LIGHT_SORT_FIELDS);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Validation failed", "details", ex.getMessage()));
+                    ERROR_KEY, VALIDATION_FAILED, DETAILS_KEY, ex.getMessage()));
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);

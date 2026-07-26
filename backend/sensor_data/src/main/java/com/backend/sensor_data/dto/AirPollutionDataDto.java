@@ -2,6 +2,7 @@ package com.backend.sensor_data.dto;
 
 import com.backend.sensor_data.entity.PollutionLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Schema(name = "AirPollutionDataDto", description = "Payload for submitting an air pollution sensor reading")
 public class AirPollutionDataDto {
@@ -10,7 +11,8 @@ public class AirPollutionDataDto {
     private String location;
 
     @Schema(description = "PM2.5 particulate matter concentration in µg/m³", example = "22.5", minimum = "0")
-    private Float pm2_5;
+    @JsonProperty("pm2_5")
+    private Float pm25;
 
     @Schema(description = "PM10 particulate matter concentration in µg/m³", example = "40.0", minimum = "0")
     private Float pm10;
@@ -33,8 +35,10 @@ public class AirPollutionDataDto {
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
 
-    public Float getPm2_5() { return pm2_5; }
-    public void setPm2_5(Float pm2_5) { this.pm2_5 = pm2_5; }
+    @JsonProperty("pm2_5")
+    public Float getPm25() { return pm25; }
+    @JsonProperty("pm2_5")
+    public void setPm25(Float pm25) { this.pm25 = pm25; }
 
     public Float getPm10() { return pm10; }
     public void setPm10(Float pm10) { this.pm10 = pm10; }
