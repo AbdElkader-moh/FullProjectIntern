@@ -1,12 +1,19 @@
 package com.backend.sensor_data.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import org.mockito.ArgumentCaptor;
+
+import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -14,201 +21,303 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.backend.sensor_data.entity.AirPollutionData;
+import com.backend.sensor_data.dto.AirPollutionDataDto;
+import com.backend.sensor_data.dto.StreetLightDataDto;
+import com.backend.sensor_data.dto.TrafficDataDto;
 import com.backend.sensor_data.entity.CongestionLevel;
+import com.backend.sensor_data.entity.PollutionLevel;
+import com.backend.sensor_data.entity.Status;
 import com.backend.sensor_data.entity.TrafficData;
 import com.backend.sensor_data.service.SensorDataService;
 
-import java.util.Collections;
-
+/**
+ * Covers SensorController as a plain unit test (mocked SensorDataService,
+ * no Spring context) -- this is deliberately NOT @WebMvcTest, since the
+ * goal here is exercising the private validatePagination()/buildSort()
+ * helpers (the exact lines/conditions flagged as uncovered), not the HTTP
+ * serialization layer. If you also want a @WebMvcTest pass for the HTTP
+ * contract itself (status codes as seen by a real request), that's a
+ * separate, complementary test class.
+ */
+@ExtendWith(MockitoExtension.class)
 class SensorControllerTest {
 
+    @Mock
     private SensorDataService sensorDataService;
+
     private SensorController controller;
 
     @BeforeEach
     void setUp() {
-        sensorDataService = mock(SensorDataService.class);
         controller = new SensorController(sensorDataService);
     }
 
+    // ---------------- ingestion endpoints ----------------
+
     @Test
-    void getAirData_sortByPm2_5_resolvesToPm25Property() {
-        Page<AirPollutionData> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(sensorDataService.getAirData(any(), any(), any(), any(), any())).thenReturn(emptyPage);
+    void receiveTrafficData_delegatesToServiceAndReturns201() {
+        TrafficDataDto dto = new TrafficDataDto();
 
-        ResponseEntity<?> response = controller.getAirData(
-                null, null, null, null, 0, 20, "pm2_5,desc");
+        ResponseEntity<String> response = controller.receiveTrafficData(dto);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(sensorDataService).getAirData(any(), any(), any(), any(), pageableCaptor.capture());
-
-        Sort resultSort = pageableCaptor.getValue().getSort();
-        Sort.Order order = resultSort.getOrderFor("pm25");
-        assertNotNull(order, "Expected sort to resolve to the 'pm25' Java property");
-        assertEquals(Sort.Direction.DESC, order.getDirection());
+        verify(sensorDataService).saveTrafficData(dto);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isEqualTo("Traffic data saved successfully.");
     }
 
     @Test
-    void getAirData_sortByUnknownField_returns400() {
-        ResponseEntity<?> response = controller.getAirData(
-                null, null, null, null, 0, 20, "notARealField,asc");
+    void receiveAirData_delegatesToServiceAndReturns201() {
+        AirPollutionDataDto dto = new AirPollutionDataDto();
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        verifyNoInteractions(sensorDataService);
+        ResponseEntity<String> response = controller.receiveAirData(dto);
+
+        verify(sensorDataService).saveAirPollutionData(dto);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isEqualTo("Air pollution data saved successfully.");
     }
 
     @Test
-    void getAirData_blankSort_returnsUnsorted() {
-        Page<AirPollutionData> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(sensorDataService.getAirData(any(), any(), any(), any(), any())).thenReturn(emptyPage);
+    void receiveLightData_delegatesToServiceAndReturns201() {
+        StreetLightDataDto dto = new StreetLightDataDto();
 
-        ResponseEntity<?> response = controller.getAirData(
-                null, null, null, null, 0, 20, null);
+        ResponseEntity<String> response = controller.receiveLightData(dto);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(sensorDataService).getAirData(any(), any(), any(), any(), pageableCaptor.capture());
-        assertTrue(pageableCaptor.getValue().getSort().isUnsorted());
+        verify(sensorDataService).saveStreetLightData(dto);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isEqualTo("Street light data saved successfully.");
     }
 
-    @Test
-    void getAirData_sortByTimestamp_noAliasNeeded() {
-        Page<AirPollutionData> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(sensorDataService.getAirData(any(), any(), any(), any(), any())).thenReturn(emptyPage);
-
-        controller.getAirData(null, null, null, null, 0, 20, "timestamp,asc");
-
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(sensorDataService).getAirData(any(), any(), any(), any(), pageableCaptor.capture());
-
-        Sort.Order order = pageableCaptor.getValue().getSort().getOrderFor("timestamp");
-        assertNotNull(order);
-        assertEquals(Sort.Direction.ASC, order.getDirection());
-    }
+    // ---------------- validatePagination() via getTrafficData ----------------
 
     @Test
-    void getTrafficData_invalidPage_returns400() {
-        ResponseEntity<?> response = controller.getTrafficData(
+    void getTrafficData_negativePage_returns400BeforeCallingService() {
+        ResponseEntity<Object> response = controller.getTrafficData(
                 null, null, null, null, -1, 20, null);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        @SuppressWarnings("unchecked")
+        Map<String, String> body = (Map<String, String>) response.getBody();
+        assertThat(body).containsEntry("details", "Page must be >= 0");
         verifyNoInteractions(sensorDataService);
     }
 
     @Test
-    void getTrafficData_sortByCongestionLevel_noAliasNeeded() {
-        Page<TrafficData> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(sensorDataService.getTrafficData(any(), any(), any(), any(), any())).thenReturn(emptyPage);
+    void getTrafficData_zeroSize_returns400BeforeCallingService() {
+        ResponseEntity<Object> response = controller.getTrafficData(
+                null, null, null, null, 0, 0, null);
 
-        ResponseEntity<?> response = controller.getTrafficData(
-                null, CongestionLevel.High, null, null, 0, 20, "congestionLevel,desc");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        @SuppressWarnings("unchecked")
+        Map<String, String> body = (Map<String, String>) response.getBody();
+        assertThat(body).containsEntry("details", "Page size must be greater than 0");
+        verifyNoInteractions(sensorDataService);
     }
 
     @Test
-    void getTrafficStats_returns200() {
-        when(sensorDataService.getTrafficStats()).thenReturn(mock(com.backend.sensor_data.dto.TrafficStatsDto.class));
+    void getTrafficData_negativeSize_returns400() {
+        ResponseEntity<Object> response = controller.getTrafficData(
+                null, null, null, null, 0, -5, null);
 
-        ResponseEntity<?> response = controller.getTrafficStats();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verifyNoInteractions(sensorDataService);
     }
 
-    @Test
-    void getTrafficTrends_returns200() {
-        when(sensorDataService.getTrafficTrends()).thenReturn(Collections.emptyList());
-
-        ResponseEntity<?> response = controller.getTrafficTrends();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
+    // ---------------- buildSort() via getTrafficData ----------------
 
     @Test
-    void getTrafficCongestionSummary_returns200() {
-        when(sensorDataService.getTrafficCongestionSummary()).thenReturn(java.util.Map.of());
-
-        ResponseEntity<?> response = controller.getTrafficCongestionSummary();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    void getAirStats_returns200() {
-        when(sensorDataService.getAirStats()).thenReturn(mock(com.backend.sensor_data.dto.AirStatsDto.class));
-
-        ResponseEntity<?> response = controller.getAirStats();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    void getAirTrends_returns200() {
-        when(sensorDataService.getAirTrends()).thenReturn(Collections.emptyList());
-
-        ResponseEntity<?> response = controller.getAirTrends();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    void getLightStats_returns200() {
-        when(sensorDataService.getLightStats()).thenReturn(mock(com.backend.sensor_data.dto.LightStatsDto.class));
-
-        ResponseEntity<?> response = controller.getLightStats();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    void getLightTrends_returns200() {
-        when(sensorDataService.getLightTrends()).thenReturn(Collections.emptyList());
-
-        ResponseEntity<?> response = controller.getLightTrends();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    void getLightData_sortByInvalidField_returns400() {
-        ResponseEntity<?> response = controller.getLightData(
+    void getTrafficData_invalidSortField_returns400WithFieldNameInMessage() {
+        ResponseEntity<Object> response = controller.getTrafficData(
                 null, null, null, null, 0, 20, "notARealField,asc");
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        @SuppressWarnings("unchecked")
+        Map<String, String> body = (Map<String, String>) response.getBody();
+        assertThat(body.get("details")).contains("notARealField");
         verifyNoInteractions(sensorDataService);
     }
 
     @Test
-    void receiveTrafficData_returns201() {
-        com.backend.sensor_data.dto.TrafficDataDto dto = new com.backend.sensor_data.dto.TrafficDataDto();
+    void getTrafficData_nullSort_usesUnsortedAndCallsService() {
+        Page<TrafficData> page = new PageImpl<>(List.of());
+        when(sensorDataService.getTrafficData(any(), any(), any(), any(), any())).thenReturn(page);
 
-        ResponseEntity<?> response = controller.receiveTrafficData(dto);
+        ResponseEntity<Object> response = controller.getTrafficData(
+                null, null, null, null, 0, 20, null);
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        verify(sensorDataService).saveTrafficData(dto);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(sensorDataService).getTrafficData(any(), any(), any(), any(), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getSort().isUnsorted()).isTrue();
     }
 
     @Test
-    void receiveAirData_returns201() {
-        com.backend.sensor_data.dto.AirPollutionDataDto dto = new com.backend.sensor_data.dto.AirPollutionDataDto();
+    void getTrafficData_blankSort_usesUnsorted() {
+        Page<TrafficData> page = new PageImpl<>(List.of());
+        when(sensorDataService.getTrafficData(any(), any(), any(), any(), any())).thenReturn(page);
 
-        ResponseEntity<?> response = controller.receiveAirData(dto);
+        controller.getTrafficData(null, null, null, null, 0, 20, "   ");
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        verify(sensorDataService).saveAirPollutionData(dto);
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(sensorDataService).getTrafficData(any(), any(), any(), any(), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getSort().isUnsorted()).isTrue();
     }
 
     @Test
-    void receiveLightData_returns201() {
-        com.backend.sensor_data.dto.StreetLightDataDto dto = new com.backend.sensor_data.dto.StreetLightDataDto();
+    void getTrafficData_validSortFieldNoDirection_defaultsToAscending() {
+        Page<TrafficData> page = new PageImpl<>(List.of());
+        when(sensorDataService.getTrafficData(any(), any(), any(), any(), any())).thenReturn(page);
 
-        ResponseEntity<?> response = controller.receiveLightData(dto);
+        controller.getTrafficData(null, null, null, null, 0, 20, "trafficDensity");
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        verify(sensorDataService).saveStreetLightData(dto);
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(sensorDataService).getTrafficData(any(), any(), any(), any(), pageableCaptor.capture());
+        Sort.Order order = pageableCaptor.getValue().getSort().getOrderFor("trafficDensity");
+        assertThat(order).isNotNull();
+        assertThat(order.getDirection()).isEqualTo(Sort.Direction.ASC);
+    }
+
+    @Test
+    void getTrafficData_validSortFieldDescDirection_appliesDescending() {
+        Page<TrafficData> page = new PageImpl<>(List.of());
+        when(sensorDataService.getTrafficData(any(), any(), any(), any(), any())).thenReturn(page);
+
+        controller.getTrafficData(null, null, null, null, 0, 20, "avgSpeed,desc");
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(sensorDataService).getTrafficData(any(), any(), any(), any(), pageableCaptor.capture());
+        Sort.Order order = pageableCaptor.getValue().getSort().getOrderFor("avgSpeed");
+        assertThat(order).isNotNull();
+        assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+    }
+
+    @Test
+    void getTrafficData_validParams_passesThroughLocationAndCongestionLevel() {
+        Page<TrafficData> page = new PageImpl<>(List.of());
+        when(sensorDataService.getTrafficData(any(), any(), any(), any(), any())).thenReturn(page);
+
+        controller.getTrafficData("Main St", CongestionLevel.High, null, null, 1, 10, "timestamp,desc");
+
+        verify(sensorDataService).getTrafficData(
+                eq("Main St"), eq(CongestionLevel.High), eq(null), eq(null), any());
+    }
+
+    // ---------------- traffic read-only passthrough endpoints ----------------
+
+    @Test
+    void getTrafficStats_delegatesToService() {
+        controller.getTrafficStats();
+        verify(sensorDataService).getTrafficStats();
+    }
+
+    @Test
+    void getTrafficTrends_delegatesToService() {
+        controller.getTrafficTrends();
+        verify(sensorDataService).getTrafficTrends();
+    }
+
+    @Test
+    void getTrafficCongestionSummary_delegatesToService() {
+        controller.getTrafficCongestionSummary();
+        verify(sensorDataService).getTrafficCongestionSummary();
+    }
+
+    // ---------------- buildSort() with field aliases via getAirData ----------------
+
+    @Test
+    void getAirData_aliasedSortField_resolvesToRealFieldName() {
+        when(sensorDataService.getAirData(any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        controller.getAirData(null, null, null, null, 0, 20, "pm2_5,asc");
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(sensorDataService).getAirData(any(), any(), any(), any(), pageableCaptor.capture());
+        // The alias map resolves the public "pm2_5" sort key to the entity's real "pm25" field.
+        Sort.Order order = pageableCaptor.getValue().getSort().getOrderFor("pm25");
+        assertThat(order).isNotNull();
+    }
+
+    @Test
+    void getAirData_invalidSortField_returns400() {
+        ResponseEntity<Object> response = controller.getAirData(
+                null, null, null, null, 0, 20, "notAField");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verifyNoInteractions(sensorDataService);
+    }
+
+    @Test
+    void getAirData_negativePage_returns400() {
+        ResponseEntity<Object> response = controller.getAirData(
+                null, null, null, null, -1, 20, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verifyNoInteractions(sensorDataService);
+    }
+
+    @Test
+    void getAirData_validParams_passesThroughPollutionLevel() {
+        when(sensorDataService.getAirData(any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        controller.getAirData("Downtown", PollutionLevel.Unhealthy, null, null, 0, 20, null);
+
+        verify(sensorDataService).getAirData(
+                eq("Downtown"), eq(PollutionLevel.Unhealthy), eq(null), eq(null), any());
+    }
+
+    @Test
+    void getAirStats_delegatesToService() {
+        controller.getAirStats();
+        verify(sensorDataService).getAirStats();
+    }
+
+    @Test
+    void getAirTrends_delegatesToService() {
+        controller.getAirTrends();
+        verify(sensorDataService).getAirTrends();
+    }
+
+    // ---------------- light endpoints ----------------
+
+    @Test
+    void getLightData_zeroSize_returns400() {
+        ResponseEntity<Object> response = controller.getLightData(
+                null, null, null, null, 0, 0, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verifyNoInteractions(sensorDataService);
+    }
+
+    @Test
+    void getLightData_invalidSortField_returns400() {
+        ResponseEntity<Object> response = controller.getLightData(
+                null, null, null, null, 0, 20, "notAField,asc");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verifyNoInteractions(sensorDataService);
+    }
+
+    @Test
+    void getLightData_validParams_passesThroughStatusFilter() {
+        when(sensorDataService.getLightData(any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        controller.getLightData("Elm St", Status.ON, null, null, 0, 20, "brightnessLevel,desc");
+
+        verify(sensorDataService).getLightData(
+                eq("Elm St"), eq(Status.ON), eq(null), eq(null), any());
+    }
+
+    @Test
+    void getLightStats_delegatesToService() {
+        controller.getLightStats();
+        verify(sensorDataService).getLightStats();
+    }
+
+    @Test
+    void getLightTrends_delegatesToService() {
+        controller.getLightTrends();
+        verify(sensorDataService).getLightTrends();
     }
 }
