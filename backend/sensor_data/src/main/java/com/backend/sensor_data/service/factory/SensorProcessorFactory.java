@@ -22,12 +22,13 @@ public class SensorProcessorFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <D> AbstractSensorProcessor<D, ?> getProcessor(String type) {
-        return switch (type.toUpperCase()) {
-            case "AIR"   -> (AbstractSensorProcessor<D, ?>) airProcessor;
-            case "LIGHT" -> (AbstractSensorProcessor<D, ?>) lightProcessor;
-            case "TRAFFIC" -> (AbstractSensorProcessor<D, ?>) trafficProcessor;
+    public <D> AbstractSensorProcessor<D, Object> getProcessor(String type) {
+        AbstractSensorProcessor<?, ?> processor = switch (type.toUpperCase()) {
+            case "AIR"     -> airProcessor;
+            case "LIGHT"   -> lightProcessor;
+            case "TRAFFIC" -> trafficProcessor;
             default -> throw new IllegalArgumentException("Unknown sensor type: " + type);
         };
+        return (AbstractSensorProcessor<D, Object>) processor;
     }
 }
