@@ -86,6 +86,15 @@
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Used by SecretReaderTest to stub environment variables (System.getenv
+             can't be mutated directly), e.g. simulating a missing/blank/directory-
+             instead-of-file JWT_SECRET_FILE path. -->
+        <dependency>
+            <groupId>uk.org.webcompere</groupId>
+            <artifactId>system-stubs-jupiter</artifactId>
+            <version>2.1.7</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
