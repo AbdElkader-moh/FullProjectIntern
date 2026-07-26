@@ -36,7 +36,6 @@ import com.backend.sensor_data.service.SensorDataService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -65,7 +64,7 @@ public class SensorController {
      * Validates page/size params. Returns an error ResponseEntity if invalid,
      * or null if the params are valid and processing should continue.
      */
-    private ResponseEntity<?> validatePagination(int page, int size) {
+    private ResponseEntity<Object> validatePagination(int page, int size) {
         if (page < 0) {
             return ResponseEntity.badRequest().body(Map.of(
                     ERROR_KEY, VALIDATION_FAILED, DETAILS_KEY, "Page must be >= 0"));
@@ -104,33 +103,27 @@ public class SensorController {
 
     @PostMapping("/traffic")
     @Operation(summary = "Submit traffic sensor data", description = "Persists a traffic sensor reading and checks user-configured alert thresholds for trafficDensity and avgSpeed.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Traffic data saved successfully"),
-        @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
-    })
-    public ResponseEntity<?> receiveTrafficData(@RequestBody TrafficDataDto data) {
+    @ApiResponse(responseCode = "201", description = "Traffic data saved successfully")
+    @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
+    public ResponseEntity<String> receiveTrafficData(@RequestBody TrafficDataDto data) {
         sensorDataService.saveTrafficData(data);
         return ResponseEntity.status(HttpStatus.CREATED).body("Traffic data saved successfully.");
     }
 
     @PostMapping("/air")
     @Operation(summary = "Submit air pollution sensor data", description = "Persists an air quality sensor reading and checks user-configured alert thresholds for CO and ozone levels.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Air pollution data saved successfully"),
-        @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
-    })
-    public ResponseEntity<?> receiveAirData(@RequestBody AirPollutionDataDto data) {
+    @ApiResponse(responseCode = "201", description = "Air pollution data saved successfully")
+    @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
+    public ResponseEntity<String> receiveAirData(@RequestBody AirPollutionDataDto data) {
         sensorDataService.saveAirPollutionData(data);
         return ResponseEntity.status(HttpStatus.CREATED).body("Air pollution data saved successfully.");
     }
 
     @PostMapping("/light")
     @Operation(summary = "Submit street light sensor data", description = "Persists a street light sensor reading and checks user-configured alert thresholds for brightnessLevel and powerConsumption.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Street light data saved successfully"),
-        @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
-    })
-    public ResponseEntity<?> receiveLightData(@RequestBody StreetLightDataDto data) {
+    @ApiResponse(responseCode = "201", description = "Street light data saved successfully")
+    @ApiResponse(responseCode = "400", description = "Validation error — missing or invalid fields")
+    public ResponseEntity<String> receiveLightData(@RequestBody StreetLightDataDto data) {
         sensorDataService.saveStreetLightData(data);
         return ResponseEntity.status(HttpStatus.CREATED).body("Street light data saved successfully.");
     }
@@ -140,11 +133,9 @@ public class SensorController {
 
     @GetMapping("/traffic")
     @Operation(summary = "Get traffic sensor data", description = "Retrieves traffic sensor readings with optional filtering by location, congestion level, date range, sorting, and pagination.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Traffic data retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
-    })
-    public ResponseEntity<?> getTrafficData(
+    @ApiResponse(responseCode = "200", description = "Traffic data retrieved successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
+    public ResponseEntity<Object> getTrafficData(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) CongestionLevel congestionLevel,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -153,7 +144,7 @@ public class SensorController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort) {
 
-        ResponseEntity<?> paginationError = validatePagination(page, size);
+        ResponseEntity<Object> paginationError = validatePagination(page, size);
         if (paginationError != null) {
             return paginationError;
         }
@@ -174,27 +165,21 @@ public class SensorController {
 
     @GetMapping("/traffic/stats")
     @Operation(summary = "Get traffic dashboard statistics", description = "Returns aggregated traffic statistics for dashboard charts and summary cards.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Traffic statistics retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Traffic statistics retrieved successfully")
     public ResponseEntity<TrafficStatsDto> getTrafficStats() {
         return ResponseEntity.ok(sensorDataService.getTrafficStats());
     }
 
     @GetMapping("/traffic/trends")
     @Operation(summary = "Get traffic trend data", description = "Returns recent traffic density and average speed readings ordered by timestamp for dashboard charts.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Traffic trend data retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Traffic trend data retrieved successfully")
     public ResponseEntity<List<TrafficTrendDto>> getTrafficTrends() {
         return ResponseEntity.ok(sensorDataService.getTrafficTrends());
     }
 
     @GetMapping("/traffic/congestion-summary")
     @Operation(summary = "Get traffic congestion summary", description = "Returns count of traffic records grouped by congestion level for dashboard charts.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Traffic congestion summary retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Traffic congestion summary retrieved successfully")
     public ResponseEntity<Map<String, Long>> getTrafficCongestionSummary() {
         return ResponseEntity.ok(sensorDataService.getTrafficCongestionSummary());
     }
@@ -207,11 +192,9 @@ public class SensorController {
 
     @GetMapping("/air")
     @Operation(summary = "Get air pollution sensor data", description = "Retrieves air pollution readings with optional filtering by location, date range, sorting, and pagination.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Air pollution data retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
-    })
-    public ResponseEntity<?> getAirData(
+    @ApiResponse(responseCode = "200", description = "Air pollution data retrieved successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
+    public ResponseEntity<Object> getAirData(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) PollutionLevel pollutionLevel,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -220,7 +203,7 @@ public class SensorController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort) {
 
-        ResponseEntity<?> paginationError = validatePagination(page, size);
+        ResponseEntity<Object> paginationError = validatePagination(page, size);
         if (paginationError != null) {
             return paginationError;
         }
@@ -239,18 +222,14 @@ public class SensorController {
 
     @GetMapping("/air/stats")
     @Operation(summary = "Get air pollution dashboard statistics", description = "Returns aggregated air pollution statistics for dashboard charts and summary cards.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Air pollution statistics retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Air pollution statistics retrieved successfully")
     public ResponseEntity<AirStatsDto> getAirStats() {
         return ResponseEntity.ok(sensorDataService.getAirStats());
     }
 
     @GetMapping("/air/trends")
     @Operation(summary = "Get air pollution trend data", description = "Returns recent CO and ozone readings ordered by timestamp for dashboard charts.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Air pollution trend data retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Air pollution trend data retrieved successfully")
     public ResponseEntity<List<AirTrendDto>> getAirTrends() {
         return ResponseEntity.ok(sensorDataService.getAirTrends());
     }
@@ -260,11 +239,9 @@ public class SensorController {
 
     @GetMapping("/light")
     @Operation(summary = "Get street light sensor data", description = "Retrieves street light readings with optional filtering by location, status, date range, sorting, and pagination.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Street light data retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
-    })
-    public ResponseEntity<?> getLightData(
+    @ApiResponse(responseCode = "200", description = "Street light data retrieved successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
+    public ResponseEntity<Object> getLightData(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) Status status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -273,7 +250,7 @@ public class SensorController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort) {
 
-        ResponseEntity<?> paginationError = validatePagination(page, size);
+        ResponseEntity<Object> paginationError = validatePagination(page, size);
         if (paginationError != null) {
             return paginationError;
         }
@@ -292,18 +269,14 @@ public class SensorController {
 
     @GetMapping("/light/stats")
     @Operation(summary = "Get street light dashboard statistics", description = "Returns aggregated street light statistics for dashboard charts and summary cards.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Street light statistics retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Street light statistics retrieved successfully")
     public ResponseEntity<LightStatsDto> getLightStats() {
         return ResponseEntity.ok(sensorDataService.getLightStats());
     }
 
     @GetMapping("/light/trends")
     @Operation(summary = "Get street light trend data", description = "Returns recent brightness and power consumption readings ordered by timestamp for dashboard charts.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Street light trend data retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Street light trend data retrieved successfully")
     public ResponseEntity<List<LightTrendDto>> getLightTrends() {
         return ResponseEntity.ok(sensorDataService.getLightTrends());
     }
