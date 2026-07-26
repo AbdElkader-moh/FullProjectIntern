@@ -48,8 +48,8 @@ class SensorDataServiceTest {
     }
 
     @Test
-@SuppressWarnings("unchecked")
-void saveTrafficData_delegatesToTrafficProcessor() {
+    @SuppressWarnings("unchecked")
+    void saveTrafficData_delegatesToTrafficProcessor() {
     AbstractSensorProcessor<TrafficDataDto, ?> mockProcessor = mock(AbstractSensorProcessor.class);
     doReturn(mockProcessor).when(processorFactory).<TrafficDataDto>getProcessor("TRAFFIC");
 
@@ -57,11 +57,11 @@ void saveTrafficData_delegatesToTrafficProcessor() {
     service.saveTrafficData(dto);
 
     verify(mockProcessor).process(dto);
-}
+    }
 
-@Test
-@SuppressWarnings("unchecked")
-void saveAirPollutionData_delegatesToAirProcessor() {
+    @Test
+    @SuppressWarnings("unchecked")
+    void saveAirPollutionData_delegatesToAirProcessor() {
     AbstractSensorProcessor<AirPollutionDataDto, ?> mockProcessor = mock(AbstractSensorProcessor.class);
     doReturn(mockProcessor).when(processorFactory).<AirPollutionDataDto>getProcessor("AIR");
 
@@ -69,15 +69,15 @@ void saveAirPollutionData_delegatesToAirProcessor() {
     service.saveAirPollutionData(dto);
 
     verify(mockProcessor).process(dto);
-}
+    }
 
     @Test
     void getTrafficData_fromAfterTo_throwsIllegalArgumentException() {
         LocalDateTime from = LocalDateTime.now();
         LocalDateTime to = from.minusDays(1);
+        Pageable pageable = PageRequest.of(0, 20);
 
-        assertThrows(IllegalArgumentException.class, () ->
-                service.getTrafficData(null, null, from, to, PageRequest.of(0, 20)));
+        assertThrows(IllegalArgumentException.class, () -> service.getTrafficData(null, null, from, to, pageable));
     }
 
     @Test
@@ -105,9 +105,9 @@ void saveAirPollutionData_delegatesToAirProcessor() {
     void getAirData_fromAfterTo_throwsIllegalArgumentException() {
         LocalDateTime from = LocalDateTime.now();
         LocalDateTime to = from.minusDays(1);
+        Pageable pageable = PageRequest.of(0, 20);
 
-        assertThrows(IllegalArgumentException.class, () ->
-                service.getAirData(null, null, from, to, PageRequest.of(0, 20)));
+        assertThrows(IllegalArgumentException.class, () -> service.getAirData(null, null, from, to, pageable));
     }
 
     @Test

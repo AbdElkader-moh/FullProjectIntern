@@ -9,7 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.backend.sensor_data.dto.AirPollutionDataDto;
@@ -29,7 +28,6 @@ import com.backend.sensor_data.entity.StreetLightData;
 import com.backend.sensor_data.entity.TrafficData;
 import com.backend.sensor_data.repository.AirPollutionDataRepository;
 import com.backend.sensor_data.repository.NotificationRepository;
-import com.backend.sensor_data.repository.SettingsRepository;
 import com.backend.sensor_data.repository.StreetLightDataRepository;
 import com.backend.sensor_data.repository.TrafficDataRepository;
 import com.backend.sensor_data.service.factory.SensorProcessorFactory;

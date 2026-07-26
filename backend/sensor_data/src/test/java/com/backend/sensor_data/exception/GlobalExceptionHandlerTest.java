@@ -36,7 +36,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleMethodNotSupported_returns405() throws Exception {
+    void handleMethodNotSupported_returns405() {
         HttpRequestMethodNotSupportedException ex =
                 new HttpRequestMethodNotSupportedException("PATCH");
 
