@@ -19,6 +19,7 @@ import org.springframework.data.jpa.domain.Specification;
 import com.backend.sensor_data.dto.AirPollutionDataDto;
 import com.backend.sensor_data.dto.TrafficDataDto;
 import com.backend.sensor_data.entity.AirPollutionData;
+import com.backend.sensor_data.entity.StreetLightData;
 import com.backend.sensor_data.entity.TrafficData;
 import com.backend.sensor_data.repository.AirPollutionDataRepository;
 import com.backend.sensor_data.repository.NotificationRepository;
@@ -50,25 +51,25 @@ class SensorDataServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void saveTrafficData_delegatesToTrafficProcessor() {
-    AbstractSensorProcessor<TrafficDataDto, ?> mockProcessor = mock(AbstractSensorProcessor.class);
-    doReturn(mockProcessor).when(processorFactory).<TrafficDataDto>getProcessor("TRAFFIC");
+        AbstractSensorProcessor<TrafficDataDto, ?> mockProcessor = mock(AbstractSensorProcessor.class);
+        doReturn(mockProcessor).when(processorFactory).<TrafficDataDto>getProcessor("TRAFFIC");
 
-    TrafficDataDto dto = new TrafficDataDto();
-    service.saveTrafficData(dto);
+        TrafficDataDto dto = new TrafficDataDto();
+        service.saveTrafficData(dto);
 
-    verify(mockProcessor).process(dto);
+        verify(mockProcessor).process(dto);
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void saveAirPollutionData_delegatesToAirProcessor() {
-    AbstractSensorProcessor<AirPollutionDataDto, ?> mockProcessor = mock(AbstractSensorProcessor.class);
-    doReturn(mockProcessor).when(processorFactory).<AirPollutionDataDto>getProcessor("AIR");
+        AbstractSensorProcessor<AirPollutionDataDto, ?> mockProcessor = mock(AbstractSensorProcessor.class);
+        doReturn(mockProcessor).when(processorFactory).<AirPollutionDataDto>getProcessor("AIR");
 
-    AirPollutionDataDto dto = new AirPollutionDataDto();
-    service.saveAirPollutionData(dto);
+        AirPollutionDataDto dto = new AirPollutionDataDto();
+        service.saveAirPollutionData(dto);
 
-    verify(mockProcessor).process(dto);
+        verify(mockProcessor).process(dto);
     }
 
     @Test
@@ -97,8 +98,7 @@ class SensorDataServiceTest {
         Pageable invalidPageable = mock(Pageable.class);
         when(invalidPageable.getPageSize()).thenReturn(0);
 
-        assertThrows(IllegalArgumentException.class, () ->
-                service.getAirData(null, null, null, null, invalidPageable));
+        assertThrows(IllegalArgumentException.class, () -> service.getAirData(null, null, null, null, invalidPageable));
     }
 
     @Test
@@ -143,5 +143,92 @@ class SensorDataServiceTest {
         when(trafficRepo.countByCongestionLevel(any())).thenReturn(2L);
 
         assertEquals(4, service.getTrafficCongestionSummary().size());
+    }
+
+    @Test
+    void getAirStats_returnsAggregatedStats() {
+        when(airRepo.count()).thenReturn(10L);
+        when(notificationRepository.countByType("Air")).thenReturn(2L);
+        when(airRepo.findAvgCo()).thenReturn(5.5);
+        when(airRepo.findAvgOzone()).thenReturn(12.0);
+        when(airRepo.findMaxCo()).thenReturn(20.0);
+        when(airRepo.findMinCo()).thenReturn(1.0);
+        when(airRepo.findMaxOzone()).thenReturn(30.0);
+        when(airRepo.findMinOzone()).thenReturn(2.0);
+        when(airRepo.countByPollutionLevel(any())).thenReturn(1L);
+
+        assertNotNull(service.getAirStats());
+    }
+
+    @Test
+    void getAirStats_handlesNullAggregates() {
+        when(airRepo.count()).thenReturn(0L);
+        when(notificationRepository.countByType("Air")).thenReturn(0L);
+        when(airRepo.findAvgCo()).thenReturn(null);
+        when(airRepo.findAvgOzone()).thenReturn(null);
+        when(airRepo.findMaxCo()).thenReturn(null);
+        when(airRepo.findMinCo()).thenReturn(null);
+        when(airRepo.findMaxOzone()).thenReturn(null);
+        when(airRepo.findMinOzone()).thenReturn(null);
+        when(airRepo.countByPollutionLevel(any())).thenReturn(0L);
+
+        assertNotNull(service.getAirStats());
+    }
+
+    @Test
+    void getAirTrends_returnsEmptyListWhenNoData() {
+        when(airRepo.findTop50ByOrderByTimestampDesc()).thenReturn(Collections.emptyList());
+
+        assertTrue(service.getAirTrends().isEmpty());
+    }
+
+    @Test
+    void getLightData_fromAfterTo_throwsIllegalArgumentException() {
+        LocalDateTime from = LocalDateTime.now();
+        LocalDateTime to = from.minusDays(1);
+        Pageable pageable = PageRequest.of(0, 20);
+
+        assertThrows(IllegalArgumentException.class, () -> service.getLightData(null, null, from, to, pageable));
+    }
+
+    @Test
+    void getLightData_pageSizeZero_throwsIllegalArgumentException() {
+        Pageable invalidPageable = mock(Pageable.class);
+        when(invalidPageable.getPageSize()).thenReturn(0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.getLightData(null, null, null, null, invalidPageable));
+    }
+
+    @Test
+    void getLightData_validParams_returnsPage() {
+        Page<StreetLightData> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(lightRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(emptyPage);
+
+        Page<StreetLightData> result = service.getLightData(
+                "Downtown", null, null, null, PageRequest.of(0, 20));
+
+        assertNotNull(result);
+        verify(lightRepo).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void getLightStats_returnsAggregatedStats() {
+        when(lightRepo.count()).thenReturn(8L);
+        when(notificationRepository.countByType("Light")).thenReturn(1L);
+        when(lightRepo.findAvgBrightnessLevel()).thenReturn(70.0);
+        when(lightRepo.findAvgPowerConsumption()).thenReturn(15.0);
+        when(lightRepo.findMaxPowerConsumption()).thenReturn(25.0);
+        when(lightRepo.findMinBrightnessLevel()).thenReturn(10.0);
+        when(lightRepo.countByStatus(any())).thenReturn(4L);
+
+        assertNotNull(service.getLightStats());
+    }
+
+    @Test
+    void getLightTrends_returnsEmptyListWhenNoData() {
+        when(lightRepo.findTop50ByOrderByTimestampDesc()).thenReturn(Collections.emptyList());
+
+        assertTrue(service.getLightTrends().isEmpty());
     }
 }
