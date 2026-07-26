@@ -2,6 +2,7 @@ package com.backend.sensor_data.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "settings")
@@ -14,7 +15,7 @@ public class Settings {
     private Float thresholdValue;
     private String alertType;
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now(ZoneId.of("UTC"));
 
     public Settings() {}
 

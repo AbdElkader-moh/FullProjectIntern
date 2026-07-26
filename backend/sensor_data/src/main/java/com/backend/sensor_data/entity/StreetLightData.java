@@ -3,6 +3,7 @@ package com.backend.sensor_data.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "street_light_sensors_data")
@@ -14,7 +15,7 @@ public class StreetLightData {
     private String location;
 
     @Column(updatable = false)
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime timestamp = LocalDateTime.now(ZoneId.of("UTC"));
 
     @Min(0) @Max(100)
     private Integer brightnessLevel;
