@@ -226,8 +226,17 @@ public class SensorDataService {
                 "Very_Unhealthy", airRepo.countByPollutionLevel(PollutionLevel.Very_Unhealthy),
                 "Hazardous", airRepo.countByPollutionLevel(PollutionLevel.Hazardous));
 
-        return new AirStatsDto(totalRecords, avgCo, avgOzone,
-                highestCo, lowestCo, highestOzone, lowestOzone, totalAlerts, breakdown);
+        return AirStatsDto.builder()
+                .totalRecords(totalRecords)
+                .averageCo(avgCo)
+                .averageOzone(avgOzone)
+                .highestCo(highestCo)
+                .lowestCo(lowestCo)
+                .highestOzone(highestOzone)
+                .lowestOzone(lowestOzone)
+                .totalAlerts(totalAlerts)
+                .pollutionLevelBreakdown(breakdown)
+                .build();
     }
 
     public List<AirTrendDto> getAirTrends() {

@@ -36,18 +36,20 @@ public class AirStatsDto {
     )
     private final Map<String, Long> pollutionLevelBreakdown;
 
-    public AirStatsDto(long totalRecords, double averageCo, double averageOzone,
-            double highestCo, double lowestCo, double highestOzone, double lowestOzone,
-            long totalAlerts, Map<String, Long> pollutionLevelBreakdown) {
-        this.totalRecords = totalRecords;
-        this.averageCo = averageCo;
-        this.averageOzone = averageOzone;
-        this.highestCo = highestCo;
-        this.lowestCo = lowestCo;
-        this.highestOzone = highestOzone;
-        this.lowestOzone = lowestOzone;
-        this.totalAlerts = totalAlerts;
-        this.pollutionLevelBreakdown = pollutionLevelBreakdown;
+    private AirStatsDto(Builder builder) {
+        this.totalRecords = builder.totalRecords;
+        this.averageCo = builder.averageCo;
+        this.averageOzone = builder.averageOzone;
+        this.highestCo = builder.highestCo;
+        this.lowestCo = builder.lowestCo;
+        this.highestOzone = builder.highestOzone;
+        this.lowestOzone = builder.lowestOzone;
+        this.totalAlerts = builder.totalAlerts;
+        this.pollutionLevelBreakdown = builder.pollutionLevelBreakdown;
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public long getTotalRecords() { return totalRecords; }
@@ -59,4 +61,35 @@ public class AirStatsDto {
     public double getLowestOzone() { return lowestOzone; }
     public long getTotalAlerts() { return totalAlerts; }
     public Map<String, Long> getPollutionLevelBreakdown() { return pollutionLevelBreakdown; }
+
+    public static final class Builder {
+        private long totalRecords;
+        private double averageCo;
+        private double averageOzone;
+        private double highestCo;
+        private double lowestCo;
+        private double highestOzone;
+        private double lowestOzone;
+        private long totalAlerts;
+        private Map<String, Long> pollutionLevelBreakdown;
+
+        private Builder() {}
+
+        public Builder totalRecords(long totalRecords) { this.totalRecords = totalRecords; return this; }
+        public Builder averageCo(double averageCo) { this.averageCo = averageCo; return this; }
+        public Builder averageOzone(double averageOzone) { this.averageOzone = averageOzone; return this; }
+        public Builder highestCo(double highestCo) { this.highestCo = highestCo; return this; }
+        public Builder lowestCo(double lowestCo) { this.lowestCo = lowestCo; return this; }
+        public Builder highestOzone(double highestOzone) { this.highestOzone = highestOzone; return this; }
+        public Builder lowestOzone(double lowestOzone) { this.lowestOzone = lowestOzone; return this; }
+        public Builder totalAlerts(long totalAlerts) { this.totalAlerts = totalAlerts; return this; }
+        public Builder pollutionLevelBreakdown(Map<String, Long> pollutionLevelBreakdown) {
+            this.pollutionLevelBreakdown = pollutionLevelBreakdown;
+            return this;
+        }
+
+        public AirStatsDto build() {
+            return new AirStatsDto(this);
+        }
+    }
 }
