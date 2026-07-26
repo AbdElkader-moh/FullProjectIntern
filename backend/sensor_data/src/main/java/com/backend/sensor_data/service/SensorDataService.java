@@ -51,8 +51,7 @@ public class SensorDataService {
     private static final String TIMEST_KEY = "timestamp";
 
     public SensorDataService(TrafficDataRepository trafficRepo, AirPollutionDataRepository airRepo,
-            StreetLightDataRepository lightRepo, SettingsRepository settingsRepository,
-            SimpMessagingTemplate messagingTemplate,
+            StreetLightDataRepository lightRepo,
             NotificationRepository notificationRepository,
             SensorProcessorFactory processorFactory) {
         this.trafficRepo = trafficRepo;
