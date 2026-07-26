@@ -15,10 +15,10 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
-
 
 class GlobalExceptionHandlerTest {
 
@@ -100,5 +100,17 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("malformed JSON", response.getBody().get("details"));
+    }
+
+    @Test
+    void handlePropertyReference_returns400WithMessage() {
+        PropertyReferenceException ex = mock(PropertyReferenceException.class);
+        when(ex.getMessage()).thenReturn("No property 'foo' found");
+
+        ResponseEntity<Map<String, String>> response = handler.handlePropertyReference(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Invalid sort property.", response.getBody().get("error"));
+        assertEquals("No property 'foo' found", response.getBody().get("details"));
     }
 }

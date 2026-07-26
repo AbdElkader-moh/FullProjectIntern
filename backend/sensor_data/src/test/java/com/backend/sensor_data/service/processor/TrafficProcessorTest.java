@@ -119,4 +119,22 @@ class TrafficProcessorTest {
         processor.process(validDto());
         verify(messagingTemplate).convertAndSend(eq("/topic/traffic"), any(TrafficData.class));
     }
+
+    @Test
+    void process_trafficDensityNegative_throwsIllegalArgumentException() {
+        TrafficDataDto dto = validDto();
+        dto.setTrafficDensity(-5);
+
+        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
+        verifyNoInteractions(trafficRepo);
+    }
+
+    @Test
+    void process_avgSpeedNegative_throwsIllegalArgumentException() {
+        TrafficDataDto dto = validDto();
+        dto.setAvgSpeed(-1.0f);
+
+        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
+        verifyNoInteractions(trafficRepo);
+    }
 }

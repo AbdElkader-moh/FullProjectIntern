@@ -17,8 +17,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.backend.sensor_data.dto.AirPollutionDataDto;
+import com.backend.sensor_data.dto.StreetLightDataDto;
 import com.backend.sensor_data.dto.TrafficDataDto;
 import com.backend.sensor_data.entity.AirPollutionData;
+import com.backend.sensor_data.entity.CongestionLevel;
+import com.backend.sensor_data.entity.PollutionLevel;
 import com.backend.sensor_data.entity.StreetLightData;
 import com.backend.sensor_data.entity.TrafficData;
 import com.backend.sensor_data.repository.AirPollutionDataRepository;
@@ -27,6 +30,7 @@ import com.backend.sensor_data.repository.StreetLightDataRepository;
 import com.backend.sensor_data.repository.TrafficDataRepository;
 import com.backend.sensor_data.service.factory.SensorProcessorFactory;
 import com.backend.sensor_data.service.processor.AbstractSensorProcessor;
+import com.backend.sensor_data.entity.Status;
 
 class SensorDataServiceTest {
 
@@ -230,5 +234,75 @@ class SensorDataServiceTest {
         when(lightRepo.findTop50ByOrderByTimestampDesc()).thenReturn(Collections.emptyList());
 
         assertTrue(service.getLightTrends().isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void saveStreetLightData_delegatesToLightProcessor() {
+        AbstractSensorProcessor<StreetLightDataDto, ?> mockProcessor = mock(AbstractSensorProcessor.class);
+        doReturn(mockProcessor).when(processorFactory).<StreetLightDataDto>getProcessor("LIGHT");
+
+        StreetLightDataDto dto = new StreetLightDataDto();
+        service.saveStreetLightData(dto);
+
+        verify(mockProcessor).process(dto);
+    }
+
+    @Test
+    void getTrafficData_withCongestionLevelAndDateRange_returnsPage() {
+        Page<TrafficData> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(trafficRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(emptyPage);
+
+        LocalDateTime from = LocalDateTime.now().minusDays(5);
+        LocalDateTime to = LocalDateTime.now();
+
+        Page<TrafficData> result = service.getTrafficData(
+                "Downtown", CongestionLevel.High, from, to, PageRequest.of(0, 20));
+
+        assertNotNull(result);
+        verify(trafficRepo).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void getAirData_withPollutionLevelAndDateRange_returnsPage() {
+        Page<AirPollutionData> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(airRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(emptyPage);
+
+        LocalDateTime from = LocalDateTime.now().minusDays(5);
+        LocalDateTime to = LocalDateTime.now();
+
+        Page<AirPollutionData> result = service.getAirData(
+                "Downtown", PollutionLevel.Good, from, to, PageRequest.of(0, 20));
+
+        assertNotNull(result);
+        verify(airRepo).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void getLightData_withStatusAndDateRange_returnsPage() {
+        Page<StreetLightData> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(lightRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(emptyPage);
+
+        LocalDateTime from = LocalDateTime.now().minusDays(5);
+        LocalDateTime to = LocalDateTime.now();
+
+        Page<StreetLightData> result = service.getLightData(
+                "Downtown", Status.ON, from, to, PageRequest.of(0, 20));
+
+        assertNotNull(result);
+        verify(lightRepo).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void getLightStats_handlesNullAggregates() {
+        when(lightRepo.count()).thenReturn(0L);
+        when(notificationRepository.countByType("Light")).thenReturn(0L);
+        when(lightRepo.findAvgBrightnessLevel()).thenReturn(null);
+        when(lightRepo.findAvgPowerConsumption()).thenReturn(null);
+        when(lightRepo.findMaxPowerConsumption()).thenReturn(null);
+        when(lightRepo.findMinBrightnessLevel()).thenReturn(null);
+        when(lightRepo.countByStatus(any())).thenReturn(0L);
+
+        assertNotNull(service.getLightStats());
     }
 }

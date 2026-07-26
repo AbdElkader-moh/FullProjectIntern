@@ -109,4 +109,106 @@ class SensorControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
+
+    @Test
+    void getTrafficStats_returns200() {
+        when(sensorDataService.getTrafficStats()).thenReturn(mock(com.backend.sensor_data.dto.TrafficStatsDto.class));
+
+        ResponseEntity<?> response = controller.getTrafficStats();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getTrafficTrends_returns200() {
+        when(sensorDataService.getTrafficTrends()).thenReturn(Collections.emptyList());
+
+        ResponseEntity<?> response = controller.getTrafficTrends();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getTrafficCongestionSummary_returns200() {
+        when(sensorDataService.getTrafficCongestionSummary()).thenReturn(java.util.Map.of());
+
+        ResponseEntity<?> response = controller.getTrafficCongestionSummary();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getAirStats_returns200() {
+        when(sensorDataService.getAirStats()).thenReturn(mock(com.backend.sensor_data.dto.AirStatsDto.class));
+
+        ResponseEntity<?> response = controller.getAirStats();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getAirTrends_returns200() {
+        when(sensorDataService.getAirTrends()).thenReturn(Collections.emptyList());
+
+        ResponseEntity<?> response = controller.getAirTrends();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getLightStats_returns200() {
+        when(sensorDataService.getLightStats()).thenReturn(mock(com.backend.sensor_data.dto.LightStatsDto.class));
+
+        ResponseEntity<?> response = controller.getLightStats();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getLightTrends_returns200() {
+        when(sensorDataService.getLightTrends()).thenReturn(Collections.emptyList());
+
+        ResponseEntity<?> response = controller.getLightTrends();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getLightData_sortByInvalidField_returns400() {
+        ResponseEntity<?> response = controller.getLightData(
+                null, null, null, null, 0, 20, "notARealField,asc");
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verifyNoInteractions(sensorDataService);
+    }
+
+    @Test
+    void receiveTrafficData_returns201() {
+        com.backend.sensor_data.dto.TrafficDataDto dto = new com.backend.sensor_data.dto.TrafficDataDto();
+
+        ResponseEntity<?> response = controller.receiveTrafficData(dto);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        verify(sensorDataService).saveTrafficData(dto);
+    }
+
+    @Test
+    void receiveAirData_returns201() {
+        com.backend.sensor_data.dto.AirPollutionDataDto dto = new com.backend.sensor_data.dto.AirPollutionDataDto();
+
+        ResponseEntity<?> response = controller.receiveAirData(dto);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        verify(sensorDataService).saveAirPollutionData(dto);
+    }
+
+    @Test
+    void receiveLightData_returns201() {
+        com.backend.sensor_data.dto.StreetLightDataDto dto = new com.backend.sensor_data.dto.StreetLightDataDto();
+
+        ResponseEntity<?> response = controller.receiveLightData(dto);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        verify(sensorDataService).saveStreetLightData(dto);
+    }
 }
