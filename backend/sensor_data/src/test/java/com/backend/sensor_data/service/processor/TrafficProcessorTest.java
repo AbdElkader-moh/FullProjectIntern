@@ -1,13 +1,15 @@
 package com.backend.sensor_data.service.processor;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.backend.sensor_data.dto.TrafficDataDto;
@@ -16,125 +18,221 @@ import com.backend.sensor_data.entity.TrafficData;
 import com.backend.sensor_data.repository.TrafficDataRepository;
 import com.backend.sensor_data.service.strategy.TrafficThresholdStrategy;
 
+/**
+ * Covers TrafficProcessor's 4 validation checks (each with a boundary case
+ * for trafficDensity/avgSpeed), plus mapToEntity, save, checkThreshold, and
+ * broadcast -- the latter closing the gap H4 flagged (Traffic previously had
+ * no WebSocket broadcast at all).
+ *
+ * getCongestionLevel()/setCongestionLevel() take the CongestionLevel enum
+ * (Low, Moderate, High, Severe), confirmed against
+ * com.backend.sensor_data.entity.CongestionLevel.
+ * trafficDensity is Integer; avgSpeed is Float (confirmed via compiler
+ * feedback -- the two fields use different numeric types).
+ */
+@ExtendWith(MockitoExtension.class)
 class TrafficProcessorTest {
 
+    @Mock
     private TrafficThresholdStrategy strategy;
+
+    @Mock
     private TrafficDataRepository trafficRepo;
+
+    @Mock
     private SimpMessagingTemplate messagingTemplate;
+
     private TrafficProcessor processor;
 
     @BeforeEach
     void setUp() {
-        strategy = mock(TrafficThresholdStrategy.class);
-        trafficRepo = mock(TrafficDataRepository.class);
-        messagingTemplate = mock(SimpMessagingTemplate.class);
         processor = new TrafficProcessor(strategy, trafficRepo, messagingTemplate);
     }
 
     private TrafficDataDto validDto() {
         TrafficDataDto dto = new TrafficDataDto();
-        dto.setLocation("Downtown");
-        dto.setTrafficDensity(120);
-        dto.setAvgSpeed(45.0f);
+        dto.setLocation("Main St & 5th Ave");
         dto.setCongestionLevel(CongestionLevel.Moderate);
+        dto.setTrafficDensity(250);
+        dto.setAvgSpeed(60.0f);
         return dto;
     }
 
+    // ---------------- validate() ----------------
+
     @Test
-    void process_mapsAllFieldsFromDtoToEntity() {
-        processor.process(validDto());
-
-        ArgumentCaptor<TrafficData> captor = ArgumentCaptor.forClass(TrafficData.class);
-        verify(trafficRepo).save(captor.capture());
-
-        TrafficData saved = captor.getValue();
-        assertEquals("Downtown", saved.getLocation());
-        assertEquals(120, saved.getTrafficDensity());
-        assertEquals(45.0f, saved.getAvgSpeed());
-        assertEquals(CongestionLevel.Moderate, saved.getCongestionLevel());
+    void validate_validDto_doesNotThrow() {
+        assertThatCode(() -> processor.validate(validDto())).doesNotThrowAnyException();
     }
 
     @Test
-    void process_blankLocation_throwsIllegalArgumentException() {
+    void validate_nullLocation_throws() {
+        TrafficDataDto dto = validDto();
+        dto.setLocation(null);
+
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid location: cannot be blank");
+    }
+
+    @Test
+    void validate_blankLocation_throws() {
         TrafficDataDto dto = validDto();
         dto.setLocation("   ");
 
-        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
-        verifyNoInteractions(trafficRepo);
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid location: cannot be blank");
     }
 
     @Test
-    void process_nullCongestionLevel_throwsIllegalArgumentException() {
+    void validate_nullCongestionLevel_throws() {
         TrafficDataDto dto = validDto();
         dto.setCongestionLevel(null);
 
-        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
-        verifyNoInteractions(trafficRepo);
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid congestion level: cannot be null");
     }
 
     @Test
-    void process_nullTrafficDensity_throwsIllegalArgumentException() {
+    void validate_nullTrafficDensity_throws() {
         TrafficDataDto dto = validDto();
         dto.setTrafficDensity(null);
 
-        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
-        verifyNoInteractions(trafficRepo);
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("trafficDensity is required");
     }
 
     @Test
-    void process_trafficDensityOutOfRange_throwsIllegalArgumentException() {
+    void validate_trafficDensityBelowZero_throws() {
         TrafficDataDto dto = validDto();
-        dto.setTrafficDensity(600);
+        dto.setTrafficDensity(-1);
 
-        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
-        verifyNoInteractions(trafficRepo);
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid traffic density: must be between 0 and 500");
     }
 
     @Test
-    void process_nullAvgSpeed_throwsIllegalArgumentException() {
+    void validate_trafficDensityAboveFiveHundred_throws() {
+        TrafficDataDto dto = validDto();
+        dto.setTrafficDensity(501);
+
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid traffic density: must be between 0 and 500");
+    }
+
+    @Test
+    void validate_trafficDensityAtLowerBoundZero_isValid() {
+        TrafficDataDto dto = validDto();
+        dto.setTrafficDensity(0);
+
+        assertThatCode(() -> processor.validate(dto)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validate_trafficDensityAtUpperBoundFiveHundred_isValid() {
+        TrafficDataDto dto = validDto();
+        dto.setTrafficDensity(500);
+
+        assertThatCode(() -> processor.validate(dto)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validate_nullAvgSpeed_throws() {
         TrafficDataDto dto = validDto();
         dto.setAvgSpeed(null);
 
-        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
-        verifyNoInteractions(trafficRepo);
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("avgSpeed is required");
     }
 
     @Test
-    void process_avgSpeedOutOfRange_throwsIllegalArgumentException() {
-        TrafficDataDto dto = validDto();
-        dto.setAvgSpeed(200.0f);
-
-        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
-        verifyNoInteractions(trafficRepo);
-    }
-
-    @Test
-    void process_checksThresholdWithSavedEntity() {
-        processor.process(validDto());
-        verify(strategy).check(any(TrafficData.class), eq("Downtown"));
-    }
-
-    @Test
-    void process_broadcastsSavedEntity() {
-        processor.process(validDto());
-        verify(messagingTemplate).convertAndSend(eq("/topic/traffic"), any(TrafficData.class));
-    }
-
-    @Test
-    void process_trafficDensityNegative_throwsIllegalArgumentException() {
-        TrafficDataDto dto = validDto();
-        dto.setTrafficDensity(-5);
-
-        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
-        verifyNoInteractions(trafficRepo);
-    }
-
-    @Test
-    void process_avgSpeedNegative_throwsIllegalArgumentException() {
+    void validate_avgSpeedBelowZero_throws() {
         TrafficDataDto dto = validDto();
         dto.setAvgSpeed(-1.0f);
 
-        assertThrows(IllegalArgumentException.class, () -> processor.process(dto));
-        verifyNoInteractions(trafficRepo);
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid average speed: must be between 0 and 120");
+    }
+
+    @Test
+    void validate_avgSpeedAboveOneTwenty_throws() {
+        TrafficDataDto dto = validDto();
+        dto.setAvgSpeed(121.0f);
+
+        assertThatThrownBy(() -> processor.validate(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid average speed: must be between 0 and 120");
+    }
+
+    @Test
+    void validate_avgSpeedAtLowerBoundZero_isValid() {
+        TrafficDataDto dto = validDto();
+        dto.setAvgSpeed(0.0f);
+
+        assertThatCode(() -> processor.validate(dto)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validate_avgSpeedAtUpperBoundOneTwenty_isValid() {
+        TrafficDataDto dto = validDto();
+        dto.setAvgSpeed(120.0f);
+
+        assertThatCode(() -> processor.validate(dto)).doesNotThrowAnyException();
+    }
+
+    // ---------------- mapToEntity() ----------------
+
+    @Test
+    void mapToEntity_copiesAllFieldsCorrectly() {
+        TrafficDataDto dto = validDto();
+
+        TrafficData entity = processor.mapToEntity(dto);
+
+        assertThat(entity.getLocation()).isEqualTo(dto.getLocation());
+        assertThat(entity.getTrafficDensity()).isEqualTo(dto.getTrafficDensity());
+        assertThat(entity.getAvgSpeed()).isEqualTo(dto.getAvgSpeed());
+        assertThat(entity.getCongestionLevel()).isEqualTo(dto.getCongestionLevel());
+    }
+
+    // ---------------- save() ----------------
+
+    @Test
+    void save_delegatesToRepository() {
+        TrafficData entity = new TrafficData();
+
+        processor.save(entity);
+
+        verify(trafficRepo).save(entity);
+    }
+
+    // ---------------- checkThreshold() ----------------
+
+    @Test
+    void checkThreshold_delegatesToStrategyWithEntityLocation() {
+        TrafficData entity = new TrafficData();
+        entity.setLocation("Main St & 5th Ave");
+
+        processor.checkThreshold(entity);
+
+        verify(strategy).check(entity, "Main St & 5th Ave");
+    }
+
+    // ---------------- broadcast() ----------------
+
+    @Test
+    void broadcast_sendsToTrafficTopic() {
+        // Closes the H4 gap: Traffic previously had no broadcast() step at all.
+        TrafficData entity = new TrafficData();
+
+        processor.broadcast(entity);
+
+        verify(messagingTemplate).convertAndSend("/topic/traffic", entity);
     }
 }
