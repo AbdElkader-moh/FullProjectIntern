@@ -5,6 +5,10 @@ import java.nio.file.Paths;
 
 public class SecretReader {
 
+    private SecretReader() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static String readSecret(String fileEnvName, String fallbackEnvName) {
         try {
             String filePath = System.getenv(fileEnvName);
