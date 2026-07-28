@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "4173167d-7af8-4c28-a14f-b2d44fa08b93",
+    "_postman_id": "13310fd1-ab7d-4845-aee8-ef435972e751",
     "name": "Project — Sprint 1 , 2 and 3  BE Tests",
     "description": "Backend integration tests for Sign Up, Sign In, Profile (GET/PUT), and Logout.\nBase URL: http://localhost:4200\nAll session-based — Postman must have 'Automatically follow redirects' ON and cookie jar enabled.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52585419",
-    "_collection_link": "https://go.postman.co/collection/52585419-4173167d-7af8-4c28-a14f-b2d44fa08b93?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/52585419-13310fd1-ab7d-4845-aee8-ef435972e751?source=collection_link"
   },
   "item": [
     {
@@ -3508,6 +3508,9 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
@@ -3529,9 +3532,6 @@
                 "sensors",
                 "air"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
           },
           "response": []

@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "112d0d1f-05e8-41a6-928c-6bf44270c64d",
+    "_postman_id": "24582915-12c4-4f38-807b-799411a10f5a",
     "name": "🩺 Sanity Checks — Full System",
     "description": "Lightweight smoke pass covering every endpoint across both services (port 4200 — User/Auth and port 8081 — Sensor). Run this first on every deployment or server restart. Each request has 1–3 assertions max. If anything here fails, stop and fix before running the full suites.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52585419",
-    "_collection_link": "https://go.postman.co/collection/52585419-112d0d1f-05e8-41a6-928c-6bf44270c64d?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/52585419-24582915-12c4-4f38-807b-799411a10f5a?source=collection_link"
   },
   "item": [
     {

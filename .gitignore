@@ -1,7 +1,10 @@
-﻿test_output.txt
+test_output.txt
 secrets/
 k8s/secrets.yaml
 FrontendTestingFramework/target/
+FrontendTestingFramework/.allure/
+FrontendTestingFramework/allure-results/
+FrontendTestingFramework/reports/
 node_modules/
 
 backend/sensor_data/effective-pom
