@@ -1,11 +1,11 @@
 {
   "info": {
-    "_postman_id": "b9e24806-329e-418a-b4f4-ac1336d3f43c",
+    "_postman_id": "fa13819a-b032-4dcc-85bd-43cc8c184e85",
     "name": "Sprint 4 and Sprint 5",
     "description": "Automated test collection for GET /api/sensors/air, /air/stats, and /air/trends endpoints",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52585419",
-    "_collection_link": "https://go.postman.co/collection/52585419-b9e24806-329e-418a-b4f4-ac1336d3f43c?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/52585419-fa13819a-b032-4dcc-85bd-43cc8c184e85?source=collection_link"
   },
   "item": [
     {
@@ -218,6 +218,12 @@
                       "    pm.expect(record).to.have.property('pollutionLevel').that.is.a('string');",
                       "    pm.expect(record).to.have.property('timestamp').that.is.a('string');",
                       "  });",
+                      "});",
+                      "const schemaRaw = pm.environment.get('airSchema');",
+                      "if (!schemaRaw) { throw new Error(\"Missing environment variable 'airSchema' - add it to the shared environment.\"); }",
+                      "const schema = JSON.parse(schemaRaw);",
+                      "pm.test('Response matches schema', () => {",
+                      "  pm.response.to.have.jsonSchema(schema);",
                       "});"
                     ]
                   }
@@ -991,7 +997,6 @@
               "name": "TC-GET-AST-002 | All top-level fields exist with correct types",
               "event": [
                 {
-                  "listen": "test",
                   "script": {
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
@@ -1007,50 +1012,25 @@
                       "  pm.expect(body).to.have.property('totalAlerts').that.is.a('number');",
                       "  pm.expect(body).to.have.property('pollutionLevelBreakdown').that.is.an('object');",
                       "});",
-                      "const schema = {",
-                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
-                      "  \"title\": \"GET /api/sensors/air/stats response\",",
-                      "  \"type\": \"object\",",
-                      "  \"required\": [\"totalRecords\", \"averageCo\", \"averageOzone\", \"highestCo\", \"lowestCo\", \"highestOzone\", \"lowestOzone\", \"totalAlerts\", \"pollutionLevelBreakdown\"],",
-                      "  \"additionalProperties\": false,",
-                      "  \"properties\": {",
-                      "    \"totalRecords\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"averageCo\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"averageOzone\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"highestCo\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"lowestCo\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"highestOzone\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"lowestOzone\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"totalAlerts\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"pollutionLevelBreakdown\": {",
-                      "      \"type\": \"object\",",
-                      "      \"required\": [\"Good\", \"Moderate\", \"Unhealthy\", \"Very_Unhealthy\", \"Hazardous\"],",
-                      "      \"additionalProperties\": false,",
-                      "      \"properties\": {",
-                      "        \"Good\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "        \"Moderate\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "        \"Unhealthy\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "        \"Very_Unhealthy\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "        \"Hazardous\": { \"type\": \"number\", \"minimum\": 0 }",
-                      "      }",
-                      "    }",
-                      "  }",
-                      "};",
+                      "const schemaRaw = pm.environment.get('airStatsSchema');",
+                      "if (!schemaRaw) { throw new Error(\"Missing environment variable 'airStatsSchema' - add it to the shared environment.\"); }",
+                      "const schema = JSON.parse(schemaRaw);",
                       "pm.test('Response matches schema', () => {",
                       "  pm.response.to.have.jsonSchema(schema);",
                       "});"
                     ],
-                    "type": "text/javascript",
-                    "packages": {},
-                    "requests": {}
-                  }
+                    "type": "text/javascript"
+                  },
+                  "listen": "test"
                 },
                 {
-                  "listen": "prerequest",
                   "script": {
-                    "packages": {},
+                    "exec": [
+                      ""
+                    ],
                     "type": "text/javascript"
-                  }
+                  },
+                  "listen": "prerequest"
                 }
               ],
               "request": {
@@ -1359,6 +1339,7 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
                       "pm.test('Each record has correct field types', () => {",
@@ -1368,27 +1349,13 @@
                       "    pm.expect(record).to.have.property('ozone').that.is.a('number');",
                       "  });",
                       "});",
-                      "const schema = {",
-                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
-                      "  \"title\": \"GET /api/sensors/air/trends response\",",
-                      "  \"type\": \"array\",",
-                      "  \"items\": {",
-                      "    \"type\": \"object\",",
-                      "    \"required\": [\"timestamp\", \"co\", \"ozone\"],",
-                      "    \"properties\": {",
-                      "      \"timestamp\": { \"type\": \"string\" },",
-                      "      \"co\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "      \"ozone\": { \"type\": \"number\", \"minimum\": 0 }",
-                      "    }",
-                      "  }",
-                      "};",
+                      "const schemaRaw = pm.environment.get('airTrendsSchema');",
+                      "if (!schemaRaw) { throw new Error(\"Missing environment variable 'airTrendsSchema' - add it to the shared environment.\"); }",
+                      "const schema = JSON.parse(schemaRaw);",
                       "pm.test('Response matches schema', () => {",
                       "  pm.response.to.have.jsonSchema(schema);",
                       "});"
-                    ],
-                    "type": "text/javascript",
-                    "packages": {},
-                    "requests": {}
+                    ]
                   }
                 }
               ],
@@ -1662,7 +1629,6 @@
               "name": "TC-GET-LGT-003 | Each record has correct field types",
               "event": [
                 {
-                  "listen": "test",
                   "script": {
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
@@ -1675,47 +1641,16 @@
                       "    pm.expect(record).to.have.property('timestamp').that.is.a('string');",
                       "  });",
                       "});",
-                      "const schema = {",
-                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
-                      "  \"title\": \"GET /api/sensors/light response\",",
-                      "  \"type\": \"object\",",
-                      "  \"required\": [\"content\", \"pageable\", \"totalElements\", \"totalPages\", \"first\", \"last\"],",
-                      "  \"properties\": {",
-                      "    \"content\": {",
-                      "      \"type\": \"array\",",
-                      "      \"items\": {",
-                      "        \"type\": \"object\",",
-                      "        \"required\": [\"location\", \"brightnessLevel\", \"powerConsumption\", \"status\", \"timestamp\"],",
-                      "        \"properties\": {",
-                      "          \"location\": { \"type\": \"string\" },",
-                      "          \"brightnessLevel\": { \"type\": \"number\" },",
-                      "          \"powerConsumption\": { \"type\": \"number\" },",
-                      "          \"status\": { \"type\": \"string\", \"enum\": [\"ON\", \"OFF\"] },",
-                      "          \"timestamp\": { \"type\": \"string\" }",
-                      "        }",
-                      "      }",
-                      "    },",
-                      "    \"pageable\": {",
-                      "      \"type\": \"object\",",
-                      "      \"properties\": {",
-                      "        \"pageSize\": { \"type\": \"number\" },",
-                      "        \"pageNumber\": { \"type\": \"number\" }",
-                      "      }",
-                      "    },",
-                      "    \"totalElements\": { \"type\": \"number\" },",
-                      "    \"totalPages\": { \"type\": \"number\" },",
-                      "    \"first\": { \"type\": \"boolean\" },",
-                      "    \"last\": { \"type\": \"boolean\" }",
-                      "  }",
-                      "};",
+                      "const schemaRaw = pm.environment.get('lightSchema');",
+                      "if (!schemaRaw) { throw new Error(\"Missing environment variable 'lightSchema' - add it to the shared environment.\"); }",
+                      "const schema = JSON.parse(schemaRaw);",
                       "pm.test('Response matches schema', () => {",
                       "  pm.response.to.have.jsonSchema(schema);",
                       "});"
                     ],
-                    "type": "text/javascript",
-                    "packages": {},
-                    "requests": {}
-                  }
+                    "type": "text/javascript"
+                  },
+                  "listen": "test"
                 }
               ],
               "request": {
@@ -2632,7 +2567,6 @@
               "name": "TC-GET-LST-002 | All top-level fields exist with correct types",
               "event": [
                 {
-                  "listen": "test",
                   "script": {
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
@@ -2646,38 +2580,16 @@
                       "  pm.expect(body).to.have.property('totalAlerts').that.is.a('number');",
                       "  pm.expect(body).to.have.property('statusBreakdown').that.is.an('object');",
                       "});",
-                      "const schema = {",
-                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
-                      "  \"title\": \"GET /api/sensors/light/stats response\",",
-                      "  \"type\": \"object\",",
-                      "  \"required\": [\"totalRecords\", \"averageBrightness\", \"averagePowerConsumption\", \"highestPowerConsumption\", \"lowestBrightness\", \"totalAlerts\", \"statusBreakdown\"],",
-                      "  \"additionalProperties\": false,",
-                      "  \"properties\": {",
-                      "    \"totalRecords\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"averageBrightness\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"averagePowerConsumption\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"highestPowerConsumption\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"lowestBrightness\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"totalAlerts\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "    \"statusBreakdown\": {",
-                      "      \"type\": \"object\",",
-                      "      \"required\": [\"ON\", \"OFF\"],",
-                      "      \"additionalProperties\": false,",
-                      "      \"properties\": {",
-                      "        \"ON\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "        \"OFF\": { \"type\": \"number\", \"minimum\": 0 }",
-                      "      }",
-                      "    }",
-                      "  }",
-                      "};",
+                      "const schemaRaw = pm.environment.get('lightStatsSchema');",
+                      "if (!schemaRaw) { throw new Error(\"Missing environment variable 'lightStatsSchema' - add it to the shared environment.\"); }",
+                      "const schema = JSON.parse(schemaRaw);",
                       "pm.test('Response matches schema', () => {",
                       "  pm.response.to.have.jsonSchema(schema);",
                       "});"
                     ],
-                    "type": "text/javascript",
-                    "packages": {},
-                    "requests": {}
-                  }
+                    "type": "text/javascript"
+                  },
+                  "listen": "test"
                 }
               ],
               "request": {
@@ -3055,8 +2967,8 @@
               "name": "TC-GET-LTR-003 | Each record has correct field types",
               "event": [
                 {
-                  "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
                       "pm.test('Status is 200', () => { pm.response.to.have.status(200); });",
                       "pm.test('Each record has correct field types', () => {",
@@ -3066,28 +2978,15 @@
                       "    pm.expect(record).to.have.property('powerConsumption').that.is.a('number');",
                       "  });",
                       "});",
-                      "const schema = {",
-                      "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",",
-                      "  \"title\": \"GET /api/sensors/light/trends response\",",
-                      "  \"type\": \"array\",",
-                      "  \"items\": {",
-                      "    \"type\": \"object\",",
-                      "    \"required\": [\"timestamp\", \"brightnessLevel\", \"powerConsumption\"],",
-                      "    \"properties\": {",
-                      "      \"timestamp\": { \"type\": \"string\" },",
-                      "      \"brightnessLevel\": { \"type\": \"number\", \"minimum\": 0 },",
-                      "      \"powerConsumption\": { \"type\": \"number\", \"minimum\": 0 }",
-                      "    }",
-                      "  }",
-                      "};",
+                      "const schemaRaw = pm.environment.get('lightTrendsSchema');",
+                      "if (!schemaRaw) { throw new Error(\"Missing environment variable 'lightTrendsSchema' - add it to the shared environment.\"); }",
+                      "const schema = JSON.parse(schemaRaw);",
                       "pm.test('Response matches schema', () => {",
                       "  pm.response.to.have.jsonSchema(schema);",
                       "});"
-                    ],
-                    "type": "text/javascript",
-                    "packages": {},
-                    "requests": {}
-                  }
+                    ]
+                  },
+                  "listen": "test"
                 }
               ],
               "request": {
