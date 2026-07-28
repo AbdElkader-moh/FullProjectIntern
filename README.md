@@ -26,6 +26,7 @@
 - [Running the Test Suites](#-running-the-test-suites)
 - [CI/CD Pipeline](#-cicd-pipeline)
 - [Kubernetes Deployment](#-kubernetes-deployment)
+- [OpenShift + Tekton Pipeline](#️-openshift--tekton-pipeline-cloud-native-cicd)
 - [Project Structure](#-project-structure)
 - [Contributing](#-contributing)
 
@@ -676,6 +677,74 @@ kubectl logs -l app=sensor-service --tail=100
 
 ---
 
+## ☁️ OpenShift + Tekton Pipeline (Cloud-Native CI/CD)
+
+Alongside the Jenkins pipeline above, the project also ships a fully cloud-native pipeline built on
+**OpenShift**, **Tekton**, and **Pipelines-as-Code (PAC)** — this is the pipeline that actually
+builds, tests, and deploys the app to the Red Hat Developer Sandbox (`beyond-code-dev` namespace),
+with no external CI server involved at all.
+
+> 📖 For the full step-by-step walkthrough (written for someone who's never touched Tekton or
+> OpenShift), see [`TEKTON_OPENSHIFT_GUIDE.md`](./TEKTON_OPENSHIFT_GUIDE.md) and
+> [`openshift/README.md`](./openshift/README.md).
+
+### Trigger — Pipelines-as-Code (`.tekton/`)
+
+- [`.tekton/push.yaml`](./.tekton/push.yaml) — a `PipelineRun` template picked up directly by the
+  cluster's shared PAC controller on every push to `main`
+  (`pipelinesascode.tekton.dev/on-event: "[push]"`, `on-target-branch: "[main]"`). There's no
+  webhook relay to host — PAC reads this file straight out of the repo on each GitHub event.
+- [`tekton/10-pac-repository.yaml`](./tekton/10-pac-repository.yaml) — a `Repository` object that
+  registers this GitHub repo with the shared PAC controller and points it at the webhook secret.
+- `max-keep-runs: "3"` caps how many finished PipelineRuns PAC keeps per push, so pods don't pile up
+  and exhaust the Sandbox's pod quota.
+
+### Pipeline graph (`tekton/02-pipeline.yaml`)
+
+```
+clone
+ ├─► test-user-service   ─► sonar-user-service   ─► build-user-service   ─┐
+ ├─► test-sensor-service ─► sonar-sensor-service ─► build-sensor-service ─┼─► deploy-test ─► run-newman ─► run-selenium ─► deploy-prod
+ ├─► build-frontend ──────────────────────────────────────────────────────┤   (Postman Sanity)  (Selenium/TestNG)  (only if selenium passed)
+ └─► build-simulator ─────────────────────────────────────────────────────┘
+finally:
+ └─► cleanup-test   (always runs, no matter where the pipeline stopped)
+```
+
+| Task file | Purpose |
+|---|---|
+| [`09-unit-test-task.yaml`](./tekton/09-unit-test-task.yaml) | Runs `mvn test` (JUnit/Surefire + JaCoCo) per backend service — the real test gate, since both Dockerfiles build with `-DskipTests`. |
+| [`11-sonar-task.yaml`](./tekton/11-sonar-task.yaml) | Runs SonarCloud analysis with `sonar.qualitygate.wait=true`, failing the task if the Quality Gate doesn't pass — a real gate, not just a report. |
+| [`03-buildah-task.yaml`](./tekton/03-buildah-task.yaml) | Defines `kaniko-build-push` — builds and pushes each service's image to Docker Hub with **kaniko** (rootless, no Docker daemon required inside the pod). |
+| [`04-deploy-task.yaml`](./tekton/04-deploy-task.yaml) | Defines `deploy-overlay` — applies the requested Kustomize overlay (`test`/`prod`) from pre-generated ConfigMaps, swaps in the real image tag, then waits on `oc rollout status` for every Deployment. |
+| [`05-newman-task.yaml`](./tekton/05-newman-task.yaml) | Runs the Postman "Sanity Checks" collection against the freshly deployed test stack over in-cluster Service DNS. |
+| [`06-selenium-task.yaml`](./tekton/06-selenium-task.yaml) | Runs the Selenium/TestNG sanity suite against the test frontend, installing headless Chrome at runtime. |
+| [`08-cleanup-task.yaml`](./tekton/08-cleanup-task.yaml) | `finally:` task — deletes every `-test` resource via `-l variant=test`, regardless of how the run ended. |
+
+Promotion to production needs no separate `when:` condition: `deploy-prod` simply depends on
+`run-selenium`, and Tekton skips every downstream task the moment anything upstream fails — so
+passing the test stack's Newman + Selenium suites *is* the promotion gate, for free.
+
+### Target environment (`openshift/`)
+
+Kustomize `base/` + `overlays/{test,prod}` describing the same 5 services (`mysql`, `user-service`,
+`sensor-service`, `simulator`, `frontend`). Because the Developer Sandbox grants only **one
+namespace** (`beyond-code-dev`), both `test` and `prod` live there — isolated from each other purely
+through Kustomize (`nameSuffix: -test`, `commonLabels: {variant: test}`, and `patches:` that give
+every test object a genuinely different `app` selector, so prod's Services can never accidentally
+route traffic to a throwaway test pod). Only `prod` carries OpenShift `Route`s and is reachable from
+outside the cluster; `test` is torn down automatically after every run.
+
+```
+openshift/
+├── base/                 # environment-agnostic manifests, no namespace/real tags baked in
+└── overlays/
+    ├── prod/              # long-lived, public stack (unsuffixed names, has Routes)
+    └── test/              # temporary stack, deployed + torn down on every pipeline run
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -719,12 +788,16 @@ FullProjectIntern/
 │   └── simulator.py
 │
 ├── db/                              # MySQL Docker init scripts
-├── k8s/                             # Kubernetes deployment manifests
+├── k8s/                             # Kubernetes manifests (Minikube-era deployment target)
+├── openshift/                       # OpenShift Kustomize manifests (base + test/prod overlays)
+├── tekton/                          # Tekton Pipeline/Task definitions (build, test, deploy, cleanup)
+├── .tekton/                         # Pipelines-as-Code PipelineRun triggers (read directly by PAC)
 ├── jenkins/                         # Jenkins configuration
 ├── secrets/                         # ⚠️ Git-ignored — runtime secrets only
 ├── docker-compose.yml               # Full local environment orchestration
 ├── jenkins-compose.yml              # Jenkins server Docker Compose
 ├── Jenkinsfile                      # Declarative CI/CD pipeline definition
+├── TEKTON_OPENSHIFT_GUIDE.md         # Step-by-step guide to the OpenShift/Tekton/PAC pipeline
 └── .env                             # DockerHub username & image tag (git-ignored)
 ```
 
