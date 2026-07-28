@@ -17,7 +17,7 @@ This service exposes REST endpoints for:
 - **Java 17**, **Spring Boot 3.4**
 - **Spring Data JPA** (Hibernate) + **MySQL**
 - **Spring WebSocket** (STOMP) for live alert broadcasting
-- **Spring Security**: JWT-based auth on GET endpoints (ingestion endpoints are open for device write access)
+- **Spring Security** JWT-based auth on GET endpoints (ingestion endpoints are open for device write access)
 - **springdoc-openapi** (Swagger UI) for API documentation
 - **SonarCloud** for static analysis and quality gating
 
