@@ -1,7 +1,11 @@
 package com.backend.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter
+@AllArgsConstructor
 @Schema(description = "User profile response")
 public class UserResponse {
 
@@ -22,20 +26,4 @@ public class UserResponse {
 
     @Schema(description = "Hashed password (bcrypt)")
     private String password;
-
-    public UserResponse(Long id, String email, String firstName, String lastName, String profilePicture, String password) {
-        this.id = id;
-        this.email = email;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.profilePicture = profilePicture;
-        this.password = password;
-    }
-
-    public Long getId() { return id; }
-    public String getEmail() { return email; }
-    public String getFirstName() { return firstName; }
-    public String getLastName() { return lastName; }
-    public String getProfilePicture() { return profilePicture; }
-    public String getPassword() { return password; }
 }

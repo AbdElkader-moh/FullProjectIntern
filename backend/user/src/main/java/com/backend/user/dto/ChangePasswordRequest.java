@@ -2,7 +2,11 @@ package com.backend.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Schema(description = "Request body for changing user password")
 public class ChangePasswordRequest {
 
@@ -13,20 +17,4 @@ public class ChangePasswordRequest {
     @NotBlank
     @Schema(description = "New password", example = "newpass456")
     private String newPassword;
-
-    public String getOldPassword() {
-        return oldPassword;
-    }
-
-    public void setOldPassword(String oldPassword) {
-        this.oldPassword = oldPassword;
-    }
-
-    public String getNewPassword() {
-        return newPassword;
-    }
-
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
-    }
 }

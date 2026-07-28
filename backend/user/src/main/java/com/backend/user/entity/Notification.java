@@ -1,12 +1,18 @@
 package com.backend.user.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "notifications")
 public class Notification {
+
     @Id
     private String id;
 
@@ -40,25 +46,4 @@ public class Notification {
     public Notification() {
         this.id = java.util.UUID.randomUUID().toString();
     }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    public String getMetric() { return metric; }
-    public void setMetric(String metric) { this.metric = metric; }
-    public Float getValue() { return value; }
-    public void setValue(Float value) { this.value = value; }
-    public Float getThresholdValue() { return thresholdValue; }
-    public void setThresholdValue(Float thresholdValue) { this.thresholdValue = thresholdValue; }
-    public String getAlertType() { return alertType; }
-    public void setAlertType(String alertType) { this.alertType = alertType; }
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    public Boolean getIsRead() { return isRead; }
-    public void setIsRead(Boolean isRead) { this.isRead = isRead; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
