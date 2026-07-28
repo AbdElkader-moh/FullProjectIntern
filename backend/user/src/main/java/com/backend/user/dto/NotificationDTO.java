@@ -1,8 +1,15 @@
 package com.backend.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
 @Schema(description = "Threshold breach notification")
 public class NotificationDTO {
 
@@ -33,11 +40,6 @@ public class NotificationDTO {
     @Schema(description = "Timestamp when the notification was created")
     private LocalDateTime createdAt;
 
-    public NotificationDTO() {
-        // Intentionally empty: required for frameworks (e.g. Jackson deserialization)
-        // that instantiate this DTO via reflection and populate it using setters.
-    }
-
     /**
      * Builds a NotificationDTO from a Notification entity.
      * Replaces the old 9-parameter constructor (flagged by SonarQube as
@@ -56,23 +58,4 @@ public class NotificationDTO {
         dto.setCreatedAt(notification.getCreatedAt());
         return dto;
     }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    public String getMetric() { return metric; }
-    public void setMetric(String metric) { this.metric = metric; }
-    public Float getValue() { return value; }
-    public void setValue(Float value) { this.value = value; }
-    public Float getThresholdValue() { return thresholdValue; }
-    public void setThresholdValue(Float thresholdValue) { this.thresholdValue = thresholdValue; }
-    public String getAlertType() { return alertType; }
-    public void setAlertType(String alertType) { this.alertType = alertType; }
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    public Boolean getIsRead() { return isRead; }
-    public void setIsRead(Boolean isRead) { this.isRead = isRead; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -5,7 +5,12 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
+@Getter
+@Setter
 @Schema(description = "Request body for user registration")
 public class SignupRequest {
 
@@ -29,45 +34,5 @@ public class SignupRequest {
 
     @NotNull(message = "Profile picture is required")
     @Schema(description = "Profile picture file (multipart upload)", requiredMode = Schema.RequiredMode.REQUIRED)
-    private org.springframework.web.multipart.MultipartFile profilePicture;
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public org.springframework.web.multipart.MultipartFile getProfilePicture() {
-        return profilePicture;
-    }
-
-    public void setProfilePicture(org.springframework.web.multipart.MultipartFile profilePicture) {
-        this.profilePicture = profilePicture;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    private MultipartFile profilePicture;
 }

@@ -1,32 +1,22 @@
 package com.backend.sensor_data.entity;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "air_pollution_sensors_data")
-public class AirPollutionData {
-    @Id
-    private String id;
-
-    @NotBlank
-    private String location;
-
-    @Column(updatable = false)
-    private LocalDateTime timestamp = LocalDateTime.now(Clock.systemDefaultZone());
+public class AirPollutionData extends BaseSensorData {
 
     @Column(name = "pm2_5")
     private Float pm25;
@@ -46,37 +36,9 @@ public class AirPollutionData {
     @NotNull
     private PollutionLevel pollutionLevel;
 
-    public AirPollutionData() { this.id = java.util.UUID.randomUUID().toString(); }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
-
     @JsonProperty("pm2_5")
     public Float getPm25() { return pm25; }
+
     @JsonProperty("pm2_5")
     public void setPm25(Float pm25) { this.pm25 = pm25; }
-
-    public Float getPm10() { return pm10; }
-    public void setPm10(Float pm10) { this.pm10 = pm10; }
-
-    public Float getCo() { return co; }
-    public void setCo(Float co) { this.co = co; }
-
-    public Float getNo2() { return no2; }
-    public void setNo2(Float no2) { this.no2 = no2; }
-
-    public Float getSo2() { return so2; }
-    public void setSo2(Float so2) { this.so2 = so2; }
-
-    public Float getOzone() { return ozone; }
-    public void setOzone(Float ozone) { this.ozone = ozone; }
-
-    public PollutionLevel getPollutionLevel() { return pollutionLevel; }
-    public void setPollutionLevel(PollutionLevel pollutionLevel) { this.pollutionLevel = pollutionLevel; }
 }

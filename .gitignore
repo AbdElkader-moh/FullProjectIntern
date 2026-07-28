@@ -3,5 +3,5 @@ secrets/
 k8s/secrets.yaml
 FrontendTestingFramework/target/
 node_modules/
-
 backend/sensor_data/effective-pom
+sonar_log.txt
