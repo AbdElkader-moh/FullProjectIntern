@@ -350,7 +350,7 @@ imperatively too (none of it is safe to keep as committed YAML with real values)
 
 ---
 
-## Step 6 — Manual / debugging commands cheat-sheet
+## Step 6 — Manual / debugging commands cheat-sheet..
 
 ```bash
 # Preview what an overlay would produce, without applying anything
